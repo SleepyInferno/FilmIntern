@@ -29,12 +29,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can trigger analysis and receive a structured documentary report with extracted quotes, recurring themes, and key moments
   4. Analysis report displays on screen in a professional, scannable format (not raw chatbot text)
   5. The full loop (select type, upload, preview, analyze, view report) works end-to-end without errors on a real transcript
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
-- [ ] 01-03: TBD
+- [ ] 01-01-PLAN.md — Scaffold Next.js project, foundation types/schemas/parser, app shell layout
+- [ ] 01-02-PLAN.md — Upload flow with drag-and-drop dropzone, server-side parsing, content preview
+- [ ] 01-03-PLAN.md — Streaming analysis pipeline with Claude and structured report display
 
 ### Phase 2: File Format Support
 **Goal**: User can upload PDF screenplays, Final Draft (.fdx) files, and Word documents with structural formatting preserved for downstream analysis
@@ -89,7 +89,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Vertical Slice | 0/3 | Not started | - |
+| 1. Vertical Slice | 0/3 | Planning complete | - |
 | 2. File Format Support | 0/2 | Not started | - |
 | 3. Analysis Expansion | 0/3 | Not started | - |
 | 4. Export and Document Generation | 0/2 | Not started | - |
