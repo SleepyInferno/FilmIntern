@@ -77,30 +77,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CORE-01 | — | Pending |
-| CORE-02 | — | Pending |
-| CORE-03 | — | Pending |
-| CORE-04 | — | Pending |
-| CORE-05 | — | Pending |
-| PARSE-01 | — | Pending |
-| PARSE-02 | — | Pending |
-| PARSE-03 | — | Pending |
-| PARSE-04 | — | Pending |
-| ANLYS-01 | — | Pending |
-| ANLYS-02 | — | Pending |
-| ANLYS-03 | — | Pending |
-| ANLYS-04 | — | Pending |
-| ANLYS-05 | — | Pending |
-| ANLYS-06 | — | Pending |
-| OUTP-01 | — | Pending |
-| OUTP-02 | — | Pending |
-| OUTP-03 | — | Pending |
+| CORE-01 | Phase 1 | Pending |
+| CORE-02 | Phase 1 | Pending |
+| CORE-03 | Phase 1 | Pending |
+| CORE-04 | Phase 1 | Pending |
+| CORE-05 | Phase 1 | Pending |
+| PARSE-01 | Phase 1 | Pending |
+| PARSE-02 | Phase 2 | Pending |
+| PARSE-03 | Phase 2 | Pending |
+| PARSE-04 | Phase 2 | Pending |
+| ANLYS-01 | Phase 1 | Pending |
+| ANLYS-02 | Phase 3 | Pending |
+| ANLYS-03 | Phase 3 | Pending |
+| ANLYS-04 | Phase 3 | Pending |
+| ANLYS-05 | Phase 3 | Pending |
+| ANLYS-06 | Phase 3 | Pending |
+| OUTP-01 | Phase 1 | Pending |
+| OUTP-02 | Phase 4 | Pending |
+| OUTP-03 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18 ⚠️
+- Mapped to phases: 18
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-16*
-*Last updated: 2026-03-16 after initial definition*
+*Last updated: 2026-03-16 after roadmap creation*
