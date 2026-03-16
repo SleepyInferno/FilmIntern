@@ -87,7 +87,7 @@ Declared values (multiples of 4):
 | 2xl | 48px | Major section breaks, page top margin |
 | 3xl | 64px | Page-level spacing (unused in Phase 1) |
 
-Exceptions: Touch targets for buttons minimum 40px height (matching sidebar nav item height for consistent interactive elements). Sidebar nav items 40px height for comfortable click targets. On mobile contexts (if applicable), touch targets expand to 44px.
+Exceptions: Touch targets for buttons minimum 40px height (matching sidebar nav item height for consistent interactive elements). Sidebar nav items 40px height for comfortable click targets. Phase 1 is desktop-first; no mobile touch target exception declared.
 
 ---
 
