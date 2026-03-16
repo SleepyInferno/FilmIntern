@@ -46,7 +46,7 @@ shadcn components required for Phase 1:
 +-------------------+----------------------------------------------+
 ```
 
-**Sidebar:** 240px fixed width. Dark background (`sidebar` color token). Icon + label navigation. Collapsible to 64px icon-only on narrow viewports (below 1024px).
+**Sidebar:** 240px fixed width. Dark background (`sidebar` color token). Icon + label navigation. Collapsible to 64px icon-only on narrow viewports (below 1024px). When collapsed to icon-only mode, each nav item shows a shadcn `Tooltip` on hover displaying the full label text.
 
 **Breadcrumb bar:** Full width above content. Shows "Project: [Name] | [Analysis Type]". Right-aligned: future export button (disabled placeholder), user avatar placeholder.
 
@@ -87,7 +87,7 @@ Declared values (multiples of 4):
 | 2xl | 48px | Major section breaks, page top margin |
 | 3xl | 64px | Page-level spacing (unused in Phase 1) |
 
-Exceptions: Touch targets for buttons minimum 36px height (44px on mobile if applicable). Sidebar nav items 40px height for comfortable click targets.
+Exceptions: Touch targets for buttons minimum 40px height (matching sidebar nav item height for consistent interactive elements). Sidebar nav items 40px height for comfortable click targets. On mobile contexts (if applicable), touch targets expand to 44px.
 
 ---
 
@@ -96,13 +96,13 @@ Exceptions: Touch targets for buttons minimum 36px height (44px on mobile if app
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
 | Body | 14px | 400 (regular) | 1.5 | Default text, transcript preview, report body |
-| Label | 13px | 500 (medium) | 1.4 | Form labels, sidebar nav items, badge text, metadata |
+| Label | 13px | 400 (regular) | 1.4 | Form labels, sidebar nav items, badge text, metadata |
 | Heading | 20px | 600 (semibold) | 1.3 | Section headings in report, page titles |
 | Display | 28px | 600 (semibold) | 1.2 | App brand text ("Nano Banana"), phase/page headers |
 
 Font stack: `Inter, system-ui, -apple-system, sans-serif`
 
-Weights used: 400 (regular), 500 (medium), 600 (semibold) — load only these three via `next/font/google`.
+Weights used: 400 (regular), 600 (semibold) — load only these two via `next/font/google`.
 
 ---
 
@@ -134,6 +134,18 @@ The amber accent (`#D97706`) is reserved exclusively for:
 - Progress/loading bar fill during analysis streaming
 
 Accent is NOT used for: links, all buttons generically, hover states, borders, or decorative elements.
+
+### Key Moments Type Badge Colors
+
+| Type | Tailwind Class | Hex Value | CSS Variable |
+|------|---------------|-----------|--------------|
+| turning-point | `bg-amber-600` | `#D97706` | `--primary` (accent) |
+| emotional-peak | `bg-rose-500` | `#F43F5E` | `--km-emotional` |
+| revelation | `bg-amber-500` | `#F59E0B` | `--km-revelation` |
+| contradiction | `bg-orange-500` | `#F97316` | `--km-contradiction` |
+| humor | `bg-emerald-500` | `#10B981` | `--km-humor` |
+
+These CSS variables are declared in the app's global stylesheet alongside the shadcn theme tokens. They do not override any shadcn defaults.
 
 ### Dark Mode
 
@@ -217,7 +229,7 @@ Not in scope for Phase 1. Single light theme with dark sidebar.
 |----------|-------|
 | Layout | Vertical timeline-style list with position indicators |
 | Position indicator | Badge showing "Early" / "Middle" / "Late" in outline variant |
-| Type badge | Colored by type: turning-point=accent, emotional-peak=rose, revelation=amber, contradiction=orange, humor=emerald |
+| Type badge | Colored by type: turning-point=`#D97706`, emotional-peak=`#F43F5E`, revelation=`#F59E0B`, contradiction=`#F97316`, humor=`#10B981` (see Key Moments Type Badge Colors table) |
 | Moment text | Heading-size moment name, body-size significance below |
 
 ### Report Section: Editorial Notes
@@ -260,6 +272,7 @@ Not in scope for Phase 1. Single light theme with dark sidebar.
 | Hover | Background lightens to 10% white overlay |
 | Active | Left 3px accent border. Text and icon at full white. Background at 5% white overlay. |
 | Disabled (placeholder) | 50% opacity. No hover effect. Tooltip on hover: "Coming in a future update" |
+| Icon-only (collapsed) | Tooltip on hover showing full label text via shadcn `Tooltip` component |
 
 ---
 
@@ -279,7 +292,7 @@ Not in scope for Phase 1. Single light theme with dark sidebar.
 | Empty state heading (placeholder tabs) | Coming Soon |
 | Empty state body (placeholder tabs) | This project type is not yet available. Documentary analysis is ready to use. |
 | Empty state heading (placeholder nav) | Coming in a Future Update |
-| Empty state body (placeholder nav) | This feature is on the roadmap. |
+| Empty state body (placeholder nav) | Use the Projects section to get started with documentary analysis. |
 | Error: upload failed | Upload failed. Check your file and try again. |
 | Error: invalid file type | Only .txt files are supported. Please upload a plain text transcript. |
 | Error: file too large | File exceeds 10MB limit. Please upload a smaller file. |
