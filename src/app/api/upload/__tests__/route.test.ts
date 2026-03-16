@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment node
+ */
 import { describe, it, expect } from 'vitest';
 import { POST } from '../route';
 
@@ -53,9 +56,20 @@ describe('POST /api/upload', () => {
   });
 
   it('returns 400 with error for a file exceeding 10MB', async () => {
-    const content = 'small content';
-    const oversizeBytes = 10 * 1024 * 1024 + 1; // just over 10MB
-    const req = createUploadRequest('large.txt', content, oversizeBytes);
+    // Create a mock request that returns a File with overridden size from formData
+    const file = new File(['small content'], 'large.txt', { type: 'text/plain' });
+    const oversizedFile = Object.create(file, {
+      size: { value: 10 * 1024 * 1024 + 1, writable: false },
+      name: { value: 'large.txt', writable: false },
+      text: { value: () => Promise.resolve('small content'), writable: false },
+    });
+    const mockFormData = {
+      get: (key: string) => (key === 'file' ? oversizedFile : null),
+    };
+    const req = {
+      formData: () => Promise.resolve(mockFormData),
+    } as unknown as Request;
+
     const res = await POST(req);
     const data = await res.json();
 
