@@ -7,7 +7,7 @@
 
 ### Core Workflow
 
-- [ ] **CORE-01**: User can select a project type from the available options before uploading material
+- [x] **CORE-01**: User can select a project type from the available options before uploading material
 - [ ] **CORE-02**: User can upload a file via drag & drop or file picker
 - [ ] **CORE-03**: App displays a parsed content preview before analysis runs so user can verify parsing quality
 - [ ] **CORE-04**: User can trigger an analysis run after upload
@@ -15,14 +15,14 @@
 
 ### File Parsing
 
-- [ ] **PARSE-01**: App parses plain text (.txt) files
+- [x] **PARSE-01**: App parses plain text (.txt) files
 - [ ] **PARSE-02**: App parses PDF files with structure-preserving extraction (handles screenplay formatting)
 - [ ] **PARSE-03**: App parses Final Draft (.fdx) files preserving scene headings, character names, and dialogue structure
 - [ ] **PARSE-04**: App parses Word/DOCX files
 
 ### Analysis — Documentary & Corporate Interview
 
-- [ ] **ANLYS-01**: Documentary projects receive interview mining analysis: best quotes, recurring themes, and key moments surfaced from transcript
+- [x] **ANLYS-01**: Documentary projects receive interview mining analysis: best quotes, recurring themes, and key moments surfaced from transcript
 - [ ] **ANLYS-02**: Corporate interview projects receive key messaging analysis: usable soundbites, quote extraction, and messaging themes
 
 ### Analysis — Narrative Film & TV/Episodic
@@ -77,16 +77,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CORE-01 | Phase 1 | Pending |
+| CORE-01 | Phase 1 | Complete |
 | CORE-02 | Phase 1 | Pending |
 | CORE-03 | Phase 1 | Pending |
 | CORE-04 | Phase 1 | Pending |
 | CORE-05 | Phase 1 | Pending |
-| PARSE-01 | Phase 1 | Pending |
+| PARSE-01 | Phase 1 | Complete |
 | PARSE-02 | Phase 2 | Pending |
 | PARSE-03 | Phase 2 | Pending |
 | PARSE-04 | Phase 2 | Pending |
-| ANLYS-01 | Phase 1 | Pending |
+| ANLYS-01 | Phase 1 | Complete |
 | ANLYS-02 | Phase 3 | Pending |
 | ANLYS-03 | Phase 3 | Pending |
 | ANLYS-04 | Phase 3 | Pending |
