@@ -38,8 +38,8 @@
 ### Outputs
 
 - [x] **OUTP-01**: User receives a structured analysis report formatted appropriately for the project type
-- [ ] **OUTP-02**: User can download the analysis report as a formatted document (PDF or DOCX)
-- [ ] **OUTP-03**: App can generate a treatment or narrative outline from uploaded material
+- [x] **OUTP-02**: User can download the analysis report as a formatted document (PDF or DOCX)
+- [x] **OUTP-03**: App can generate a treatment or narrative outline from uploaded material
 
 ## v2 Requirements
 
@@ -93,8 +93,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ANLYS-05 | Phase 3 | Complete |
 | ANLYS-06 | Phase 3 | Complete |
 | OUTP-01 | Phase 1 | Complete |
-| OUTP-02 | Phase 4 | Pending |
-| OUTP-03 | Phase 4 | Pending |
+| OUTP-02 | Phase 4 | Complete |
+| OUTP-03 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 18 total

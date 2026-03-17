@@ -4,14 +4,14 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 03.1-03-PLAN.md (Phase 3.1 complete)
-last_updated: "2026-03-17T18:33:19.447Z"
+last_updated: "2026-03-17T18:42:14.599Z"
 last_activity: 2026-03-17 -- Plan 03.1-03 Analyze route provider integration (human-verify approved)
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 15
-  completed_plans: 11
-  percent: 73
+  completed_plans: 12
+  percent: 80
 ---
 
 # Project State
@@ -26,18 +26,18 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 ## Current Position
 
 Phase: 4 of 4 (Export and Document Generation)
-Plan: 0 of 4 complete in current phase
+Plan: 1 of 4 complete in current phase
 Status: In Progress
-Last activity: 2026-03-17 -- Plan 03.1-03 Analyze route provider integration (human-verify approved)
+Last activity: 2026-03-17 -- Plan 04-01 Shared document contracts
 
-Progress: [███████░░░] 73%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
+- Total plans completed: 12
 - Average duration: 4.5 min
-- Total execution time: 0.83 hours
+- Total execution time: 0.93 hours
 
 **By Phase:**
 
@@ -47,9 +47,10 @@ Progress: [███████░░░] 73%
 | 2. File Format Support | 2/2 | 7 min | 3.5 min |
 | 3. Analysis Expansion | 3/3 | 13 min | 4.3 min |
 | 3.1. Multi-Provider AI | 3/3 | 12 min | 4 min |
+| 4. Export & Doc Gen | 1/4 | 6 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-02 (5 min), 03-03 (2 min), 03.1-01 (3 min), 03.1-02 (5 min), 03.1-03 (4 min)
+- Last 5 plans: 03-03 (2 min), 03.1-01 (3 min), 03.1-02 (5 min), 03.1-03 (4 min), 04-01 (6 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -78,6 +79,10 @@ Recent decisions affecting current work:
 - 03-02: base-ui Tabs onValueChange signature takes (value, eventDetails) -- wrapped with lambda to match string callback
 - 03.1-03: Provider-specific providerOptions conditionally spread only when matching provider is active
 - 03.1-03: Model ID constructed via lookup map from settings.provider to provider:model string format
+- 04-01: Tiptap-compatible JSON as canonical document content format for editor and export compatibility
+- 04-01: Report normalizer registry keyed by AnalysisReportKind avoids documentary-specific branching
+- 04-01: Narrative analysis produces two report kinds (structure and coverage) from the same schema
+- 04-01: Corporate soundbites mapped to quoteRefs with same Q-label pattern as documentary keyQuotes
 
 ### Roadmap Evolution
 
@@ -94,6 +99,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T18:30:00Z
-Stopped at: Completed 03.1-03-PLAN.md (Phase 3.1 complete)
-Resume file: .planning/phases/04-export-and-document-generation/04-01-PLAN.md
+Last session: 2026-03-17T18:41:00Z
+Stopped at: Completed 04-01-PLAN.md
+Resume file: .planning/phases/04-export-and-document-generation/04-02-PLAN.md
