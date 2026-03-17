@@ -28,7 +28,7 @@ export const generatedDocumentSchema = z.object({
     dateLabel: z.string(),
     projectTypeLabel: z.string(),
   }),
-  content: z.record(z.unknown()),
+  content: z.record(z.string(), z.any()),
   quoteRefs: z.array(
     z.object({
       id: z.string(),
@@ -45,7 +45,7 @@ export const generatedDocumentSchema = z.object({
     })
   ),
   sourceText: z.string(),
-  analysisSnapshot: z.record(z.unknown()).optional(),
+  analysisSnapshot: z.record(z.string(), z.any()).optional(),
 });
 
 /**

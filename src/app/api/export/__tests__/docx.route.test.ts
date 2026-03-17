@@ -1,19 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { GeneratedDocument } from '@/lib/documents/types';
 
-// Mock the exportDocx function
-const mockExportDocx = vi.fn();
+// Mock the exportDocx function before route import
 vi.mock('@/lib/documents/export-docx', () => ({
-  exportDocx: (...args: unknown[]) => mockExportDocx(...args),
+  exportDocx: vi.fn(),
 }));
 
-// Mock export-request for validation
-vi.mock('@/lib/documents/export-request', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/documents/export-request')>(
-    '@/lib/documents/export-request'
-  );
-  return actual;
-});
+import { exportDocx } from '@/lib/documents/export-docx';
+import { POST } from '@/app/api/export/docx/route';
+
+const mockExportDocx = vi.mocked(exportDocx);
 
 const testDocument: GeneratedDocument = {
   id: 'test-doc-1',
@@ -55,8 +51,6 @@ describe('POST /api/export/docx', () => {
   });
 
   it('returns 200 with DOCX content type and .docx Content-Disposition', async () => {
-    const { POST } = await import('../../docx/route');
-
     const request = new Request('http://localhost/api/export/docx', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -74,8 +68,6 @@ describe('POST /api/export/docx', () => {
   });
 
   it('returns 400 for missing document body', async () => {
-    const { POST } = await import('../../docx/route');
-
     const request = new Request('http://localhost/api/export/docx', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
