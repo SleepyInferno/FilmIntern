@@ -1,21 +1,23 @@
+/**
+ * @vitest-environment node
+ */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock the 'ai' module
-const mockStreamText = vi.fn();
-const mockOutputObject = vi.fn().mockReturnValue('mocked-output');
+const { mockStreamText, mockOutputObject, mockAnthropic } = vi.hoisted(() => ({
+  mockStreamText: vi.fn(),
+  mockOutputObject: vi.fn().mockReturnValue('mocked-output'),
+  mockAnthropic: vi.fn().mockReturnValue('mock-model'),
+}));
 
 vi.mock('ai', () => ({
   streamText: mockStreamText,
   Output: { object: mockOutputObject },
 }));
 
-// Mock the anthropic provider
-const mockAnthropic = vi.fn().mockReturnValue('mock-model');
 vi.mock('@ai-sdk/anthropic', () => ({
   anthropic: mockAnthropic,
 }));
 
-// Mock the schema and prompt
 vi.mock('@/lib/ai/schemas/documentary', () => ({
   documentaryAnalysisSchema: { _type: 'mock-schema' },
 }));
@@ -24,7 +26,7 @@ vi.mock('@/lib/ai/prompts/documentary', () => ({
   documentarySystemPrompt: 'mock-system-prompt',
 }));
 
-import { POST } from '../../route';
+import { POST } from '../route';
 
 function makeRequest(body: Record<string, unknown>): Request {
   return new Request('http://localhost/api/analyze', {
