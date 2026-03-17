@@ -18,10 +18,12 @@ Add a provider selection mechanism so users can choose between:
 - **Anthropic Claude** (current — claude-sonnet-4-x or claude-opus-4-x)
 - **OpenAI** (GPT-4o or o4-mini — needs clarification from user on preferred model)
 
+Decisions locked:
+- **Scope:** Global settings page (not per-analysis toggle)
+
 Open design questions to resolve before planning:
 1. Which OpenAI model? (GPT-4o for quality, o4-mini for cost)
-2. Scope: per-analysis toggle in the UI, or a global setting in app config/settings page?
-3. Schema handling: OpenAI doesn't support Zod `.describe()` natively the same way — may need provider-specific prompt strategies
-4. Streaming: both support streaming, but SDK calls differ (Vercel AI SDK handles this well via `streamText` with provider switching)
+2. Schema handling: OpenAI doesn't support Zod `.describe()` natively the same way — may need provider-specific prompt strategies
+3. Streaming: both support streaming, but SDK calls differ (Vercel AI SDK handles this well via `streamText` with provider switching)
 
 Plan as a dedicated phase after Phase 4 (Export). Estimate: 1-2 plans covering API abstraction layer + UI toggle/settings.
