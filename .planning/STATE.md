@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 04-04-PLAN.md
-last_updated: "2026-03-17T19:21:28.124Z"
-last_activity: 2026-03-17 -- Plan 04-04 Export routes and client download wiring
+stopped_at: Completed 04-06-PLAN.md
+last_updated: "2026-03-17T23:51:01.232Z"
+last_activity: 2026-03-17 -- Plan 04-06 Gap closure build type errors
 progress:
   total_phases: 5
   completed_phases: 5
-  total_plans: 15
-  completed_plans: 15
+  total_plans: 17
+  completed_plans: 17
   percent: 100
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 ## Current Position
 
 Phase: 4 of 4 (Export and Document Generation)
-Plan: 4 of 4 complete in current phase
+Plan: 6 of 6 complete in current phase
 Status: Phase Complete
-Last activity: 2026-03-17 -- Plan 04-04 Export routes and client download wiring
+Last activity: 2026-03-17 -- Plan 04-06 Gap closure build type errors
 
 Progress: [██████████] 100%
 
@@ -47,7 +47,7 @@ Progress: [██████████] 100%
 | 2. File Format Support | 2/2 | 7 min | 3.5 min |
 | 3. Analysis Expansion | 3/3 | 13 min | 4.3 min |
 | 3.1. Multi-Provider AI | 3/3 | 12 min | 4 min |
-| 4. Export & Doc Gen | 4/4 | 30 min | 7.5 min |
+| 4. Export & Doc Gen | 6/6 | 33 min | 5.5 min |
 
 **Recent Trend:**
 - Last 5 plans: 03.1-03 (4 min), 04-01 (6 min), 04-02 (7 min), 04-03 (4 min), 04-04 (13 min)
@@ -89,6 +89,8 @@ Recent decisions affecting current work:
 - 04-03: Hand-rolled Tiptap JSON to HTML walker instead of @tiptap/static-renderer for simpler server-side rendering
 - 04-03: Exposed buildDocxDocument for test inspection of document structure without Packer serialization
 - 04-04: Fixed Zod v4 z.record(z.unknown()) crash in jsdom by using z.record(z.string(), z.any())
+- 04-06: Used ArrayBuffer.slice() instead of Uint8Array for Response body -- Uint8Array<ArrayBufferLike> also rejected by DOM BodyInit types
+- 04-06: Narrowed heading tag to explicit 'h1'-'h6' union instead of keyof JSX.IntrinsicElements
 
 ### Roadmap Evolution
 
@@ -105,6 +107,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T19:14:20Z
-Stopped at: Completed 04-04-PLAN.md
-Resume file: All plans complete
+Last session: 2026-03-17T23:50:58.685Z
+Stopped at: Completed 04-06-PLAN.md
+Resume file: None
