@@ -154,8 +154,16 @@ describe('Home page - post-analysis document workspace', () => {
           kind: 'outline',
           projectType: 'documentary',
           title: 'Test Outline',
+          cover: {
+            title: 'Test Outline',
+            typeLabel: 'Outline',
+            writtenBy: 'FilmIntern',
+            dateLabel: '2026-01-01T00:00:00.000Z',
+            projectTypeLabel: 'Documentary',
+          },
           content: { type: 'doc', content: [] },
           quoteRefs: [],
+          sourceText: 'mock transcript',
         }),
       });
 

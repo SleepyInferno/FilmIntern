@@ -11,9 +11,10 @@ import { EditorialSection } from '@/components/report-sections/editorial-section
 interface AnalysisReportProps {
   data: Partial<DocumentaryAnalysis> | null;
   isStreaming: boolean;
+  action?: React.ReactNode;
 }
 
-export function AnalysisReport({ data, isStreaming }: AnalysisReportProps) {
+export function AnalysisReport({ data, isStreaming, action }: AnalysisReportProps) {
   if (!data && !isStreaming) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -24,6 +25,8 @@ export function AnalysisReport({ data, isStreaming }: AnalysisReportProps) {
 
   return (
     <div className="space-y-6">
+      {action && <div className="flex justify-end">{action}</div>}
+
       {isStreaming && (
         <p className="text-sm text-muted-foreground">
           Analyzing your transcript...
@@ -45,6 +48,14 @@ export function AnalysisReport({ data, isStreaming }: AnalysisReportProps) {
         </CardHeader>
         <CardContent>
           <QuotesSection data={data?.keyQuotes} />
+          {data?.keyQuotes?.map((_, i) => (
+            <span
+              key={`qt-${i}`}
+              data-quote-target={`quote-${i + 1}`}
+              tabIndex={-1}
+              className="sr-only"
+            />
+          ))}
         </CardContent>
       </Card>
 

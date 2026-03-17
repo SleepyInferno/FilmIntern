@@ -1,29 +1,40 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ProjectTypeTabs } from '@/components/project-type-tabs';
 import { FileDropzone } from '@/components/file-dropzone';
 import { ContentPreview } from '@/components/content-preview';
-import { AnalysisReport } from '@/components/analysis-report';
-import { NarrativeReport } from '@/components/narrative-report';
-import { CorporateReport } from '@/components/corporate-report';
-import { TvReport } from '@/components/tv-report';
-import { ShortFormReport } from '@/components/short-form-report';
+import { DocumentWorkspace } from '@/components/document-workspace';
 import { ShortFormInputToggle } from '@/components/short-form-input-toggle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
+import { buildReportDocument } from '@/lib/documents/report-document';
 import type { ParseResult } from '@/lib/parsers/txt-parser';
-import type { DocumentaryAnalysis } from '@/lib/ai/schemas/documentary';
-import type { CorporateAnalysis } from '@/lib/ai/schemas/corporate';
-import type { NarrativeAnalysis } from '@/lib/ai/schemas/narrative';
-import type { TvEpisodicAnalysis } from '@/lib/ai/schemas/tv-episodic';
-import type { ShortFormAnalysis } from '@/lib/ai/schemas/short-form';
+import type { GeneratedDocument, DocumentKind, ExportFormat } from '@/lib/documents/types';
+import type { AnalysisReportKind } from '@/lib/documents/report-normalization';
 
 interface UploadData {
   text: string;
   metadata: ParseResult['metadata'];
+}
+
+function getReportKind(projectType: string): AnalysisReportKind {
+  switch (projectType) {
+    case 'documentary':
+      return 'documentary';
+    case 'corporate':
+      return 'corporate';
+    case 'narrative':
+      return 'narrative-structure';
+    case 'tv-episodic':
+      return 'tv-episodic';
+    case 'short-form':
+      return 'short-form';
+    default:
+      return 'documentary';
+  }
 }
 
 export default function Home() {
@@ -34,11 +45,21 @@ export default function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
+  // Document workspace state
+  const [reportDocument, setReportDocument] = useState<GeneratedDocument | null>(null);
+  const [generatedDocuments, setGeneratedDocuments] = useState<GeneratedDocument[]>([]);
+  const [activeDocumentId, setActiveDocumentId] = useState<string>('');
+  const [title] = useState('Untitled');
+  const [writtenBy] = useState('FilmIntern');
+
   function handleTypeChange(newType: string) {
     setProjectType(newType);
     setAnalysisData(null);
     setAnalysisError(null);
     setIsAnalyzing(false);
+    setReportDocument(null);
+    setGeneratedDocuments([]);
+    setActiveDocumentId('');
     if (newType !== 'short-form') setInputType('script-storyboard');
   }
 
@@ -48,6 +69,8 @@ export default function Home() {
     setIsAnalyzing(true);
     setAnalysisError(null);
     setAnalysisData(null);
+    setReportDocument(null);
+    setGeneratedDocuments([]);
 
     try {
       const response = await fetch('/api/analyze', {
@@ -69,6 +92,7 @@ export default function Home() {
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let accumulated = '';
+      let finalData: Record<string, unknown> | null = null;
 
       while (reader) {
         const { done, value } = await reader.read();
@@ -77,9 +101,25 @@ export default function Home() {
         try {
           const partial = JSON.parse(accumulated);
           setAnalysisData(partial);
+          finalData = partial;
         } catch {
           // Incomplete JSON -- continue accumulating
         }
+      }
+
+      // Build report document after analysis completes
+      if (finalData) {
+        const reportKind = getReportKind(projectType);
+        const reportDoc = buildReportDocument({
+          reportKind,
+          projectType,
+          analysis: finalData,
+          sourceText: uploadData.text,
+          title,
+          writtenBy,
+        });
+        setReportDocument(reportDoc);
+        setActiveDocumentId(reportDoc.id);
       }
 
       setIsAnalyzing(false);
@@ -89,47 +129,60 @@ export default function Home() {
     }
   }
 
-  function renderReport() {
-    switch (projectType) {
-      case 'documentary':
-        return (
-          <AnalysisReport
-            data={analysisData as Partial<DocumentaryAnalysis> | null}
-            isStreaming={isAnalyzing}
-          />
-        );
-      case 'corporate':
-        return (
-          <CorporateReport
-            data={analysisData as Partial<CorporateAnalysis> | null}
-            isStreaming={isAnalyzing}
-          />
-        );
-      case 'narrative':
-        return (
-          <NarrativeReport
-            data={analysisData as Partial<NarrativeAnalysis> | null}
-            isStreaming={isAnalyzing}
-          />
-        );
-      case 'tv-episodic':
-        return (
-          <TvReport
-            data={analysisData as Partial<TvEpisodicAnalysis> | null}
-            isStreaming={isAnalyzing}
-          />
-        );
-      case 'short-form':
-        return (
-          <ShortFormReport
-            data={analysisData as Partial<ShortFormAnalysis> | null}
-            isStreaming={isAnalyzing}
-          />
-        );
-      default:
-        return null;
-    }
-  }
+  const handleGenerateDocument = useCallback(
+    async (kind: Exclude<DocumentKind, 'report'>) => {
+      if (!uploadData || !analysisData) return;
+
+      try {
+        const response = await fetch('/api/documents/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectType,
+            documentKind: kind,
+            sourceText: uploadData.text,
+            title,
+            writtenBy,
+            analysis: analysisData,
+          }),
+        });
+
+        if (!response.ok) return;
+
+        const doc: GeneratedDocument = await response.json();
+        setGeneratedDocuments((prev) => [...prev, doc]);
+        setActiveDocumentId(doc.id);
+      } catch {
+        // Generation error -- keep current state
+      }
+    },
+    [uploadData, analysisData, projectType, title, writtenBy]
+  );
+
+  const handleUpdateDocument = useCallback(
+    (id: string, content: Record<string, unknown>) => {
+      setGeneratedDocuments((prev) =>
+        prev.map((doc) =>
+          doc.id === id
+            ? { ...doc, content, updatedAt: new Date().toISOString() }
+            : doc
+        )
+      );
+    },
+    []
+  );
+
+  const handleQuoteJump = useCallback((_quoteId: string) => {
+    // The workspace handles the actual scroll/focus behavior.
+    // This callback is for page-level awareness of jumps.
+  }, []);
+
+  const handleExport = useCallback(
+    async (_format: ExportFormat, _document: GeneratedDocument) => {
+      // Export is wired in Plan 04-03
+    },
+    []
+  );
 
   const buttonText = analysisData && !isAnalyzing ? 'Re-run Analysis' : 'Run Analysis';
 
@@ -183,7 +236,25 @@ export default function Home() {
           </Card>
         )}
 
-        {renderReport()}
+        {reportDocument && !isAnalyzing && (
+          <DocumentWorkspace
+            projectType={projectType}
+            reportDocument={reportDocument}
+            generatedDocuments={generatedDocuments}
+            activeDocumentId={activeDocumentId}
+            onActiveDocumentChange={setActiveDocumentId}
+            onGenerateDocument={handleGenerateDocument}
+            onUpdateDocument={handleUpdateDocument}
+            onQuoteJump={handleQuoteJump}
+            onExport={handleExport}
+          />
+        )}
+
+        {isAnalyzing && (
+          <p className="text-sm text-muted-foreground">
+            Analyzing your material...
+          </p>
+        )}
       </div>
     </ProjectTypeTabs>
   );
