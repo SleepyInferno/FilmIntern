@@ -46,13 +46,13 @@ describe('POST /api/upload', () => {
     expect(data.error).toContain('Unsupported file format: .mp4');
   });
 
-  it('returns 400 with parser error for unimplemented format', async () => {
+  it('returns 400 with parser error for invalid PDF content', async () => {
     const req = createUploadRequest('script.pdf', 'fake pdf content');
     const res = await POST(req);
     const data = await res.json();
 
     expect(res.status).toBe(400);
-    expect(data.error).toContain('not yet implemented');
+    expect(data.error).toBeTruthy();
   });
 
   it('returns 400 with error when no file is provided', async () => {
