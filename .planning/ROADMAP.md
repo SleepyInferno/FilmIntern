@@ -32,9 +32,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [x] 01-01-PLAN.md — Scaffold Next.js project, foundation types/schemas/parser, app shell layout
-- [x] 01-02-PLAN.md — Upload flow with drag-and-drop dropzone, server-side parsing, content preview
-- [x] 01-03-PLAN.md — Streaming analysis pipeline with Claude and structured report display
+- [x] 01-01-PLAN.md - Scaffold Next.js project, foundation types/schemas/parser, app shell layout
+- [x] 01-02-PLAN.md - Upload flow with drag-and-drop dropzone, server-side parsing, content preview
+- [x] 01-03-PLAN.md - Streaming analysis pipeline with Claude and structured report display
 
 ### Phase 2: File Format Support
 **Goal**: User can upload PDF screenplays, Final Draft (.fdx) files, and Word documents with structural formatting preserved for downstream analysis
@@ -48,8 +48,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Infrastructure: install deps, async registry with Buffer support, upload route binary handling, dropzone/project-type MIME expansion, Wave 0 test stubs
-- [ ] 02-02-PLAN.md — Parsers: PDF with screenplay detection, FDX XML parsing, DOCX extraction, registry wiring
+- [ ] 02-01-PLAN.md - Infrastructure: install deps, async registry with Buffer support, upload route binary handling, dropzone/project-type MIME expansion, Wave 0 test stubs
+- [ ] 02-02-PLAN.md - Parsers: PDF with screenplay detection, FDX XML parsing, DOCX extraction, registry wiring
 
 ### Phase 3: Analysis Expansion
 **Goal**: All five project types produce tailored, high-quality analysis using project-type-specific analytical frameworks
@@ -76,12 +76,13 @@ Plans:
   1. User can download any analysis report as a formatted PDF or DOCX document
   2. User can generate a treatment or narrative outline from uploaded material and view it on screen
   3. Downloaded documents are professionally formatted with appropriate headings, sections, and typography
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Establish shared document contracts, project-type availability rules, and report-to-document adapter
-- [ ] 04-02-PLAN.md — Build derivative document generation route plus tabbed in-app editing workspace
-- [ ] 04-03-PLAN.md — Implement shared PDF/DOCX export pipeline and export API routes
+- [ ] 04-01-PLAN.md - Establish shared document contracts, project-type availability rules, and generic analysis-report normalization
+- [ ] 04-02-PLAN.md - Build derivative document generation route plus tabbed in-app editing workspace
+- [ ] 04-03-PLAN.md - Implement shared export contracts, layout/renderers, and PDF/DOCX exporter libraries
+- [ ] 04-04-PLAN.md - Expose export API routes and wire active-tab download handling
 
 ## Progress
 
@@ -93,4 +94,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 1. Vertical Slice | 3/3 | Complete   | 2026-03-17 |
 | 2. File Format Support | 2/2 | Complete    | 2026-03-17 |
 | 3. Analysis Expansion | 0/3 | Not started | - |
-| 4. Export and Document Generation | 0/2 | Not started | - |
+| 4. Export and Document Generation | 0/4 | Not started | - |
