@@ -3,19 +3,28 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockStreamText, mockOutputObject, mockAnthropic } = vi.hoisted(() => ({
+const { mockStreamText, mockOutputObject, mockLoadSettings, mockLanguageModel, mockBuildRegistry } = vi.hoisted(() => ({
   mockStreamText: vi.fn(),
   mockOutputObject: vi.fn().mockReturnValue('mocked-output'),
-  mockAnthropic: vi.fn().mockReturnValue('mock-model'),
+  mockLoadSettings: vi.fn(),
+  mockLanguageModel: vi.fn().mockReturnValue('mock-model'),
+  mockBuildRegistry: vi.fn(),
 }));
+
+// Initialize mockBuildRegistry to return an object with languageModel
+mockBuildRegistry.mockReturnValue({ languageModel: mockLanguageModel });
 
 vi.mock('ai', () => ({
   streamText: mockStreamText,
   Output: { object: mockOutputObject },
 }));
 
-vi.mock('@ai-sdk/anthropic', () => ({
-  anthropic: mockAnthropic,
+vi.mock('@/lib/ai/settings', () => ({
+  loadSettings: mockLoadSettings,
+}));
+
+vi.mock('@/lib/ai/provider-registry', () => ({
+  buildRegistry: mockBuildRegistry,
 }));
 
 vi.mock('zod', () => ({
@@ -64,6 +73,13 @@ vi.mock('@/lib/ai/prompts/short-form', () => ({
 
 import { POST } from '../route';
 
+const DEFAULT_MOCK_SETTINGS = {
+  provider: 'anthropic' as const,
+  anthropic: { model: 'claude-sonnet-4-5' },
+  openai: { model: 'gpt-4o' },
+  ollama: { model: 'llama3.1', baseURL: 'http://localhost:11434/api' },
+};
+
 function makeRequest(body: Record<string, unknown>): Request {
   return new Request('http://localhost/api/analyze', {
     method: 'POST',
@@ -75,6 +91,9 @@ function makeRequest(body: Record<string, unknown>): Request {
 describe('POST /api/analyze', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockLoadSettings.mockResolvedValue({ ...DEFAULT_MOCK_SETTINGS });
+    mockBuildRegistry.mockReturnValue({ languageModel: mockLanguageModel });
+    mockLanguageModel.mockReturnValue('mock-model');
     mockStreamText.mockReturnValue({
       toTextStreamResponse: vi.fn().mockReturnValue(new Response('{}')),
     });
@@ -85,7 +104,7 @@ describe('POST /api/analyze', () => {
     const res = await POST(req);
 
     expect(res.status).toBe(200);
-    expect(mockAnthropic).toHaveBeenCalledWith('claude-sonnet-4-5');
+    expect(mockLanguageModel).toHaveBeenCalledWith('anthropic:claude-sonnet-4-5');
     expect(mockOutputObject).toHaveBeenCalledWith({
       schema: { _type: 'documentary-schema' },
     });
@@ -97,6 +116,63 @@ describe('POST /api/analyze', () => {
         prompt: expect.stringContaining('sample transcript'),
       })
     );
+  });
+
+  it('includes anthropic providerOptions when provider is anthropic', async () => {
+    const req = makeRequest({ text: 'sample transcript', projectType: 'documentary' });
+    await POST(req);
+
+    expect(mockStreamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        providerOptions: {
+          anthropic: { structuredOutputMode: 'auto' },
+        },
+      })
+    );
+  });
+
+  it('uses openai provider when settings.provider is openai', async () => {
+    mockLoadSettings.mockResolvedValue({
+      ...DEFAULT_MOCK_SETTINGS,
+      provider: 'openai',
+    });
+
+    const req = makeRequest({ text: 'sample transcript', projectType: 'documentary' });
+    const res = await POST(req);
+
+    expect(res.status).toBe(200);
+    expect(mockLanguageModel).toHaveBeenCalledWith('openai:gpt-4o');
+    expect(mockStreamText).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        providerOptions: expect.anything(),
+      })
+    );
+  });
+
+  it('uses ollama provider when settings.provider is ollama', async () => {
+    mockLoadSettings.mockResolvedValue({
+      ...DEFAULT_MOCK_SETTINGS,
+      provider: 'ollama',
+    });
+
+    const req = makeRequest({ text: 'sample transcript', projectType: 'documentary' });
+    const res = await POST(req);
+
+    expect(res.status).toBe(200);
+    expect(mockLanguageModel).toHaveBeenCalledWith('ollama:llama3.1');
+    expect(mockBuildRegistry).toHaveBeenCalledWith('http://localhost:11434/api');
+    expect(mockStreamText).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        providerOptions: expect.anything(),
+      })
+    );
+  });
+
+  it('defaults to anthropic when loadSettings returns default', async () => {
+    const req = makeRequest({ text: 'sample transcript', projectType: 'documentary' });
+    await POST(req);
+
+    expect(mockLanguageModel).toHaveBeenCalledWith('anthropic:claude-sonnet-4-5');
   });
 
   it('calls streamText with corporateAnalysisSchema for corporate projectType', async () => {
