@@ -10,8 +10,8 @@
 - [x] **CORE-01**: User can select a project type from the available options before uploading material
 - [x] **CORE-02**: User can upload a file via drag & drop or file picker
 - [x] **CORE-03**: App displays a parsed content preview before analysis runs so user can verify parsing quality
-- [ ] **CORE-04**: User can trigger an analysis run after upload
-- [ ] **CORE-05**: User can view structured analysis results on screen
+- [x] **CORE-04**: User can trigger an analysis run after upload
+- [x] **CORE-05**: User can view structured analysis results on screen
 
 ### File Parsing
 
@@ -37,7 +37,7 @@
 
 ### Outputs
 
-- [ ] **OUTP-01**: User receives a structured analysis report formatted appropriately for the project type
+- [x] **OUTP-01**: User receives a structured analysis report formatted appropriately for the project type
 - [ ] **OUTP-02**: User can download the analysis report as a formatted document (PDF or DOCX)
 - [ ] **OUTP-03**: App can generate a treatment or narrative outline from uploaded material
 
@@ -80,8 +80,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CORE-01 | Phase 1 | Complete |
 | CORE-02 | Phase 1 | Complete |
 | CORE-03 | Phase 1 | Complete |
-| CORE-04 | Phase 1 | Pending |
-| CORE-05 | Phase 1 | Pending |
+| CORE-04 | Phase 1 | Complete |
+| CORE-05 | Phase 1 | Complete |
 | PARSE-01 | Phase 1 | Complete |
 | PARSE-02 | Phase 2 | Pending |
 | PARSE-03 | Phase 2 | Pending |
@@ -92,7 +92,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ANLYS-04 | Phase 3 | Pending |
 | ANLYS-05 | Phase 3 | Pending |
 | ANLYS-06 | Phase 3 | Pending |
-| OUTP-01 | Phase 1 | Pending |
+| OUTP-01 | Phase 1 | Complete |
 | OUTP-02 | Phase 4 | Pending |
 | OUTP-03 | Phase 4 | Pending |
 
