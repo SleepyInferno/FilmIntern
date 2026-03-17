@@ -1,6 +1,7 @@
 import { streamText, Output } from 'ai';
-import { anthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
+import { loadSettings } from '@/lib/ai/settings';
+import { buildRegistry } from '@/lib/ai/provider-registry';
 import { documentaryAnalysisSchema } from '@/lib/ai/schemas/documentary';
 import { documentarySystemPrompt } from '@/lib/ai/prompts/documentary';
 import { corporateAnalysisSchema } from '@/lib/ai/schemas/corporate';
@@ -41,18 +42,28 @@ export async function POST(req: Request) {
     );
   }
 
+  const settings = await loadSettings();
+  const registry = buildRegistry(settings.ollama.baseURL);
+  const modelId = ({
+    anthropic: `anthropic:${settings.anthropic.model}`,
+    openai: `openai:${settings.openai.model}`,
+    ollama: `ollama:${settings.ollama.model}`,
+  } as const)[settings.provider];
+
   const inputTypePrefix = projectType === 'short-form' && inputType
     ? `[Input Type: ${inputType}]\n\n`
     : '';
 
   const result = streamText({
-    model: anthropic('claude-sonnet-4-5'),
+    model: registry.languageModel(modelId),
     output: Output.object({ schema: config.schema }),
     system: config.prompt,
     prompt: `${inputTypePrefix}Analyze this material:\n\n${text}`,
-    providerOptions: {
-      anthropic: { structuredOutputMode: 'auto' },
-    },
+    ...(settings.provider === 'anthropic' ? {
+      providerOptions: {
+        anthropic: { structuredOutputMode: 'auto' },
+      },
+    } : {}),
     onError({ error }) {
       console.error('Analysis streaming error:', error);
     },
