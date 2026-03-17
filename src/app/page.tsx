@@ -178,8 +178,32 @@ export default function Home() {
   }, []);
 
   const handleExport = useCallback(
-    async (_format: ExportFormat, _document: GeneratedDocument) => {
-      // Export is wired in Plan 04-03
+    async (format: ExportFormat, document: GeneratedDocument) => {
+      const url = format === 'pdf' ? '/api/export/pdf' : '/api/export/docx';
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ document }),
+        });
+
+        if (!response.ok) return;
+
+        const blob = await response.blob();
+        const disposition = response.headers.get('Content-Disposition');
+        const filenameMatch = disposition?.match(/filename="([^"]+)"/);
+        const filename = filenameMatch?.[1] ?? `export.${format}`;
+
+        const blobUrl = URL.createObjectURL(blob);
+        const anchor = window.document.createElement('a');
+        anchor.href = blobUrl;
+        anchor.download = filename;
+        anchor.click();
+        URL.revokeObjectURL(blobUrl);
+      } catch {
+        // Export error -- keep current state
+      }
     },
     []
   );
