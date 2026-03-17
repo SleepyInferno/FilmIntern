@@ -48,8 +48,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md - Infrastructure: install deps, async registry with Buffer support, upload route binary handling, dropzone/project-type MIME expansion, Wave 0 test stubs
-- [ ] 02-02-PLAN.md - Parsers: PDF with screenplay detection, FDX XML parsing, DOCX extraction, registry wiring
+- [x] 02-01-PLAN.md - Infrastructure: install deps, async registry with Buffer support, upload route binary handling, dropzone/project-type MIME expansion, Wave 0 test stubs
+- [x] 02-02-PLAN.md - Parsers: PDF with screenplay detection, FDX XML parsing, DOCX extraction, registry wiring
 
 ### Phase 3: Analysis Expansion
 **Goal**: All five project types produce tailored, high-quality analysis using project-type-specific analytical frameworks
@@ -61,12 +61,12 @@ Plans:
   3. TV/episodic projects produce episode arc and series structure analysis
   4. Short-form/branded projects produce pacing, messaging effectiveness, and CTA clarity analysis
   5. Each project type's analysis reads as domain-appropriate professional feedback, not generic AI summary
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
-- [ ] 03-03: TBD
+- [ ] 03-01-PLAN.md — Schemas, prompts, and API route routing for all 4 new project types
+- [ ] 03-02-PLAN.md — Report components (Narrative/TV tabbed, Corporate/Short-form single-section) and page refactoring
+- [ ] 03-03-PLAN.md — Human verification of all 5 project types end-to-end
 
 ### Phase 4: Export and Document Generation
 **Goal**: User can download analysis reports and generate derivative documents (treatments, outlines) from uploaded material
