@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AppSidebar } from "@/components/app-sidebar";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Providers } from "./providers";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -23,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased`}>
-        <TooltipProvider>
+        <Providers>
           <div className="flex h-screen">
             <AppSidebar />
             <div className="flex-1 flex flex-col min-w-0">
@@ -42,7 +42,7 @@ export default function RootLayout({
               </main>
             </div>
           </div>
-        </TooltipProvider>
+        </Providers>
       </body>
     </html>
   );
