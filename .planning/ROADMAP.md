@@ -15,6 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Vertical Slice** - Complete end-to-end pipeline for documentary project type with plain text upload (completed 2026-03-17)
 - [x] **Phase 2: File Format Support** - PDF, Final Draft, and DOCX parsing with structure preservation (completed 2026-03-17)
 - [x] **Phase 3: Analysis Expansion** - All remaining project type analyses (corporate, narrative, TV, short-form) (completed 2026-03-17)
+- [ ] **Phase 3.1: Multi-Provider AI Support** - Global settings for Anthropic, OpenAI, and Ollama provider selection
 - [ ] **Phase 4: Export and Document Generation** - Downloadable reports and treatment/outline generation
 
 ## Phase Details
@@ -64,9 +65,27 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Schemas, prompts, and API route routing for all 4 new project types
-- [ ] 03-02-PLAN.md — Report components (Narrative/TV tabbed, Corporate/Short-form single-section) and page refactoring
-- [ ] 03-03-PLAN.md — Human verification of all 5 project types end-to-end
+- [x] 03-01-PLAN.md — Schemas, prompts, and API route routing for all 4 new project types
+- [x] 03-02-PLAN.md — Report components (Narrative/TV tabbed, Corporate/Short-form single-section) and page refactoring
+- [x] 03-03-PLAN.md — Human verification of all 5 project types end-to-end
+
+### Phase 03.1: Multi-Provider AI Support (INSERTED)
+
+**Goal:** User can select AI provider (Anthropic, OpenAI, or Ollama) from a global settings page and the analysis pipeline uses that provider dynamically
+**Requirements**: MPAI-01, MPAI-02, MPAI-03, MPAI-04, MPAI-05
+**Depends on:** Phase 3
+**Success Criteria** (what must be TRUE):
+  1. User can navigate to a Settings page from the sidebar and select an AI provider
+  2. User can configure provider-specific settings (model name, Ollama base URL)
+  3. Analysis route uses the selected provider instead of hardcoded Anthropic
+  4. Missing or invalid provider configuration shows clear error messages
+  5. Default behavior (Anthropic claude-sonnet-4-5) works unchanged when no settings configured
+**Plans:** 3 plans
+
+Plans:
+- [ ] 03.1-01-PLAN.md — Install deps, settings persistence (types/read/write), provider registry, settings API route
+- [ ] 03.1-02-PLAN.md — Settings page UI with provider selection form, sidebar navigation wiring
+- [ ] 03.1-03-PLAN.md — Integrate analyze route with provider registry, update tests, human verification
 
 ### Phase 4: Export and Document Generation
 **Goal**: User can download analysis reports and generate derivative documents (treatments, outlines) from uploaded material
@@ -87,11 +106,12 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4
+Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Vertical Slice | 3/3 | Complete   | 2026-03-17 |
 | 2. File Format Support | 2/2 | Complete    | 2026-03-17 |
 | 3. Analysis Expansion | 3/3 | Complete   | 2026-03-17 |
+| 3.1. Multi-Provider AI | 0/3 | Not started | - |
 | 4. Export and Document Generation | 0/4 | Not started | - |
