@@ -1,17 +1,41 @@
+'use client';
+
+import { useState } from 'react';
 import { ProjectTypeTabs } from '@/components/project-type-tabs';
+import { FileDropzone } from '@/components/file-dropzone';
+import { ContentPreview } from '@/components/content-preview';
+import { Button } from '@/components/ui/button';
+import type { ParseResult } from '@/lib/parsers/txt-parser';
+
+interface UploadData {
+  text: string;
+  metadata: ParseResult['metadata'];
+}
 
 export default function Home() {
+  const [uploadData, setUploadData] = useState<UploadData | null>(null);
+
   return (
     <ProjectTypeTabs>
-      <div className="flex items-center justify-center py-24">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-foreground mb-2">
-            Documentary Analysis
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Upload your transcript to get started.
-          </p>
-        </div>
+      <div className="space-y-6 py-6">
+        <FileDropzone onFileUploaded={setUploadData} />
+
+        {uploadData && (
+          <>
+            <ContentPreview
+              text={uploadData.text}
+              metadata={uploadData.metadata}
+            />
+            <Button
+              size="lg"
+              onClick={() => {
+                alert('Analysis coming soon');
+              }}
+            >
+              Run Analysis
+            </Button>
+          </>
+        )}
       </div>
     </ProjectTypeTabs>
   );
