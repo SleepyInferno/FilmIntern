@@ -1,9 +1,9 @@
 ---
-status: complete
+status: diagnosed
 phase: 04-export-and-document-generation
 source: [04-01-SUMMARY.md, 04-02-SUMMARY.md, 04-03-SUMMARY.md, 04-04-SUMMARY.md]
 started: 2026-03-17T21:00:00Z
-updated: 2026-03-17T21:15:00Z
+updated: 2026-03-17T21:20:00Z
 ---
 
 ## Current Test
@@ -68,5 +68,13 @@ skipped: 7
   reason: "User reported: After upload if I go to settings and back to Projects, the script I uploaded is gone. I need it persistent"
   severity: major
   test: 1
-  artifacts: []
-  missing: []
+  root_cause: "All workspace state (uploadData, analysisData, reportDocument, generatedDocuments) lives in useState hooks inside the Home page component (src/app/page.tsx). Next.js App Router unmounts page components on navigation, destroying all React state. No persistence layer exists. Fix: lift state into a React Context provider mounted at layout level (layout never unmounts during in-app navigation)."
+  artifacts:
+    - path: "src/app/page.tsx"
+      issue: "All workspace state in local useState — lines 41-53"
+    - path: "src/app/layout.tsx"
+      issue: "No context provider — state cannot survive page transitions"
+  missing:
+    - "WorkspaceContext provider wrapping layout children"
+    - "page.tsx reads/writes state from context instead of local useState"
+  debug_session: ""
