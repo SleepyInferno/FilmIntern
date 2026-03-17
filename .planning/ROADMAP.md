@@ -76,11 +76,12 @@ Plans:
   1. User can download any analysis report as a formatted PDF or DOCX document
   2. User can generate a treatment or narrative outline from uploaded material and view it on screen
   3. Downloaded documents are professionally formatted with appropriate headings, sections, and typography
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-01-PLAN.md — Establish shared document contracts, project-type availability rules, and report-to-document adapter
+- [ ] 04-02-PLAN.md — Build derivative document generation route plus tabbed in-app editing workspace
+- [ ] 04-03-PLAN.md — Implement shared PDF/DOCX export pipeline and export API routes
 
 ## Progress
 
@@ -90,6 +91,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Vertical Slice | 3/3 | Complete   | 2026-03-17 |
-| 2. File Format Support | 2/2 | Complete   | 2026-03-17 |
+| 2. File Format Support | 2/2 | Complete    | 2026-03-17 |
 | 3. Analysis Expansion | 0/3 | Not started | - |
 | 4. Export and Document Generation | 0/2 | Not started | - |
