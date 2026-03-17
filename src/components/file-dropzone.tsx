@@ -68,13 +68,19 @@ export function FileDropzone({ onFileUploaded }: FileDropzoneProps) {
 
   const handleRejection = useCallback((fileRejections: FileRejection[]) => {
     if (fileRejections.length > 0) {
-      setError('Only .txt files are supported. Please upload a plain text transcript.');
+      setError('Unsupported file type. Accepted formats: .txt, .pdf, .fdx, .docx');
       setTimeout(() => setError(null), 3000);
     }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: { 'text/plain': ['.txt'] },
+    accept: {
+      'text/plain': ['.txt'],
+      'application/pdf': ['.pdf'],
+      'application/xml': ['.fdx'],
+      'text/xml': ['.fdx'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+    },
     maxFiles: 1,
     maxSize: 10 * 1024 * 1024,
     onDropAccepted: handleDrop,
@@ -119,7 +125,7 @@ export function FileDropzone({ onFileUploaded }: FileDropzoneProps) {
               : 'Drag & drop your transcript, or click to browse'}
         </p>
         <p className="text-sm text-muted-foreground mt-2">
-          Accepts .txt files up to 10MB
+          Accepts .txt, .pdf, .fdx, .docx files up to 10MB
         </p>
       </Card>
       {error && (

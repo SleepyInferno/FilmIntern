@@ -15,8 +15,8 @@ export const PROJECT_TYPES: Record<string, ProjectTypeConfig> = {
     description:
       'Interview mining: extract quotes, themes, and key moments from transcripts',
     icon: 'Video',
-    acceptedExtensions: ['.txt'],
-    acceptedMimeTypes: ['text/plain'],
+    acceptedExtensions: ['.txt', '.pdf', '.docx'],
+    acceptedMimeTypes: ['text/plain', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
     fileTypeLabel: 'transcript',
   },
   corporate: {
@@ -24,8 +24,8 @@ export const PROJECT_TYPES: Record<string, ProjectTypeConfig> = {
     label: 'Corporate Interview',
     description: 'Key messaging, soundbites, and corporate narrative analysis',
     icon: 'Briefcase',
-    acceptedExtensions: [],
-    acceptedMimeTypes: [],
+    acceptedExtensions: ['.txt', '.pdf', '.docx'],
+    acceptedMimeTypes: ['text/plain', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
     fileTypeLabel: 'script',
   },
   narrative: {
@@ -34,8 +34,8 @@ export const PROJECT_TYPES: Record<string, ProjectTypeConfig> = {
     description:
       'Story structure, character arcs, and script coverage analysis',
     icon: 'Film',
-    acceptedExtensions: [],
-    acceptedMimeTypes: [],
+    acceptedExtensions: ['.pdf', '.fdx', '.docx'],
+    acceptedMimeTypes: ['application/pdf', 'application/xml', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
     fileTypeLabel: 'script',
   },
   'tv-episodic': {
@@ -43,8 +43,8 @@ export const PROJECT_TYPES: Record<string, ProjectTypeConfig> = {
     label: 'TV / Episodic',
     description: 'Episode arc and series structure analysis',
     icon: 'Tv',
-    acceptedExtensions: [],
-    acceptedMimeTypes: [],
+    acceptedExtensions: ['.pdf', '.fdx', '.docx'],
+    acceptedMimeTypes: ['application/pdf', 'application/xml', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
     fileTypeLabel: 'script',
   },
   'short-form': {
@@ -52,8 +52,8 @@ export const PROJECT_TYPES: Record<string, ProjectTypeConfig> = {
     label: 'Short-form / Branded',
     description: 'Pacing, messaging effectiveness, and CTA clarity analysis',
     icon: 'Clapperboard',
-    acceptedExtensions: [],
-    acceptedMimeTypes: [],
+    acceptedExtensions: ['.txt', '.pdf', '.fdx', '.docx'],
+    acceptedMimeTypes: ['text/plain', 'application/pdf', 'application/xml', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
     fileTypeLabel: 'script',
   },
 };

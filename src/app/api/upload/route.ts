@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { parseFile } from '@/lib/parsers/registry';
 
+const ALLOWED_EXTENSIONS = ['.txt', '.pdf', '.fdx', '.docx'];
+
 export async function POST(req: Request) {
   const formData = await req.formData();
   const file = formData.get('file') as File | null;
@@ -16,16 +18,27 @@ export async function POST(req: Request) {
     );
   }
 
-  if (!file.name.endsWith('.txt')) {
+  const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+  if (!ALLOWED_EXTENSIONS.includes(ext)) {
     return NextResponse.json(
-      { error: 'Only .txt files are supported. Please upload a plain text transcript.' },
+      { error: `Unsupported file format: ${ext}. Accepted formats: ${ALLOWED_EXTENSIONS.join(', ')}` },
       { status: 400 }
     );
   }
 
-  const content = await file.text();
-  const result = parseFile(content, file.name);
-  result.metadata.size = file.size;
-
-  return NextResponse.json(result);
+  try {
+    let result;
+    if (ext === '.txt') {
+      const content = await file.text();
+      result = await parseFile(content, file.name);
+    } else {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      result = await parseFile(buffer, file.name);
+    }
+    result.metadata.size = file.size;
+    return NextResponse.json(result);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to parse file';
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
 }

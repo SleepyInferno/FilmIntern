@@ -37,13 +37,22 @@ describe('POST /api/upload', () => {
     expect(typeof data.metadata.size).toBe('number');
   });
 
-  it('returns 400 with error for a .pdf file', async () => {
-    const req = createUploadRequest('document.pdf', 'fake pdf content');
+  it('returns 400 for unsupported extension like .mp4', async () => {
+    const req = createUploadRequest('video.mp4', 'fake content');
     const res = await POST(req);
     const data = await res.json();
 
     expect(res.status).toBe(400);
-    expect(data.error).toBe('Only .txt files are supported. Please upload a plain text transcript.');
+    expect(data.error).toContain('Unsupported file format: .mp4');
+  });
+
+  it('returns 400 with parser error for unimplemented format', async () => {
+    const req = createUploadRequest('script.pdf', 'fake pdf content');
+    const res = await POST(req);
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toContain('not yet implemented');
   });
 
   it('returns 400 with error when no file is provided', async () => {

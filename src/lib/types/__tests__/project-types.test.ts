@@ -7,11 +7,15 @@ describe('PROJECT_TYPES', () => {
     expect(doc).toBeDefined();
     expect(doc.id).toBe('documentary');
     expect(doc.label).toBe('Documentary');
-    expect(doc.acceptedExtensions).toEqual(['.txt']);
+    expect(doc.acceptedExtensions).toEqual(['.txt', '.pdf', '.docx']);
   });
 
   it('documentary config has icon set to Video', () => {
     expect(PROJECT_TYPES['documentary'].icon).toBe('Video');
+  });
+
+  it('narrative accepts .pdf, .fdx, .docx', () => {
+    expect(PROJECT_TYPES['narrative'].acceptedExtensions).toEqual(['.pdf', '.fdx', '.docx']);
   });
 
   it('has at least 1 project type entry', () => {
