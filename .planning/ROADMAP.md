@@ -80,7 +80,7 @@ Plans:
   3. Analysis route uses the selected provider instead of hardcoded Anthropic
   4. Missing or invalid provider configuration shows clear error messages
   5. Default behavior (Anthropic claude-sonnet-4-5) works unchanged when no settings configured
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 03.1-01-PLAN.md — Install deps, settings persistence (types/read/write), provider registry, settings API route
