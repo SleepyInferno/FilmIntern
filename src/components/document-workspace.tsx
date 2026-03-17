@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -73,8 +73,8 @@ function TiptapContentRenderer({ content, quoteRefs }: TiptapContentProps) {
 
         if (nodeType === 'heading') {
           const level = (node.attrs as { level: number })?.level ?? 2;
-          const Tag = `h${level}` as keyof JSX.IntrinsicElements;
-          return <Tag key={i}>{textContent}</Tag>;
+          const HeadingTag = (`h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6');
+          return <HeadingTag key={i}>{textContent}</HeadingTag>;
         }
         return <p key={i}>{textContent}</p>;
       })}
