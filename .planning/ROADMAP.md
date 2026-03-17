@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Vertical Slice** - Complete end-to-end pipeline for documentary project type with plain text upload (completed 2026-03-17)
 - [x] **Phase 2: File Format Support** - PDF, Final Draft, and DOCX parsing with structure preservation (completed 2026-03-17)
 - [x] **Phase 3: Analysis Expansion** - All remaining project type analyses (corporate, narrative, TV, short-form) (completed 2026-03-17)
-- [ ] **Phase 3.1: Multi-Provider AI Support** - Global settings for Anthropic, OpenAI, and Ollama provider selection
+- [x] **Phase 3.1: Multi-Provider AI Support** - Global settings for Anthropic, OpenAI, and Ollama provider selection (completed 2026-03-17)
 - [ ] **Phase 4: Export and Document Generation** - Downloadable reports and treatment/outline generation
 
 ## Phase Details
@@ -83,9 +83,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 03.1-01-PLAN.md — Install deps, settings persistence (types/read/write), provider registry, settings API route
-- [ ] 03.1-02-PLAN.md — Settings page UI with provider selection form, sidebar navigation wiring
-- [ ] 03.1-03-PLAN.md — Integrate analyze route with provider registry, update tests, human verification
+- [x] 03.1-01-PLAN.md — Install deps, settings persistence (types/read/write), provider registry, settings API route
+- [x] 03.1-02-PLAN.md — Settings page UI with provider selection form, sidebar navigation wiring
+- [x] 03.1-03-PLAN.md — Integrate analyze route with provider registry, update tests, human verification
 
 ### Phase 4: Export and Document Generation
 **Goal**: User can download analysis reports and generate derivative documents (treatments, outlines) from uploaded material
@@ -113,5 +113,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4
 | 1. Vertical Slice | 3/3 | Complete   | 2026-03-17 |
 | 2. File Format Support | 2/2 | Complete    | 2026-03-17 |
 | 3. Analysis Expansion | 3/3 | Complete   | 2026-03-17 |
-| 3.1. Multi-Provider AI | 0/3 | Not started | - |
+| 3.1. Multi-Provider AI | 3/3 | Complete | 2026-03-17 |
 | 4. Export and Document Generation | 0/4 | Not started | - |

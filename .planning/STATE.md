@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-03-PLAN.md (Phase 3 complete)
-last_updated: "2026-03-17T11:55:57.854Z"
-last_activity: 2026-03-17 -- Plan 03-03 human verification approved (all 5 project types)
+stopped_at: Completed 03.1-03-PLAN.md (Phase 3.1 complete)
+last_updated: "2026-03-17T18:30:00.000Z"
+last_activity: 2026-03-17 -- Plan 03.1-03 Analyze route provider integration (human-verify approved)
 progress:
-  total_phases: 4
-  completed_phases: 3
-  total_plans: 12
-  completed_plans: 8
-  percent: 67
+  total_phases: 5
+  completed_phases: 4
+  total_plans: 15
+  completed_plans: 11
+  percent: 73
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-16)
 
 **Core value:** Upload your material, pick your project type, get a structured analysis back -- one tool that replaces hours of manual review across scattered apps.
-**Current focus:** Phase 3: Analysis Expansion -- COMPLETE
+**Current focus:** Phase 4: Export and Document Generation
 
 ## Current Position
 
 Phase: 4 of 4 (Export and Document Generation)
 Plan: 0 of 4 complete in current phase
 Status: In Progress
-Last activity: 2026-03-17 -- Plan 03-03 human verification approved (all 5 project types)
+Last activity: 2026-03-17 -- Plan 03.1-03 Analyze route provider integration (human-verify approved)
 
-Progress: [███████░░░] 67%
+Progress: [███████░░░] 73%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: 5 min
-- Total execution time: 0.63 hours
+- Total plans completed: 11
+- Average duration: 4.5 min
+- Total execution time: 0.83 hours
 
 **By Phase:**
 
@@ -46,9 +46,10 @@ Progress: [███████░░░] 67%
 | 1. Vertical Slice | 3/3 | 18 min | 6 min |
 | 2. File Format Support | 2/2 | 7 min | 3.5 min |
 | 3. Analysis Expansion | 3/3 | 13 min | 4.3 min |
+| 3.1. Multi-Provider AI | 3/3 | 12 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (3 min), 02-02 (4 min), 03-01 (6 min), 03-02 (5 min), 03-03 (2 min)
+- Last 5 plans: 03-02 (5 min), 03-03 (2 min), 03.1-01 (3 min), 03.1-02 (5 min), 03.1-03 (4 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -75,7 +76,12 @@ Recent decisions affecting current work:
 - 03-01: Short-form inputType prepended as [Input Type: X] prefix in user prompt rather than system prompt
 - 03-02: Used Record<string, unknown> for analysisData state to support all project types generically
 - 03-02: base-ui Tabs onValueChange signature takes (value, eventDetails) -- wrapped with lambda to match string callback
+- 03.1-03: Provider-specific providerOptions conditionally spread only when matching provider is active
+- 03.1-03: Model ID constructed via lookup map from settings.provider to provider:model string format
 
+### Roadmap Evolution
+
+- Phase 3.1 inserted after Phase 3: Multi-Provider AI Support (INSERTED) — global settings for Anthropic, OpenAI, and Ollama providers
 
 ### Pending Todos
 
@@ -88,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T11:42:00Z
-Stopped at: Completed 03-03-PLAN.md (Phase 3 complete)
+Last session: 2026-03-17T18:30:00Z
+Stopped at: Completed 03.1-03-PLAN.md (Phase 3.1 complete)
 Resume file: .planning/phases/04-export-and-document-generation/04-01-PLAN.md
