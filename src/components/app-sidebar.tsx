@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import {
   LayoutDashboard,
   FolderOpen,
@@ -17,6 +18,7 @@ import {
 interface NavItem {
   label: string;
   icon: React.ReactNode;
+  href?: string;
   active?: boolean;
   disabled?: boolean;
 }
@@ -32,7 +34,7 @@ const navItems: NavItem[] = [
 const settingsItem: NavItem = {
   label: 'Settings',
   icon: <Settings size={20} />,
-  disabled: true,
+  href: '/settings',
 };
 
 function NavButton({ item }: { item: NavItem }) {
@@ -51,6 +53,23 @@ function NavButton({ item }: { item: NavItem }) {
         </TooltipTrigger>
         <TooltipContent side="right">
           <p>Coming in a future update</p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  if (item.href) {
+    return (
+      <Tooltip>
+        <TooltipTrigger
+          render={<Link href={item.href} />}
+          className={`${baseClasses} text-stone-400 hover:bg-white/10 hover:text-stone-50`}
+        >
+          {item.icon}
+          <span className="hidden xl:inline text-[13px]">{item.label}</span>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="xl:hidden">
+          <p>{item.label}</p>
         </TooltipContent>
       </Tooltip>
     );
