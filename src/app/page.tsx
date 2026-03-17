@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { ProjectTypeTabs } from '@/components/project-type-tabs';
 import { FileDropzone } from '@/components/file-dropzone';
 import { ContentPreview } from '@/components/content-preview';
@@ -11,14 +11,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
 import { buildReportDocument } from '@/lib/documents/report-document';
-import type { ParseResult } from '@/lib/parsers/txt-parser';
+import { useWorkspace } from '@/contexts/workspace-context';
 import type { GeneratedDocument, DocumentKind, ExportFormat } from '@/lib/documents/types';
 import type { AnalysisReportKind } from '@/lib/documents/report-normalization';
-
-interface UploadData {
-  text: string;
-  metadata: ParseResult['metadata'];
-}
 
 function getReportKind(projectType: string): AnalysisReportKind {
   switch (projectType) {
@@ -38,19 +33,18 @@ function getReportKind(projectType: string): AnalysisReportKind {
 }
 
 export default function Home() {
-  const [projectType, setProjectType] = useState('documentary');
-  const [inputType, setInputType] = useState('script-storyboard');
-  const [uploadData, setUploadData] = useState<UploadData | null>(null);
-  const [analysisData, setAnalysisData] = useState<Record<string, unknown> | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisError, setAnalysisError] = useState<string | null>(null);
-
-  // Document workspace state
-  const [reportDocument, setReportDocument] = useState<GeneratedDocument | null>(null);
-  const [generatedDocuments, setGeneratedDocuments] = useState<GeneratedDocument[]>([]);
-  const [activeDocumentId, setActiveDocumentId] = useState<string>('');
-  const [title] = useState('Untitled');
-  const [writtenBy] = useState('FilmIntern');
+  const {
+    projectType, setProjectType,
+    inputType, setInputType,
+    uploadData, setUploadData,
+    analysisData, setAnalysisData,
+    isAnalyzing, setIsAnalyzing,
+    analysisError, setAnalysisError,
+    reportDocument, setReportDocument,
+    generatedDocuments, setGeneratedDocuments,
+    activeDocumentId, setActiveDocumentId,
+    title, writtenBy,
+  } = useWorkspace();
 
   function handleTypeChange(newType: string) {
     setProjectType(newType);
