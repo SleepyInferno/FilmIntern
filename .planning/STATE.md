@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-03-17T18:57:41Z"
-last_activity: 2026-03-17 -- Plan 04-03 Export pipeline internals (PDF/DOCX)
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-03-17T19:14:20Z"
+last_activity: 2026-03-17 -- Plan 04-04 Export routes and client download wiring
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 15
-  completed_plans: 14
-  percent: 93
+  completed_plans: 15
+  percent: 100
 ---
 
 # Project State
@@ -26,18 +26,18 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 ## Current Position
 
 Phase: 4 of 4 (Export and Document Generation)
-Plan: 3 of 4 complete in current phase
-Status: In Progress
-Last activity: 2026-03-17 -- Plan 04-03 Export pipeline internals (PDF/DOCX)
+Plan: 4 of 4 complete in current phase
+Status: Phase Complete
+Last activity: 2026-03-17 -- Plan 04-04 Export routes and client download wiring
 
-Progress: [█████████░] 93%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
-- Average duration: 4.6 min
-- Total execution time: 1.12 hours
+- Total plans completed: 15
+- Average duration: 4.9 min
+- Total execution time: 1.34 hours
 
 **By Phase:**
 
@@ -47,10 +47,10 @@ Progress: [█████████░] 93%
 | 2. File Format Support | 2/2 | 7 min | 3.5 min |
 | 3. Analysis Expansion | 3/3 | 13 min | 4.3 min |
 | 3.1. Multi-Provider AI | 3/3 | 12 min | 4 min |
-| 4. Export & Doc Gen | 3/4 | 17 min | 5.7 min |
+| 4. Export & Doc Gen | 4/4 | 30 min | 7.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 03.1-02 (5 min), 03.1-03 (4 min), 04-01 (6 min), 04-02 (7 min), 04-03 (4 min)
+- Last 5 plans: 03.1-03 (4 min), 04-01 (6 min), 04-02 (7 min), 04-03 (4 min), 04-04 (13 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -88,6 +88,7 @@ Recent decisions affecting current work:
 - 04-01: Corporate soundbites mapped to quoteRefs with same Q-label pattern as documentary keyQuotes
 - 04-03: Hand-rolled Tiptap JSON to HTML walker instead of @tiptap/static-renderer for simpler server-side rendering
 - 04-03: Exposed buildDocxDocument for test inspection of document structure without Packer serialization
+- 04-04: Fixed Zod v4 z.record(z.unknown()) crash in jsdom by using z.record(z.string(), z.any())
 
 ### Roadmap Evolution
 
@@ -104,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T18:57:41Z
-Stopped at: Completed 04-03-PLAN.md
-Resume file: .planning/phases/04-export-and-document-generation/04-04-PLAN.md
+Last session: 2026-03-17T19:14:20Z
+Stopped at: Completed 04-04-PLAN.md
+Resume file: All plans complete
