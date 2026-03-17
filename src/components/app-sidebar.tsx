@@ -25,7 +25,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Dashboard', icon: <LayoutDashboard size={20} />, disabled: true },
-  { label: 'Projects', icon: <FolderOpen size={20} />, active: true },
+  { label: 'Projects', icon: <FolderOpen size={20} />, href: '/', active: true },
   { label: 'Shot Lists', icon: <ListVideo size={20} />, disabled: true },
   { label: 'Image Prompts', icon: <ImagePlus size={20} />, disabled: true },
   { label: 'Exports', icon: <Download size={20} />, disabled: true },
@@ -63,7 +63,7 @@ function NavButton({ item }: { item: NavItem }) {
       <Tooltip>
         <TooltipTrigger
           render={<Link href={item.href} />}
-          className={`${baseClasses} text-stone-400 hover:bg-white/10 hover:text-stone-50`}
+          className={item.active ? `${baseClasses} text-stone-50 bg-white/5 border-l-[3px] border-l-amber-600` : `${baseClasses} text-stone-400 hover:bg-white/10 hover:text-stone-50`}
         >
           {item.icon}
           <span className="hidden xl:inline text-[13px]">{item.label}</span>
