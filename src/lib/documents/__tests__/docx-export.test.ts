@@ -82,29 +82,26 @@ describe('exportDocx', () => {
 });
 
 /**
- * Helper to extract all text from a docx Document object's sections/children.
- * Walks through sections -> children -> TextRun text properties.
+ * Helper to extract all text from a docx Document object's internal XML tree.
+ * The `docx` library stores text as bare strings inside `root` arrays
+ * (e.g. within w:t elements), so this walker collects all string leaves.
  */
 function extractAllText(docxDoc: unknown): string {
   const texts: string[] = [];
 
   function walk(obj: unknown): void {
-    if (!obj || typeof obj !== 'object') return;
-    const record = obj as Record<string, unknown>;
-
-    // TextRun stores text in root.text or options.text
-    if (typeof record.text === 'string') {
-      texts.push(record.text);
+    if (typeof obj === 'string') {
+      // Bare string leaf inside a root array (e.g. w:t text content)
+      texts.push(obj);
+      return;
     }
+    if (!obj || typeof obj !== 'object') return;
 
-    // Recurse into arrays and object values
-    if (Array.isArray(record)) {
-      record.forEach(walk);
+    if (Array.isArray(obj)) {
+      obj.forEach(walk);
     } else {
-      for (const value of Object.values(record)) {
-        if (value && typeof value === 'object') {
-          walk(value);
-        }
+      for (const value of Object.values(obj as Record<string, unknown>)) {
+        walk(value);
       }
     }
   }
