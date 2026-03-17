@@ -2,8 +2,8 @@
 status: complete
 phase: 04-export-and-document-generation
 source: [04-01-SUMMARY.md, 04-02-SUMMARY.md, 04-03-SUMMARY.md, 04-04-SUMMARY.md]
-started: 2026-03-17T20:00:00Z
-updated: 2026-03-17T20:00:00Z
+started: 2026-03-17T21:00:00Z
+updated: 2026-03-17T21:15:00Z
 ---
 
 ## Current Test
@@ -13,45 +13,45 @@ updated: 2026-03-17T20:00:00Z
 ## Tests
 
 ### 1. Document workspace appears after analysis
-expected: After uploading a file and running analysis, the workspace below the report shows a "Report" tab plus document generation buttons (e.g., Outline, Treatment, Proposal) appropriate to the project type selected.
+expected: After running an analysis, a tabbed document workspace appears below (or alongside) the report. There should be at least a "Report" tab visible, with generation buttons for your project type.
 result: issue
-reported: "I can't seem to click out of settings or go to the additional pages on the lefthand side."
+reported: "After upload if I go to settings and back to Projects, the script I uploaded is gone. I need it persistent"
 severity: major
 
 ### 2. Generate a document
-expected: Click a generation button (e.g., "Generate Outline") — a loading/spinner state appears, then a new tab opens in the workspace with the AI-generated document content.
+expected: Click one of the document generation buttons (e.g., "Outline", "Treatment", or "Proposal"). The app sends a request to AI and a new tab appears with the generated document content displayed.
 result: skipped
-reason: Blocked by sidebar navigation issue — user stuck on /settings page
+reason: Blocked by state persistence issue — analysis lost on navigation
 
 ### 3. In-app document editing
-expected: Click into the generated document text and make an edit — the content updates inline in the editor without losing other content or refreshing the page.
+expected: In a generated document tab, click into the document content area. You should be able to type and edit the text directly. Changes appear immediately in the content area.
 result: skipped
-reason: Blocked by sidebar navigation issue
+reason: Blocked by state persistence issue
 
 ### 4. Quote reference jump
-expected: Click a quote reference in the generated document (e.g., "[Q1]") — the view scrolls to and focuses the matching quote in the Report tab.
+expected: In a generated document, clickable quote references (Q1, Q2, etc.) appear inline. Clicking one scrolls/jumps to the matching quote in the report section.
 result: skipped
-reason: Blocked by sidebar navigation issue
+reason: Blocked by state persistence issue
 
 ### 5. Export dropdown opens
-expected: Click the export button on a generated document tab — a dropdown appears showing "PDF" and "DOCX" as options.
+expected: A button to export appears on a generated document tab. Clicking it opens a dropdown showing "PDF" and "DOCX" as options.
 result: skipped
-reason: Blocked by sidebar navigation issue
+reason: Blocked by state persistence issue
 
 ### 6. PDF download
-expected: Select PDF from the export dropdown — the browser triggers a file download with a .pdf extension containing the document with a cover page.
+expected: Click "Export as PDF". A PDF file is downloaded to your browser's downloads. The file should open and contain the document content with a cover page.
 result: skipped
-reason: Blocked by sidebar navigation issue
+reason: Blocked by state persistence issue
 
 ### 7. DOCX download
-expected: Select DOCX from the export dropdown — the browser triggers a file download with a .docx extension that opens correctly in Word/Google Docs.
+expected: Click "Export as DOCX". A .docx file is downloaded to your browser's downloads. The file should open in Word/Docs and contain the document content with a cover page.
 result: skipped
-reason: Blocked by sidebar navigation issue
+reason: Blocked by state persistence issue
 
 ### 8. Export uses active tab document
-expected: With multiple generated document tabs open, switch to a different tab then export — the downloaded file reflects the content of the currently active tab, not a previous one.
+expected: Switch to a different generated document tab, then export. The downloaded file reflects the currently active tab's document — not a previously viewed one.
 result: skipped
-reason: Blocked by sidebar navigation issue
+reason: Blocked by state persistence issue
 
 ## Summary
 
@@ -63,9 +63,9 @@ skipped: 7
 
 ## Gaps
 
-- truth: "Sidebar navigation links are clickable and route to their respective pages"
+- truth: "Uploaded file, analysis results, and generated documents persist when navigating away and returning"
   status: failed
-  reason: "User reported: I can't seem to click out of settings or go to the additional pages on the lefthand side."
+  reason: "User reported: After upload if I go to settings and back to Projects, the script I uploaded is gone. I need it persistent"
   severity: major
   test: 1
   artifacts: []
