@@ -28,8 +28,9 @@ export async function POST(req: Request) {
 
   try {
     const buffer = await exportDocx(document);
+    const body = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer;
 
-    return new Response(buffer, {
+    return new Response(body, {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
