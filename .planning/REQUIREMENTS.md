@@ -23,17 +23,17 @@
 ### Analysis — Documentary & Corporate Interview
 
 - [x] **ANLYS-01**: Documentary projects receive interview mining analysis: best quotes, recurring themes, and key moments surfaced from transcript
-- [ ] **ANLYS-02**: Corporate interview projects receive key messaging analysis: usable soundbites, quote extraction, and messaging themes
+- [x] **ANLYS-02**: Corporate interview projects receive key messaging analysis: usable soundbites, quote extraction, and messaging themes
 
 ### Analysis — Narrative Film & TV/Episodic
 
-- [ ] **ANLYS-03**: Narrative film projects receive story structure analysis: act breaks, turning points, pacing evaluation, and arc assessment
-- [ ] **ANLYS-04**: Narrative film projects receive script coverage: character analysis, conflict assessment, dialogue quality, and marketability notes
-- [ ] **ANLYS-05**: TV/episodic projects receive episode arc and series structure analysis
+- [x] **ANLYS-03**: Narrative film projects receive story structure analysis: act breaks, turning points, pacing evaluation, and arc assessment
+- [x] **ANLYS-04**: Narrative film projects receive script coverage: character analysis, conflict assessment, dialogue quality, and marketability notes
+- [x] **ANLYS-05**: TV/episodic projects receive episode arc and series structure analysis
 
 ### Analysis — Short-form & Branded
 
-- [ ] **ANLYS-06**: Short-form/branded projects receive tailored analysis: pacing, messaging effectiveness, and CTA clarity
+- [x] **ANLYS-06**: Short-form/branded projects receive tailored analysis: pacing, messaging effectiveness, and CTA clarity
 
 ### Outputs
 
@@ -87,11 +87,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PARSE-03 | Phase 2 | Complete |
 | PARSE-04 | Phase 2 | Complete |
 | ANLYS-01 | Phase 1 | Complete |
-| ANLYS-02 | Phase 3 | Pending |
-| ANLYS-03 | Phase 3 | Pending |
-| ANLYS-04 | Phase 3 | Pending |
-| ANLYS-05 | Phase 3 | Pending |
-| ANLYS-06 | Phase 3 | Pending |
+| ANLYS-02 | Phase 3 | Complete |
+| ANLYS-03 | Phase 3 | Complete |
+| ANLYS-04 | Phase 3 | Complete |
+| ANLYS-05 | Phase 3 | Complete |
+| ANLYS-06 | Phase 3 | Complete |
 | OUTP-01 | Phase 1 | Complete |
 | OUTP-02 | Phase 4 | Pending |
 | OUTP-03 | Phase 4 | Pending |
