@@ -8,8 +8,8 @@
 ### Core Workflow
 
 - [x] **CORE-01**: User can select a project type from the available options before uploading material
-- [ ] **CORE-02**: User can upload a file via drag & drop or file picker
-- [ ] **CORE-03**: App displays a parsed content preview before analysis runs so user can verify parsing quality
+- [x] **CORE-02**: User can upload a file via drag & drop or file picker
+- [x] **CORE-03**: App displays a parsed content preview before analysis runs so user can verify parsing quality
 - [ ] **CORE-04**: User can trigger an analysis run after upload
 - [ ] **CORE-05**: User can view structured analysis results on screen
 
@@ -78,8 +78,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | CORE-01 | Phase 1 | Complete |
-| CORE-02 | Phase 1 | Pending |
-| CORE-03 | Phase 1 | Pending |
+| CORE-02 | Phase 1 | Complete |
+| CORE-03 | Phase 1 | Complete |
 | CORE-04 | Phase 1 | Pending |
 | CORE-05 | Phase 1 | Pending |
 | PARSE-01 | Phase 1 | Complete |
