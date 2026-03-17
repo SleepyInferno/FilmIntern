@@ -16,9 +16,9 @@
 ### File Parsing
 
 - [x] **PARSE-01**: App parses plain text (.txt) files
-- [ ] **PARSE-02**: App parses PDF files with structure-preserving extraction (handles screenplay formatting)
-- [ ] **PARSE-03**: App parses Final Draft (.fdx) files preserving scene headings, character names, and dialogue structure
-- [ ] **PARSE-04**: App parses Word/DOCX files
+- [x] **PARSE-02**: App parses PDF files with structure-preserving extraction (handles screenplay formatting)
+- [x] **PARSE-03**: App parses Final Draft (.fdx) files preserving scene headings, character names, and dialogue structure
+- [x] **PARSE-04**: App parses Word/DOCX files
 
 ### Analysis — Documentary & Corporate Interview
 
@@ -83,9 +83,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CORE-04 | Phase 1 | Complete |
 | CORE-05 | Phase 1 | Complete |
 | PARSE-01 | Phase 1 | Complete |
-| PARSE-02 | Phase 2 | Pending |
-| PARSE-03 | Phase 2 | Pending |
-| PARSE-04 | Phase 2 | Pending |
+| PARSE-02 | Phase 2 | Complete |
+| PARSE-03 | Phase 2 | Complete |
+| PARSE-04 | Phase 2 | Complete |
 | ANLYS-01 | Phase 1 | Complete |
 | ANLYS-02 | Phase 3 | Pending |
 | ANLYS-03 | Phase 3 | Pending |

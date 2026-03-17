@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-03-17T00:40:29.587Z"
-last_activity: 2026-03-16 -- Plan 01-03 executed (Phase 1 complete)
+status: in-progress
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-03-17T01:22:54.321Z"
+last_activity: 2026-03-17 -- Plan 02-01 executed (parser infrastructure)
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
-  percent: 100
+  total_plans: 5
+  completed_plans: 4
+  percent: 80
 ---
 
 # Project State
@@ -21,33 +21,34 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-16)
 
 **Core value:** Upload your material, pick your project type, get a structured analysis back -- one tool that replaces hours of manual review across scattered apps.
-**Current focus:** Phase 1: Vertical Slice -- COMPLETE
+**Current focus:** Phase 2: File Format Support -- IN PROGRESS
 
 ## Current Position
 
-Phase: 1 of 4 (Vertical Slice) -- COMPLETE
-Plan: 3 of 3 in current phase
-Status: Phase Complete
-Last activity: 2026-03-16 -- Plan 01-03 executed (Phase 1 complete)
+Phase: 2 of 4 (File Format Support)
+Plan: 1 of 2 complete in current phase
+Status: In Progress
+Last activity: 2026-03-17 -- Plan 02-01 executed (parser infrastructure)
 
-Progress: [██████████] 100%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 6 min
-- Total execution time: 0.31 hours
+- Total plans completed: 4
+- Average duration: 5 min
+- Total execution time: 0.35 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Vertical Slice | 3/3 | 18 min | 6 min |
+| 2. File Format Support | 1/2 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (9 min), 01-02 (2 min), 01-03 (7 min)
-- Trend: stable
+- Last 5 plans: 01-01 (9 min), 01-02 (2 min), 01-03 (7 min), 02-01 (3 min)
+- Trend: improving
 
 *Updated after each plan completion*
 
@@ -65,6 +66,8 @@ Recent decisions affecting current work:
 - 01-02: Used alert() placeholder for Run Analysis button -- wired in Plan 03
 - 01-03: Used progressive JSON.parse for client-side streaming consumption rather than AI SDK React hooks
 - 01-03: Used vi.hoisted() for mock variable declarations to work with vitest mock hoisting
+- 02-01: Stub .pdf/.fdx/.docx cases throw "not yet implemented" -- enables extension validation before parsers exist
+- 02-01: Upload route uses text() for .txt and arrayBuffer() for binary formats
 
 ### Pending Todos
 
@@ -77,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T00:35:00Z
-Stopped at: Completed 01-03-PLAN.md
-Resume file: Next phase planning needed
+Last session: 2026-03-17T01:22:00Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: .planning/phases/02-file-format-support/02-02-PLAN.md
