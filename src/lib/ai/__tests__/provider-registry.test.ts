@@ -3,12 +3,11 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 
-const { mockCreateProviderRegistry, mockAnthropic, mockOpenai, mockCreateOllama, mockOllamaInstance } = vi.hoisted(() => ({
+const { mockCreateProviderRegistry, mockCreateAnthropic, mockCreateOpenAI, mockCreateOllama } = vi.hoisted(() => ({
   mockCreateProviderRegistry: vi.fn().mockReturnValue({ languageModel: vi.fn() }),
-  mockAnthropic: vi.fn().mockReturnValue('anthropic-model'),
-  mockOpenai: vi.fn().mockReturnValue('openai-model'),
+  mockCreateAnthropic: vi.fn().mockReturnValue('anthropic-provider'),
+  mockCreateOpenAI: vi.fn().mockReturnValue('openai-provider'),
   mockCreateOllama: vi.fn().mockReturnValue('ollama-provider'),
-  mockOllamaInstance: 'ollama-provider',
 }));
 
 vi.mock('ai', () => ({
@@ -16,11 +15,11 @@ vi.mock('ai', () => ({
 }));
 
 vi.mock('@ai-sdk/anthropic', () => ({
-  anthropic: mockAnthropic,
+  createAnthropic: mockCreateAnthropic,
 }));
 
 vi.mock('@ai-sdk/openai', () => ({
-  openai: mockOpenai,
+  createOpenAI: mockCreateOpenAI,
 }));
 
 vi.mock('ollama-ai-provider-v2', () => ({
@@ -39,8 +38,8 @@ describe('provider-registry', () => {
   it('calls createProviderRegistry with anthropic, openai, and ollama', () => {
     buildRegistry();
     expect(mockCreateProviderRegistry).toHaveBeenCalledWith({
-      anthropic: mockAnthropic,
-      openai: mockOpenai,
+      anthropic: 'anthropic-provider',
+      openai: 'openai-provider',
       ollama: 'ollama-provider',
     });
   });

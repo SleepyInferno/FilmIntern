@@ -24,8 +24,8 @@ export async function PUT(req: Request) {
 
   const settings: AISettings = {
     provider: body.provider,
-    anthropic: { model: body.anthropic.model },
-    openai: { model: body.openai.model },
+    anthropic: { model: body.anthropic.model, apiKey: body.anthropic.apiKey ?? '' },
+    openai: { model: body.openai.model, apiKey: body.openai.apiKey ?? '' },
     ollama: { model: body.ollama.model, baseURL: body.ollama.baseURL },
   };
 

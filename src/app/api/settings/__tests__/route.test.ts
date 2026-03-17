@@ -17,8 +17,8 @@ import { GET, PUT } from '../route';
 
 const validSettings = {
   provider: 'anthropic',
-  anthropic: { model: 'claude-sonnet-4-5' },
-  openai: { model: 'gpt-4o' },
+  anthropic: { model: 'claude-sonnet-4-5', apiKey: '' },
+  openai: { model: 'gpt-4o', apiKey: '' },
   ollama: { model: 'llama3.1', baseURL: 'http://localhost:11434/api' },
 };
 

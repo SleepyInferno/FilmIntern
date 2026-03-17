@@ -3,15 +3,15 @@ import path from 'path';
 
 export interface AISettings {
   provider: 'anthropic' | 'openai' | 'ollama';
-  anthropic: { model: string };
-  openai: { model: string };
+  anthropic: { model: string; apiKey: string };
+  openai: { model: string; apiKey: string };
   ollama: { model: string; baseURL: string };
 }
 
 export const DEFAULT_SETTINGS: AISettings = {
   provider: 'anthropic',
-  anthropic: { model: 'claude-sonnet-4-5' },
-  openai: { model: 'gpt-4o' },
+  anthropic: { model: 'claude-sonnet-4-5', apiKey: '' },
+  openai: { model: 'gpt-4o', apiKey: '' },
   ollama: { model: 'llama3.1', baseURL: 'http://localhost:11434/api' },
 };
 

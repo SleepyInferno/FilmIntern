@@ -160,7 +160,7 @@ describe('POST /api/analyze', () => {
 
     expect(res.status).toBe(200);
     expect(mockLanguageModel).toHaveBeenCalledWith('ollama:llama3.1');
-    expect(mockBuildRegistry).toHaveBeenCalledWith('http://localhost:11434/api');
+    expect(mockBuildRegistry).toHaveBeenCalledWith('http://localhost:11434/api', undefined, undefined);
     expect(mockStreamText).toHaveBeenCalledWith(
       expect.not.objectContaining({
         providerOptions: expect.anything(),

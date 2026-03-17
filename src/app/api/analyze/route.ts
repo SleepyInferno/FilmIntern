@@ -43,7 +43,11 @@ export async function POST(req: Request) {
   }
 
   const settings = await loadSettings();
-  const registry = buildRegistry(settings.ollama.baseURL);
+  const registry = buildRegistry(
+    settings.ollama.baseURL,
+    settings.anthropic.apiKey || undefined,
+    settings.openai.apiKey || undefined,
+  );
   const modelId = ({
     anthropic: `anthropic:${settings.anthropic.model}`,
     openai: `openai:${settings.openai.model}`,

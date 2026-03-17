@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 
 interface AISettings {
   provider: 'anthropic' | 'openai' | 'ollama';
-  anthropic: { model: string };
-  openai: { model: string };
+  anthropic: { model: string; apiKey: string };
+  openai: { model: string; apiKey: string };
   ollama: { model: string; baseURL: string };
 }
 
@@ -104,6 +104,21 @@ export default function SettingsPage() {
           <div>
             <h3 className="text-sm font-medium mb-2">Anthropic</h3>
             <label className="text-xs text-muted-foreground block mb-1">
+              API Key
+            </label>
+            <input
+              type="password"
+              value={settings.anthropic.apiKey}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  anthropic: { ...settings.anthropic, apiKey: e.target.value },
+                })
+              }
+              className={inputClasses}
+              placeholder="sk-ant-..."
+            />
+            <label className="text-xs text-muted-foreground block mb-1 mt-3">
               Model
             </label>
             <input
@@ -119,7 +134,7 @@ export default function SettingsPage() {
               placeholder="claude-sonnet-4-5"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Requires ANTHROPIC_API_KEY in .env.local
+              Falls back to ANTHROPIC_API_KEY environment variable if left blank.
             </p>
           </div>
 
@@ -127,6 +142,21 @@ export default function SettingsPage() {
           <div>
             <h3 className="text-sm font-medium mb-2">OpenAI</h3>
             <label className="text-xs text-muted-foreground block mb-1">
+              API Key
+            </label>
+            <input
+              type="password"
+              value={settings.openai.apiKey}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  openai: { ...settings.openai, apiKey: e.target.value },
+                })
+              }
+              className={inputClasses}
+              placeholder="sk-..."
+            />
+            <label className="text-xs text-muted-foreground block mb-1 mt-3">
               Model
             </label>
             <input
@@ -142,7 +172,7 @@ export default function SettingsPage() {
               placeholder="gpt-4o"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Requires OPENAI_API_KEY in .env.local
+              Falls back to OPENAI_API_KEY environment variable if left blank.
             </p>
           </div>
 
