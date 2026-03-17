@@ -178,4 +178,54 @@ describe('DocumentWorkspace', () => {
     expect(mockScrollIntoView).toHaveBeenCalled();
     expect(defaultProps.onQuoteJump).toHaveBeenCalledWith('quote-1');
   });
+
+  it('selecting PDF (.pdf) from export dropdown calls onExport with the active document', () => {
+    const onExport = vi.fn();
+    render(
+      <DocumentWorkspace
+        {...defaultProps}
+        activeDocumentId="report-doc-1"
+        onExport={onExport}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Export'));
+    fireEvent.click(screen.getByText('PDF (.pdf)'));
+
+    expect(onExport).toHaveBeenCalledWith('pdf', mockReportDocument);
+  });
+
+  it('selecting Word (.docx) from export dropdown calls onExport with the active document', () => {
+    const onExport = vi.fn();
+    render(
+      <DocumentWorkspace
+        {...defaultProps}
+        activeDocumentId="report-doc-1"
+        onExport={onExport}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Export'));
+    fireEvent.click(screen.getByText('Word (.docx)'));
+
+    expect(onExport).toHaveBeenCalledWith('docx', mockReportDocument);
+  });
+
+  it('changing active tab before export uses the updated GeneratedDocument instance', () => {
+    const onExport = vi.fn();
+    render(
+      <DocumentWorkspace
+        {...defaultProps}
+        activeDocumentId="gen-doc-1"
+        onExport={onExport}
+      />
+    );
+
+    // Export from the generated document tab
+    fireEvent.click(screen.getByText('Export'));
+    fireEvent.click(screen.getByText('PDF (.pdf)'));
+
+    expect(onExport).toHaveBeenCalledWith('pdf', mockGeneratedDoc);
+    expect(onExport).not.toHaveBeenCalledWith('pdf', mockReportDocument);
+  });
 });
