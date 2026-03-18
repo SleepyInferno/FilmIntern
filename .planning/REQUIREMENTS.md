@@ -3,7 +3,7 @@
 **Defined:** 2026-03-16
 **Core Value:** Upload your material, pick your project type, get a structured analysis back — one tool that replaces hours of manual review across scattered apps.
 
-## v1 Requirements
+## v1 Requirements (Complete)
 
 ### Core Workflow
 
@@ -41,35 +41,69 @@
 - [x] **OUTP-02**: User can download the analysis report as a formatted document (PDF or DOCX)
 - [x] **OUTP-03**: App can generate a treatment or narrative outline from uploaded material
 
-## v2 Requirements
+## v1.1 Requirements
+
+### Theme & Branding
+
+- [ ] **THEME-01**: User can toggle between light and dark theme
+- [ ] **THEME-02**: App applies orange/amber brand accent colors consistently in both themes
+- [ ] **THEME-03**: Theme preference persists across page refreshes
+
+### Analysis Workspaces
+
+- [ ] **WORK-01**: Narrative analysis displays as "Story Lab Workspace" with 8 evaluation dimension cards (Logline & Premise, Story Structure, Character Arcs, Dialogue & Voice, Theme & Resonance, Pacing & Tension, Genre & Comparables, Development Recommendations)
+- [ ] **WORK-02**: Documentary analysis displays with interview-specific evaluation cards (Key Quotes, Recurring Themes, Key Moments, Subject Profiles, Story Arc, Interview Gaps)
+- [ ] **WORK-03**: Corporate interview analysis displays with messaging-specific cards (Soundbites, Key Messages, Spokesperson Assessment, Audience Alignment, Message Consistency, Recommendations)
+- [ ] **WORK-04**: TV/Episodic analysis displays with episode/series evaluation cards (Episode Arc, Series Structure, Character Development, Tone & Voice, Pilot Effectiveness, Franchise Potential)
+- [ ] **WORK-05**: Short-form/branded analysis displays with pacing/messaging cards (Hook Strength, Pacing, CTA Clarity, Brand Alignment, Emotional Impact, Audience Fit)
+
+### Library
+
+- [ ] **LIB-01**: Analyses are automatically saved to IndexedDB after completion
+- [ ] **LIB-02**: User can browse saved analyses in the Library page (sorted by date, filterable by project type)
+- [ ] **LIB-03**: User can open a saved analysis from Library and view it in the workspace
+- [ ] **LIB-04**: User can delete a saved analysis from the Library
+
+## Future Requirements
 
 ### Production Planning
 
 - **PROD-01**: App generates shot list from a script or screenplay
 - **PROD-02**: App generates a production schedule from a script
 
+### Library Enhancements
+
+- **LIB-05**: User can search saved analyses by title or content
+- **LIB-06**: User can rename a saved analysis
+- **LIB-07**: User can export all saved analyses as a backup
+
+### Advanced Workspaces
+
+- **WORK-06**: Workspace cards display score/rating visualizations per dimension
+- **WORK-07**: User can annotate individual evaluation dimension cards with personal notes
+
 ### History & Persistence
 
-- **HIST-01**: User can view past analysis runs
-- **HIST-02**: User can re-run analysis on a previously uploaded file
-- **HIST-03**: App tracks estimated token cost per analysis run
+- **HIST-01**: User can re-run analysis on a previously uploaded file
+- **HIST-02**: App tracks estimated token cost per analysis run
 
 ### UX Enhancements
 
-- **UX-01**: Analysis streams in real-time as it's generated
-- **UX-02**: App displays pacing visualization / scene-length chart for narrative projects
-- **UX-03**: User can annotate or add notes to analysis results
+- **UX-01**: App displays pacing visualization / scene-length chart for narrative projects
+- **UX-02**: User can annotate or add notes to analysis results
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Multi-user / collaboration | Personal tool — not needed in v1 |
+| Multi-user / collaboration | Personal tool — not needed |
 | Built-in transcription | Transcripts come pre-made; Descript/Otter handles this |
 | AI rewriting / script editing | Analysis tool, not an editor — scope trap |
 | OAuth / user accounts | Single user — no auth needed |
 | Mobile app | Web-first |
 | Real-time co-editing | Not relevant to personal workflow tool |
+| Cloud sync of Library | Personal tool — local-only; no backend needed |
+| Full-text search within analysis content | Deferred — date+type filter sufficient for v1.1 |
 
 ## Traceability
 
@@ -95,12 +129,25 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OUTP-01 | Phase 1 | Complete |
 | OUTP-02 | Phase 4 | Complete |
 | OUTP-03 | Phase 4 | Complete |
+| THEME-01 | Phase 5 | Pending |
+| THEME-02 | Phase 5 | Pending |
+| THEME-03 | Phase 5 | Pending |
+| WORK-01 | Phase 6 | Pending |
+| WORK-02 | Phase 6 | Pending |
+| WORK-03 | Phase 6 | Pending |
+| WORK-04 | Phase 6 | Pending |
+| WORK-05 | Phase 6 | Pending |
+| LIB-01 | Phase 7 | Pending |
+| LIB-02 | Phase 7 | Pending |
+| LIB-03 | Phase 7 | Pending |
+| LIB-04 | Phase 7 | Pending |
 
 **Coverage:**
-- v1 requirements: 18 total
-- Mapped to phases: 18
-- Unmapped: 0
+- v1 requirements: 18 total — all Complete
+- v1.1 requirements: 12 total
+- Mapped to phases: 12
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-16*
-*Last updated: 2026-03-16 after roadmap creation*
+*Last updated: 2026-03-17 after milestone v1.1 definition*
