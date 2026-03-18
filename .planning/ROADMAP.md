@@ -17,6 +17,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Analysis Expansion** - All remaining project type analyses (corporate, narrative, TV, short-form) (completed 2026-03-17)
 - [x] **Phase 3.1: Multi-Provider AI Support** - Global settings for Anthropic, OpenAI, and Ollama provider selection (completed 2026-03-17)
 - [x] **Phase 4: Export and Document Generation** - Downloadable reports and treatment/outline generation (completed 2026-03-17)
+- [ ] **Phase 5: UI Theme & Brand System** - Dark/light theme toggle with orange/amber brand accents and persistent theme preference
+- [ ] **Phase 6: Card-Based Analysis Workspaces** - Redesign all 5 project type analysis views as card-based evaluation dimension workspaces
+- [ ] **Phase 7: Library & Persistence** - Auto-save analyses to IndexedDB and full Library page for browsing, opening, and deleting saved analyses
 
 ## Phase Details
 
@@ -103,10 +106,45 @@ Plans:
 - [ ] 04-03-PLAN.md - Implement shared export contracts, layout/renderers, and PDF/DOCX exporter libraries
 - [ ] 04-04-PLAN.md - Expose export API routes and wire active-tab download handling
 
+### Phase 5: UI Theme & Brand System
+**Goal**: User can toggle between light and dark theme, and the app uses orange/amber brand accent colors consistently throughout both themes
+**Depends on**: Phase 4
+**Requirements**: THEME-01, THEME-02, THEME-03
+**Success Criteria** (what must be TRUE):
+  1. User can click a theme toggle and switch between light and dark mode
+  2. Orange/amber brand accent colors appear consistently on buttons, highlights, and interactive elements in both themes
+  3. Theme preference persists after page refresh (stored in localStorage)
+  4. All existing pages (home, settings, dashboard, exports, shot-lists, image-prompts) respect the active theme
+**Plans**: TBD
+
+### Phase 6: Card-Based Analysis Workspaces
+**Goal**: All five project type analysis views are redesigned as card-based evaluation dimension workspaces with project-type-specific evaluation cards
+**Depends on**: Phase 5
+**Requirements**: WORK-01, WORK-02, WORK-03, WORK-04, WORK-05
+**Success Criteria** (what must be TRUE):
+  1. Narrative analysis renders as "Story Lab Workspace" with 8 evaluation dimension cards (Logline & Premise, Story Structure, Character Arcs, Dialogue & Voice, Theme & Resonance, Pacing & Tension, Genre & Comparables, Development Recommendations)
+  2. Documentary analysis renders with 6 interview-specific cards (Key Quotes, Recurring Themes, Key Moments, Subject Profiles, Story Arc, Interview Gaps)
+  3. Corporate interview analysis renders with 6 messaging-specific cards (Soundbites, Key Messages, Spokesperson Assessment, Audience Alignment, Message Consistency, Recommendations)
+  4. TV/Episodic analysis renders with 6 episode/series cards (Episode Arc, Series Structure, Character Development, Tone & Voice, Pilot Effectiveness, Franchise Potential)
+  5. Short-form/branded analysis renders with 6 pacing/messaging cards (Hook Strength, Pacing, CTA Clarity, Brand Alignment, Emotional Impact, Audience Fit)
+**Plans**: TBD
+
+### Phase 7: Library & Persistence
+**Goal**: Analyses are automatically saved after completion and user can browse, open, and delete saved analyses from a Library page
+**Depends on**: Phase 6
+**Requirements**: LIB-01, LIB-02, LIB-03, LIB-04
+**Success Criteria** (what must be TRUE):
+  1. Analysis is automatically saved to IndexedDB immediately after completion (no user action required)
+  2. Library page lists all saved analyses sorted by date, with project type visible
+  3. User can filter Library by project type
+  4. User can click a saved analysis in Library and view it in the full workspace
+  5. User can delete a saved analysis from the Library
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4
+Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -115,3 +153,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4
 | 3. Analysis Expansion | 3/3 | Complete   | 2026-03-17 |
 | 3.1. Multi-Provider AI | 3/3 | Complete | 2026-03-17 |
 | 4. Export and Document Generation | 6/6 | Complete   | 2026-03-17 |
+| 5. UI Theme & Brand System | 0/TBD | Not started | — |
+| 6. Card-Based Analysis Workspaces | 0/TBD | Not started | — |
+| 7. Library & Persistence | 0/TBD | Not started | — |
