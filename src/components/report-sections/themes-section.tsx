@@ -18,7 +18,7 @@ function frequencyBadge(frequency: string) {
   switch (frequency) {
     case 'dominant':
       return (
-        <Badge className="bg-amber-600 text-white hover:bg-amber-600/80">
+        <Badge className="bg-primary text-white hover:bg-primary/80">
           {frequency}
         </Badge>
       );

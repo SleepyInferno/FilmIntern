@@ -11,11 +11,11 @@ interface MomentsSectionProps {
 function typeBadgeClass(type: string): string {
   switch (type) {
     case 'turning-point':
-      return 'bg-amber-600 text-white hover:bg-amber-600/80';
+      return 'bg-primary text-white hover:bg-primary/80';
     case 'emotional-peak':
       return 'bg-rose-500 text-white hover:bg-rose-500/80';
     case 'revelation':
-      return 'bg-amber-500 text-white hover:bg-amber-500/80';
+      return 'bg-primary text-white hover:bg-primary/80';
     case 'contradiction':
       return 'bg-orange-500 text-white hover:bg-orange-500/80';
     case 'humor':

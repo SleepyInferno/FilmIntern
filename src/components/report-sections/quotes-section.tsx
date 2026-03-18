@@ -11,13 +11,13 @@ interface QuotesSectionProps {
 function usefulnessBorderClass(usefulness: string): string {
   switch (usefulness) {
     case 'must-use':
-      return 'border-amber-600';
+      return 'border-primary';
     case 'strong':
-      return 'border-stone-400';
+      return 'border-muted-foreground';
     case 'supporting':
-      return 'border-stone-200';
+      return 'border-border';
     default:
-      return 'border-stone-200';
+      return 'border-border';
   }
 }
 
@@ -45,7 +45,7 @@ export function QuotesSection({ data }: QuotesSectionProps) {
           <div className="flex gap-2 mt-2">
             <Badge variant="secondary">{q.category}</Badge>
             {q.usefulness === 'must-use' ? (
-              <Badge className="bg-amber-600 text-white hover:bg-amber-600/80">
+              <Badge className="bg-primary text-white hover:bg-primary/80">
                 {q.usefulness}
               </Badge>
             ) : q.usefulness === 'strong' ? (

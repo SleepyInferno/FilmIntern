@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   FolderOpen,
@@ -24,11 +25,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Dashboard', icon: <LayoutDashboard size={20} />, disabled: true },
-  { label: 'Projects', icon: <FolderOpen size={20} />, href: '/', active: true },
-  { label: 'Shot Lists', icon: <ListVideo size={20} />, disabled: true },
-  { label: 'Image Prompts', icon: <ImagePlus size={20} />, disabled: true },
-  { label: 'Exports', icon: <Download size={20} />, disabled: true },
+  { label: 'Dashboard', icon: <LayoutDashboard size={20} />, href: '/dashboard' },
+  { label: 'Projects', icon: <FolderOpen size={20} />, href: '/' },
+  { label: 'Shot Lists', icon: <ListVideo size={20} />, href: '/shot-lists' },
+  { label: 'Image Prompts', icon: <ImagePlus size={20} />, href: '/image-prompts' },
+  { label: 'Exports', icon: <Download size={20} />, href: '/exports' },
 ];
 
 const settingsItem: NavItem = {
@@ -45,7 +46,7 @@ function NavButton({ item }: { item: NavItem }) {
     return (
       <Tooltip>
         <TooltipTrigger
-          className={`${baseClasses} text-stone-400 opacity-50 cursor-default`}
+          className={`${baseClasses} text-muted-foreground opacity-50 cursor-default`}
           disabled
         >
           {item.icon}
@@ -63,7 +64,7 @@ function NavButton({ item }: { item: NavItem }) {
       <Tooltip>
         <TooltipTrigger
           render={<Link href={item.href} />}
-          className={item.active ? `${baseClasses} text-stone-50 bg-white/5 border-l-[3px] border-l-amber-600` : `${baseClasses} text-stone-400 hover:bg-white/10 hover:text-stone-50`}
+          className={item.active ? `${baseClasses} text-foreground bg-white/5 border-l-[3px] border-l-primary` : `${baseClasses} text-muted-foreground hover:bg-muted hover:text-foreground`}
         >
           {item.icon}
           <span className="hidden xl:inline text-[13px]">{item.label}</span>
@@ -79,7 +80,7 @@ function NavButton({ item }: { item: NavItem }) {
     return (
       <Tooltip>
         <TooltipTrigger
-          className={`${baseClasses} text-stone-50 bg-white/5 border-l-[3px] border-l-amber-600`}
+          className={`${baseClasses} text-foreground bg-white/5 border-l-[3px] border-l-primary`}
         >
           {item.icon}
           <span className="hidden xl:inline text-[13px]">{item.label}</span>
@@ -94,7 +95,7 @@ function NavButton({ item }: { item: NavItem }) {
   return (
     <Tooltip>
       <TooltipTrigger
-        className={`${baseClasses} text-stone-400 hover:bg-white/10 hover:text-stone-50`}
+        className={`${baseClasses} text-muted-foreground hover:bg-muted hover:text-foreground`}
       >
         {item.icon}
         <span className="hidden xl:inline text-[13px]">{item.label}</span>
@@ -107,14 +108,15 @@ function NavButton({ item }: { item: NavItem }) {
 }
 
 export function AppSidebar() {
+  const pathname = usePathname();
   return (
-    <aside className="hidden lg:flex lg:w-16 xl:w-60 flex-col bg-stone-900 shrink-0">
+    <aside className="hidden lg:flex lg:w-16 xl:w-60 flex-col bg-card shrink-0">
       {/* Brand */}
-      <div className="px-6 py-6 border-b border-stone-800">
-        <h1 className="text-[28px] font-semibold text-stone-50 leading-[1.2] hidden xl:block">
+      <div className="px-6 py-6 border-b border-border">
+        <h1 className="text-[28px] font-semibold text-foreground leading-[1.2] hidden xl:block">
           Nano Banana
         </h1>
-        <span className="text-stone-50 text-[28px] font-semibold xl:hidden block text-center">
+        <span className="text-foreground text-[28px] font-semibold xl:hidden block text-center">
           NB
         </span>
       </div>
@@ -124,7 +126,7 @@ export function AppSidebar() {
         <ul className="space-y-1">
           {navItems.map((item) => (
             <li key={item.label}>
-              <NavButton item={item} />
+              <NavButton item={{ ...item, active: item.href === pathname }} />
             </li>
           ))}
         </ul>
@@ -132,7 +134,7 @@ export function AppSidebar() {
 
       {/* Settings pinned to bottom */}
       <div className="p-2 mt-auto">
-        <NavButton item={settingsItem} />
+        <NavButton item={{ ...settingsItem, active: pathname === '/settings' }} />
       </div>
     </aside>
   );

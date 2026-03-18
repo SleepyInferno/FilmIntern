@@ -43,11 +43,11 @@ function usabilityBorderClass(usability: string): string {
     case 'hero-quote':
       return 'border-green-600';
     case 'strong':
-      return 'border-stone-400';
+      return 'border-muted-foreground';
     case 'supporting':
-      return 'border-stone-200';
+      return 'border-border';
     default:
-      return 'border-stone-200';
+      return 'border-border';
   }
 }
 
