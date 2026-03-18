@@ -53,6 +53,25 @@ export const tvEpisodicAnalysisSchema = z.object({
       pacing: z.enum(['tight', 'well-paced', 'uneven', 'slow']),
     }),
   }),
+  overallScore: z.number().optional().describe('Overall quality score from 1-10'),
+  overallSummary: z.string().optional().describe('2-3 sentence overall assessment of the TV/episodic material'),
+  toneAndVoice: z.object({
+    tone: z.string().describe('The dominant tone of the show'),
+    voiceConsistency: z.enum(['distinctive', 'consistent', 'uneven', 'undefined']),
+    assessment: z.string().describe('How the tone and voice serve the story'),
+    comparisons: z.array(z.string()).optional().describe('Tonal comparisons to existing shows'),
+  }).optional().describe('Tone and voice assessment'),
+  pilotEffectiveness: z.object({
+    worldBuilding: z.enum(['immersive', 'adequate', 'insufficient']),
+    characterEstablishment: z.enum(['compelling', 'adequate', 'flat']),
+    hookStrength: z.enum(['strong', 'adequate', 'weak']),
+    assessment: z.string().describe('Overall pilot effectiveness evaluation'),
+  }).optional().describe('Pilot episode effectiveness assessment'),
+  franchisePotential: z.object({
+    potential: z.enum(['high', 'moderate', 'limited']),
+    assessment: z.string().describe('Franchise and expansion potential evaluation'),
+    opportunities: z.array(z.string()).describe('Specific franchise opportunities (spinoffs, IP extension, etc.)'),
+  }).optional().describe('Franchise and IP potential assessment'),
   seriesAnalysis: z.object({
     premiseLongevity: z.object({
       assessment: z.enum([

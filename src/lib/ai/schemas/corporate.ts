@@ -81,6 +81,24 @@ export const corporateAnalysisSchema = z.object({
       .string()
       .describe('Brief editing recommendations for the strongest cut'),
   }),
+  overallScore: z.number().optional().describe('Overall quality score from 1-10'),
+  overallSummary: z.string().optional().describe('2-3 sentence overall assessment of the corporate material'),
+  spokespersonAssessment: z.object({
+    overallReadiness: z.enum(['camera-ready', 'needs-coaching', 'significant-prep-needed']),
+    summary: z.string().describe('Overall assessment of spokesperson performance'),
+    topPerformer: z.string().optional().describe('Name of the strongest performer if multiple speakers'),
+  }).optional().describe('Overall spokesperson readiness assessment'),
+  audienceAlignment: z.object({
+    targetAudience: z.string().describe('Identified target audience for this content'),
+    alignmentRating: z.enum(['strong', 'adequate', 'weak']),
+    assessment: z.string().describe('How well the messaging resonates with the target audience'),
+    suggestions: z.array(z.string()).describe('Ways to better align with audience expectations'),
+  }).optional().describe('Audience alignment evaluation'),
+  messageConsistency: z.object({
+    consistencyRating: z.enum(['unified', 'mostly-consistent', 'mixed-signals', 'contradictory']),
+    assessment: z.string().describe('How consistent messaging is across all speakers and segments'),
+    keyConflicts: z.array(z.string()).optional().describe('Specific messaging conflicts or contradictions'),
+  }).optional().describe('Cross-speaker message consistency evaluation'),
 });
 
 export type CorporateAnalysis = z.infer<typeof corporateAnalysisSchema>;

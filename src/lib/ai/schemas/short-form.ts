@@ -67,6 +67,14 @@ export const shortFormAnalysisSchema = z.object({
       .array(z.string())
       .describe('Ways to improve the CTA'),
   }),
+  overallScore: z.number().optional().describe('Overall quality score from 1-10'),
+  overallSummary: z.string().optional().describe('2-3 sentence overall assessment of the short-form content'),
+  audienceFit: z.object({
+    primaryAudience: z.string().describe('Identified primary target audience'),
+    fitRating: z.enum(['strong', 'adequate', 'weak']),
+    assessment: z.string().describe('How well the content fits its target audience'),
+    suggestions: z.array(z.string()).describe('Ways to improve audience fit'),
+  }).optional().describe('Audience fit assessment'),
   emotionalRationalBalance: z.object({
     balance: z.enum(['emotion-led', 'balanced', 'rational-led', 'neither']),
     assessment: z

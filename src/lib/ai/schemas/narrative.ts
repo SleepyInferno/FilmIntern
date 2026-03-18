@@ -84,6 +84,22 @@ export const narrativeAnalysisSchema = z.object({
       .array(z.string())
       .describe('What needs revision or rethinking'),
   }),
+  themes: z.object({
+    centralThemes: z
+      .array(z.string())
+      .describe('The main thematic pillars and underlying messages of the script'),
+    emotionalResonance: z
+      .string()
+      .describe('How effectively the script delivers emotional impact — what feelings it evokes and whether they land'),
+    audienceImpact: z
+      .string()
+      .describe('The likely intellectual and emotional effect on viewers — what they will take away'),
+  }),
+  developmentRecommendations: z
+    .array(z.string())
+    .describe('Priority-ordered actionable recommendations for the next draft — concrete, specific, and sequenced from most to least critical'),
+  overallScore: z.number().optional().describe('Overall quality score from 1-10'),
+  overallSummary: z.string().optional().describe('2-3 sentence overall assessment of the script'),
 });
 
 export type NarrativeAnalysis = z.infer<typeof narrativeAnalysisSchema>;
