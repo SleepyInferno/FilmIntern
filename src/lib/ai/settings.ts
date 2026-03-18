@@ -10,8 +10,8 @@ export interface AISettings {
 
 export const DEFAULT_SETTINGS: AISettings = {
   provider: 'anthropic',
-  anthropic: { model: 'claude-sonnet-4-5', apiKey: '' },
-  openai: { model: 'gpt-4o', apiKey: '' },
+  anthropic: { model: 'claude-sonnet-4-6', apiKey: '' },
+  openai: { model: 'gpt-5.4', apiKey: '' },
   ollama: { model: 'llama3.1', baseURL: 'http://localhost:11434/api' },
 };
 
@@ -25,13 +25,25 @@ export async function loadSettings(): Promise<AISettings> {
     return {
       ...DEFAULT_SETTINGS,
       ...parsed,
-      anthropic: { ...DEFAULT_SETTINGS.anthropic, ...parsed.anthropic },
-      openai: { ...DEFAULT_SETTINGS.openai, ...parsed.openai },
+      anthropic: {
+        ...DEFAULT_SETTINGS.anthropic,
+        ...parsed.anthropic,
+        apiKey: parsed.anthropic?.apiKey || process.env.ANTHROPIC_API_KEY || '',
+      },
+      openai: {
+        ...DEFAULT_SETTINGS.openai,
+        ...parsed.openai,
+        apiKey: parsed.openai?.apiKey || process.env.OPENAI_API_KEY || '',
+      },
       ollama: { ...DEFAULT_SETTINGS.ollama, ...parsed.ollama },
     };
   } catch (err: unknown) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-      return DEFAULT_SETTINGS;
+      return {
+        ...DEFAULT_SETTINGS,
+        anthropic: { ...DEFAULT_SETTINGS.anthropic, apiKey: process.env.ANTHROPIC_API_KEY || '' },
+        openai: { ...DEFAULT_SETTINGS.openai, apiKey: process.env.OPENAI_API_KEY || '' },
+      };
     }
     throw err;
   }

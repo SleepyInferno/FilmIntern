@@ -121,8 +121,7 @@ export default function SettingsPage() {
             <label className="text-xs text-muted-foreground block mb-1 mt-3">
               Model
             </label>
-            <input
-              type="text"
+            <select
               value={settings.anthropic.model}
               onChange={(e) =>
                 setSettings({
@@ -131,8 +130,13 @@ export default function SettingsPage() {
                 })
               }
               className={inputClasses}
-              placeholder="claude-sonnet-4-5"
-            />
+            >
+              <optgroup label="Claude 4">
+                <option value="claude-opus-4-6">claude-opus-4-6</option>
+                <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
+                <option value="claude-haiku-4-5">claude-haiku-4-5</option>
+              </optgroup>
+            </select>
             <p className="text-xs text-muted-foreground mt-1">
               Falls back to ANTHROPIC_API_KEY environment variable if left blank.
             </p>
@@ -159,8 +163,7 @@ export default function SettingsPage() {
             <label className="text-xs text-muted-foreground block mb-1 mt-3">
               Model
             </label>
-            <input
-              type="text"
+            <select
               value={settings.openai.model}
               onChange={(e) =>
                 setSettings({
@@ -169,8 +172,42 @@ export default function SettingsPage() {
                 })
               }
               className={inputClasses}
-              placeholder="gpt-4o"
-            />
+            >
+              <optgroup label="GPT-5.4">
+                <option value="gpt-5.4">gpt-5.4</option>
+                <option value="gpt-5.4-mini">gpt-5.4-mini</option>
+                <option value="gpt-5.4-nano">gpt-5.4-nano</option>
+                <option value="gpt-5.4-pro">gpt-5.4-pro</option>
+              </optgroup>
+              <optgroup label="GPT-5.3">
+                <option value="gpt-5.3-chat-latest">gpt-5.3-chat-latest</option>
+              </optgroup>
+              <optgroup label="GPT-5.2">
+                <option value="gpt-5.2">gpt-5.2</option>
+                <option value="gpt-5.2-pro">gpt-5.2-pro</option>
+              </optgroup>
+              <optgroup label="GPT-5.1">
+                <option value="gpt-5.1">gpt-5.1</option>
+                <option value="gpt-5.1-codex-max">gpt-5.1-codex-max</option>
+                <option value="gpt-5.1-codex">gpt-5.1-codex</option>
+                <option value="gpt-5.1-codex-mini">gpt-5.1-codex-mini</option>
+              </optgroup>
+              <optgroup label="GPT-5">
+                <option value="gpt-5">gpt-5</option>
+                <option value="gpt-5-pro">gpt-5-pro</option>
+                <option value="gpt-5-mini">gpt-5-mini</option>
+                <option value="gpt-5-nano">gpt-5-nano</option>
+              </optgroup>
+              <optgroup label="GPT-4.1">
+                <option value="gpt-4.1">gpt-4.1</option>
+                <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                <option value="gpt-4.1-nano">gpt-4.1-nano</option>
+              </optgroup>
+              <optgroup label="GPT-4o">
+                <option value="gpt-4o">gpt-4o</option>
+                <option value="gpt-4o-mini">gpt-4o-mini</option>
+              </optgroup>
+            </select>
             <p className="text-xs text-muted-foreground mt-1">
               Falls back to OPENAI_API_KEY environment variable if left blank.
             </p>

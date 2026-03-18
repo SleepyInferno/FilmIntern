@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
 import { getAvailableDocumentKinds } from '@/lib/documents/availability';
 import type {
   GeneratedDocument,
@@ -17,7 +18,7 @@ interface DocumentWorkspaceProps {
   generatedDocuments: GeneratedDocument[];
   activeDocumentId: string;
   onActiveDocumentChange: (id: string) => void;
-  onGenerateDocument: (kind: Exclude<DocumentKind, 'report'>) => void;
+  onGenerateDocument: (kind: Exclude<DocumentKind, 'report'>) => Promise<void>;
   onUpdateDocument: (id: string, content: Record<string, unknown>) => void;
   onQuoteJump: (quoteId: string) => void;
   onExport: (format: ExportFormat, document: GeneratedDocument) => Promise<void> | void;
@@ -104,6 +105,7 @@ export function DocumentWorkspace({
   onExport,
 }: DocumentWorkspaceProps) {
   const [exportOpen, setExportOpen] = useState(false);
+  const [generatingKind, setGeneratingKind] = useState<Exclude<DocumentKind, 'report'> | null>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
 
   const availableKinds = getAvailableDocumentKinds(projectType).filter(
@@ -163,16 +165,34 @@ export function DocumentWorkspace({
       {/* Top action row */}
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
-          {availableKinds.map((kind) => (
-            <Button
-              key={kind}
-              variant="outline"
-              size="sm"
-              onClick={() => onGenerateDocument(kind)}
-            >
-              {kindLabel(kind)}
-            </Button>
-          ))}
+          {availableKinds.map((kind) => {
+            const isGenerating = generatingKind === kind;
+            return (
+              <Button
+                key={kind}
+                variant="outline"
+                size="sm"
+                disabled={generatingKind !== null}
+                onClick={async () => {
+                  setGeneratingKind(kind);
+                  try {
+                    await onGenerateDocument(kind);
+                  } finally {
+                    setGeneratingKind(null);
+                  }
+                }}
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  kindLabel(kind)
+                )}
+              </Button>
+            );
+          })}
         </div>
 
         <div className="relative">

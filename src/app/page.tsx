@@ -124,7 +124,7 @@ export default function Home() {
   }
 
   const handleGenerateDocument = useCallback(
-    async (kind: Exclude<DocumentKind, 'report'>) => {
+    async (kind: Exclude<DocumentKind, 'report'>): Promise<void> => {
       if (!uploadData || !analysisData) return;
 
       try {

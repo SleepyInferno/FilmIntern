@@ -101,7 +101,11 @@ export async function generateDocument(
   input: GenerateDocumentInput
 ): Promise<GeneratedDocument> {
   const settings = await loadSettings();
-  const registry = buildRegistry(settings.ollama.baseURL);
+  const registry = buildRegistry(
+    settings.ollama.baseURL,
+    settings.anthropic.apiKey || undefined,
+    settings.openai.apiKey || undefined,
+  );
   const modelId = (
     {
       anthropic: `anthropic:${settings.anthropic.model}`,
