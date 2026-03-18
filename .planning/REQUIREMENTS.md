@@ -45,9 +45,9 @@
 
 ### Theme & Branding
 
-- [ ] **THEME-01**: User can toggle between light and dark theme
-- [ ] **THEME-02**: App applies orange/amber brand accent colors consistently in both themes
-- [ ] **THEME-03**: Theme preference persists across page refreshes
+- [x] **THEME-01**: User can toggle between light and dark theme
+- [x] **THEME-02**: App applies orange/amber brand accent colors consistently in both themes
+- [x] **THEME-03**: Theme preference persists across page refreshes
 
 ### Analysis Workspaces
 
@@ -129,9 +129,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OUTP-01 | Phase 1 | Complete |
 | OUTP-02 | Phase 4 | Complete |
 | OUTP-03 | Phase 4 | Complete |
-| THEME-01 | Phase 5 | Pending |
-| THEME-02 | Phase 5 | Pending |
-| THEME-03 | Phase 5 | Pending |
+| THEME-01 | Phase 5 | Complete |
+| THEME-02 | Phase 5 | Complete |
+| THEME-03 | Phase 5 | Complete |
 | WORK-01 | Phase 6 | Pending |
 | WORK-02 | Phase 6 | Pending |
 | WORK-03 | Phase 6 | Pending |
