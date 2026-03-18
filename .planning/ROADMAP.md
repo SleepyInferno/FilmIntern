@@ -115,7 +115,11 @@ Plans:
   2. Orange/amber brand accent colors appear consistently on buttons, highlights, and interactive elements in both themes
   3. Theme preference persists after page refresh (stored in localStorage)
   4. All existing pages (home, settings, dashboard, exports, shot-lists, image-prompts) respect the active theme
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Theme infrastructure: next-themes, accent presets, CSS token update, toggle button, card elevation
+- [ ] 05-02-PLAN.md — Hardcoded color replacement across all components, accent picker in settings
 
 ### Phase 6: Card-Based Analysis Workspaces
 **Goal**: All five project type analysis views are redesigned as card-based evaluation dimension workspaces with project-type-specific evaluation cards
@@ -153,6 +157,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7
 | 3. Analysis Expansion | 3/3 | Complete   | 2026-03-17 |
 | 3.1. Multi-Provider AI | 3/3 | Complete | 2026-03-17 |
 | 4. Export and Document Generation | 6/6 | Complete   | 2026-03-17 |
-| 5. UI Theme & Brand System | 0/TBD | Not started | — |
+| 5. UI Theme & Brand System | 0/2 | Not started | — |
 | 6. Card-Based Analysis Workspaces | 0/TBD | Not started | — |
 | 7. Library & Persistence | 0/TBD | Not started | — |
