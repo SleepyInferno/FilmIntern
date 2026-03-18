@@ -49,13 +49,13 @@ Exceptions: Touch target for card header collapse toggle is 44px minimum height 
 |------|------|--------|-------------|
 | Body | 14px (text-sm) | 400 (regular) | 1.43 (20px) |
 | Label | 12px (text-xs) | 600 (semibold) | 1.33 (16px) |
-| Heading | 16px (text-base) | 500 (medium) | 1.375 (leading-snug) |
+| Heading | 16px (text-base) | 600 (semibold) | 1.375 (leading-snug) |
 | Display | 20px (text-xl) | 600 (semibold) | 1.2 |
 
 **Role mapping for this phase:**
 
 - **Display**: Workspace title ("Story Lab Workspace")
-- **Heading**: Card titles (CardTitle component, already text-base font-medium)
+- **Heading**: Card titles (CardTitle component, text-base font-semibold)
 - **Label**: Badge text, status bar text, "Show more" toggle, score label
 - **Body**: All card content text (quotes, descriptions, beat details, theme explanations)
 
@@ -153,6 +153,7 @@ Exceptions: Touch target for card header collapse toggle is 44px minimum height 
 
 - Uses existing Card component as wrapper
 - CardHeader contains: CardTitle (left) + CardAction with ChevronDown/ChevronUp icon button (right)
+- The chevron icon button MUST include `aria-label="Collapse card"` when the card is expanded and `aria-label="Expand card"` when the card is collapsed
 - Clicking anywhere on CardHeader toggles collapsed/expanded state
 - CardContent hidden when collapsed (height 0 with overflow-hidden)
 - All cards start expanded by default
@@ -188,6 +189,7 @@ Exceptions: Touch target for card header collapse toggle is 44px minimum height 
 |---------|--------|
 | Click card header | Toggle card content visibility |
 | Chevron icon | Rotates to indicate state (down=collapsed, up=expanded) |
+| Chevron icon accessibility | `aria-label="Collapse card"` when expanded, `aria-label="Expand card"` when collapsed |
 | Default state | All cards expanded |
 | Animation | Height transition matching accordion timing |
 
