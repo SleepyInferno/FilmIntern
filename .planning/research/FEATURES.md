@@ -1,143 +1,295 @@
-# Feature Landscape
+# Feature Research: v1.1 UI Redesign -- Card Workspaces, Theme, Library
 
-**Domain:** Filmmaking AI Workflow / Script & Transcript Analysis Tool
-**Researched:** 2026-03-16
-**Confidence:** MEDIUM (based on training data knowledge of competitor tools; web search unavailable for verification of latest features)
+**Domain:** Filmmaking AI Workflow / Analysis Workspace UI
+**Researched:** 2026-03-17
+**Confidence:** HIGH (features are well-scoped in PROJECT.md; existing codebase thoroughly reviewed; UI patterns well-established)
 
-## Competitive Context
+## Existing Foundation (Already Built in v1.0)
 
-The filmmaking tool space is fragmented. No single tool does what FilmIntern proposes. Filmmakers currently cobble together:
+Understanding what exists is critical for scoping what v1.1 adds:
 
-- **Script coverage:** ScriptReader Pro, Coverfly's ScriptHop, StudioBinder's script breakdown (manual), AI-assisted coverage from newer entrants like ScriptBook
-- **Transcript mining:** Descript, Otter.ai, Trint, Simon Says (transcription-first, not analysis-first)
-- **Production planning:** StudioBinder, Celtx, Yamdu (scheduling, shot lists, call sheets)
-- **AI writing assistance:** Sudowrite, NolanAI, Dramatica (story structure)
-- **Script formatting:** Highland 2, WriterSolo, Final Draft (formatting-first, some analysis)
-
-FilmIntern's differentiator is the convergence: upload material, select project type, get structured analysis back. Nobody does the "project-type-aware AI analysis" pipeline as a single tool.
+- **5 project types** with dedicated report components: `NarrativeReport`, `AnalysisReport` (documentary), `CorporateReport`, `TvReport`, `ShortFormReport`
+- **AI schemas** with structured Zod schemas per type returning typed analysis data
+- **DocumentWorkspace** component with tabbed document switching (report, generated docs)
+- **WorkspaceContext** holding all state in React context (no persistence -- entirely in-memory)
+- **Sidebar navigation** with Dashboard, Projects, Shot Lists, Image Prompts, Exports, Settings
+- **No storage layer** -- zero localStorage, IndexedDB, or database usage. Analyses vanish on page refresh.
+- **Dark-only UI** -- currently hardcoded `stone-900` sidebar, no theme system
 
 ---
 
-## Table Stakes
+## Feature Landscape
 
-Features users expect. Missing any of these and the tool feels broken or incomplete.
+### Table Stakes (Users Expect These)
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| **File upload (PDF, plain text, FDX)** | Every script/transcript tool handles these formats. Users will try to drag-and-drop their Final Draft exports immediately. | Medium | FDX (Final Draft XML) parsing is non-trivial but well-documented. PDF text extraction is the real headache -- screenplay PDFs vary wildly in formatting. |
-| **Project type selection** | Core promise of the app. Without this, analysis is generic and unhelpful. | Low | UI-only; drives downstream routing. |
-| **Structured analysis report output** | Users expect organized, readable output -- not a wall of AI text. The "professional coverage" format is the standard filmmakers know. | Medium | Sections, headings, clear formatting. Must feel like a document you'd get from a script reader, not a chatbot response. |
-| **Story structure analysis (narrative)** | StudioBinder, Save the Cat, and every screenwriting book teaches act structure. Filmmakers will immediately check if the tool identifies act breaks, midpoint, climax. | Medium | Map to common frameworks: 3-act structure, Save the Cat beats, Hero's Journey. Don't invent a new framework -- use what filmmakers already know. |
-| **Character analysis (narrative)** | Script coverage always includes character assessment. Arc, motivation, distinctiveness of voice. | Medium | Per-character breakdown. Identify protagonist, antagonist, supporting roles. Flag underdeveloped characters. |
-| **Quote/moment extraction (documentary)** | Documentary editors spend hours logging transcripts for best quotes. This is the #1 pain point the tool addresses for doc projects. | Medium | Must surface specific timecoded or paragraph-referenced quotes, not just summarize themes. |
-| **Theme identification** | Both narrative and documentary analysis includes thematic assessment. Every script coverage template has a "themes" section. | Low | Cross-cutting concern for all project types. |
-| **Export/download report** | Users need to save the output, share it (even with themselves across devices), or paste it into other documents. PDF or markdown export minimum. | Low | PDF export is the standard. Markdown is a nice bonus for filmmaker-developers. |
-| **Copy-paste friendly output** | Even before formal export, users will Command+A the report and paste it somewhere. Output must look good when pasted into Google Docs/Word. | Low | Clean HTML rendering that copies well. Not a hard technical problem but easy to overlook. |
+Features that the v1.1 milestone must deliver. Missing any of these makes the update feel incomplete.
 
-## Differentiators
+| Feature | Why Expected | Complexity | Dependencies |
+|---------|--------------|------------|--------------|
+| **Dark/light theme toggle** | Every modern creative tool supports this. The current hardcoded dark UI is a v1 shortcut. Users working in bright environments need a light mode. | LOW | Requires `next-themes` + Tailwind CSS dark mode class strategy. Existing shadcn/ui components already support dark mode via CSS variables. |
+| **Theme persistence** | If I set dark mode, it must stay dark mode after refresh. System-preference detection is also expected. | LOW | `next-themes` handles this via localStorage automatically. No custom storage needed. |
+| **Orange/amber brand accent system** | PROJECT.md specifies this. Already partially present (amber-500 in NarrativeReport CategoryLabel) but inconsistent. Must be systematic. | LOW | CSS variable definitions for primary/accent colors that adapt to light/dark. Already using some `amber-500/600` classes. |
+| **Card-based evaluation dimensions per project type** | This is the core v1.1 deliverable. The current reports are already card-based (using shadcn Card components) but the cards are generic sections, not "evaluation dimension" cards with clear scoring/rating. The redesign makes each card a focused evaluation lens. | MEDIUM | Existing report components and AI schemas provide all the data. This is primarily a UI restructuring, not new AI work. |
+| **Narrative "Story Lab Workspace" with 8 cards** | Explicitly specified in PROJECT.md. The current NarrativeReport already renders 8 numbered sections (Logline, Structure, Characters, Dialogue, Theme, Pacing, Genre, Recommendations). The redesign elevates these into a named workspace identity. | MEDIUM | Existing `narrativeAnalysisSchema` already produces all needed data for 8 cards. No schema changes needed. |
+| **Auto-save analyses after completion** | A Library is useless without saved content. Analyses must persist without user action. | MEDIUM | Requires a storage layer (IndexedDB via `idb` or localStorage). Currently zero persistence exists. This is the biggest infrastructure addition. |
+| **Library page: browse saved analyses** | PROJECT.md requirement. Users need to see what they've previously analyzed. | MEDIUM | Depends on storage layer. Needs a list view with project type, title, date, and quick status. |
+| **Library: open a saved analysis** | Users must be able to click a saved analysis and see it rendered in its workspace view. | MEDIUM | Requires hydrating WorkspaceContext from stored data. Need a routing scheme (e.g., `/library/[id]` or rehydrating the main page). |
+| **Library: delete a saved analysis** | Basic CRUD. Users need to remove old or test analyses. | LOW | Simple storage deletion + UI confirmation. |
 
-Features that set FilmIntern apart. Not expected (because no competitor does this), but highly valued.
+### Differentiators (Set This Update Apart)
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| **Project-type-aware analysis routing** | The core differentiator. Upload the same transcript as "documentary" vs "corporate interview" and get fundamentally different analysis. No other tool pivots analysis by project type. | Medium | This is prompt engineering + routing logic. The complexity is in designing great prompts per type, not in the code routing. |
-| **Script coverage report (full format)** | Generate a complete script coverage in professional format: logline, synopsis, analysis sections (premise, structure, character, dialogue), marketability assessment, grade/rating. StudioBinder has templates but doesn't auto-generate. ScriptReader Pro does this but as a paid-per-script service. | High | This is the "killer feature" for narrative projects. Must hit the format working readers/producers expect. |
-| **Interview mining with categorization** | Go beyond extracting quotes -- categorize them by topic, emotion, narrative usefulness. "Here are your 10 strongest moments, grouped by theme." | Medium | Documentary editors will love this. Descript doesn't do analysis, just transcription. |
-| **Treatment/outline generation from raw material** | Turn a transcript into a documentary treatment draft. Turn a rough script into a structured outline. Transform raw material into industry-standard documents. | High | This is document generation, not just analysis. Requires understanding of treatment format, outline conventions per project type. |
-| **Production planning outputs (shot lists, schedules)** | From a finalized script, generate a preliminary shot list or shooting schedule. StudioBinder requires manual entry; this auto-generates a starting point. | High | Scene detection, location extraction, cast requirements per scene. Complex but extremely valuable -- saves hours of breakdown work. |
-| **Dialogue quality assessment** | Analyze dialogue for naturalness, character voice distinctiveness, on-the-nose writing. Most AI tools skip this. | Medium | Screenwriters care deeply about this. "Does each character sound different?" is a question they ask constantly. |
-| **Pacing visualization** | Show scene length distribution, dialogue-to-action ratio, tension arc across the script. Visual representation of story rhythm. | Medium | StudioBinder shows page counts per scene but doesn't analyze pacing or tension. A simple chart showing scene intensity over time would be powerful. |
-| **Short-form/branded content analysis** | Tailored analysis for commercials, branded content, social media scripts: message clarity, call-to-action effectiveness, brand voice consistency, runtime estimation. | Medium | Underserved niche. Most tools focus on features/TV. Corporate/branded content is a huge market with no AI analysis tools. |
+Features that make the v1.1 redesign feel like a genuine upgrade, not just a reskin.
 
-## Anti-Features
+| Feature | Value Proposition | Complexity | Dependencies |
+|---------|-------------------|------------|--------------|
+| **Named workspace identities per project type** | "Story Lab Workspace" (narrative), "Interview Mining Workspace" (documentary), "Messaging Workspace" (corporate), "Episode Lab" (TV/episodic), "Content Pulse" (short-form). Gives each analysis type a distinct professional personality beyond generic "Analysis Report." | LOW | Naming + workspace header component. No data changes. |
+| **Evaluation dimension cards with visual scoring** | Each card shows a clear effectiveness rating (badge system already exists) but enhanced with visual weight: color-coded borders, summary scores, expand/collapse for detail. The current flat list of cards becomes a scannable dashboard. | MEDIUM | Existing badge system (EffectivenessBadge, RatingBadge) is the foundation. Add card-level summary indicators. |
+| **Card grid layout (not just vertical stack)** | Current reports are a single vertical column of cards. A 2-column grid for wider screens lets users scan evaluation dimensions at a glance, like a dashboard. | LOW | CSS Grid/Flexbox. Already using responsive `grid-cols-1 md:grid-cols-2` inside cards -- extend to card-level layout. |
+| **Library with project-type filtering** | Filter saved analyses by documentary, narrative, corporate, etc. Small feature, big usability win when the Library grows. | LOW | Client-side filter on stored metadata. |
+| **Library with search** | Search by title or content keywords across saved analyses. | LOW | Client-side text search on stored metadata (title, overview text). |
+| **Library card previews** | Show a preview snippet of the analysis (overview text, key rating, date) on each Library card rather than just a title and date. | LOW | Pull summary/overview from stored analysis data for the card preview. |
+| **Workspace header with project metadata** | Show project title, project type badge, analysis date, file name at the top of every workspace. Currently this metadata is scattered or absent. | LOW | Pull from WorkspaceContext. Already stores `title`, `projectType`. |
 
-Features to explicitly NOT build in v1. These are traps that would expand scope without proportional value.
+### Anti-Features (Do NOT Build in v1.1)
 
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| **Built-in transcription** | Descript, Otter.ai, Whisper are already excellent at transcription. Building or integrating ASR is a massive scope increase for marginal value. Users already have transcripts. | Accept transcript text files and SRT/VTT. Let users transcribe elsewhere. |
-| **Real-time collaboration** | PROJECT.md explicitly scopes this out. Multi-user adds auth, permissions, conflict resolution, WebSocket infrastructure. | Single-user tool. Export and share manually. |
-| **Script writing/editing** | Highland 2, Final Draft, WriterSolo own this space. Building an editor is a years-long project. | Read-only analysis. Users write in their preferred tool, upload here for analysis. |
-| **AI rewrite suggestions** | "Fix my dialogue" is Sudowrite territory and opens a philosophical can of worms about AI-generated creative content. Filmmakers are sensitive about this. | Identify issues ("dialogue feels expository in scene 14") but do NOT generate replacement text. Analysis, not generation -- except for structured documents like treatments. |
-| **Video/audio file handling** | Processing video/audio requires entirely different infrastructure (storage, encoding, streaming). Way out of scope. | Text-only input. Transcripts, scripts, screenplays as text. |
-| **Multi-user accounts and auth** | Personal tool. Adding auth infrastructure is premature complexity. | No login required. Single-user local or simple deployment. |
-| **Marketplace or template store** | Building community features is a distraction from core analysis quality. | Ship with good defaults per project type. Iterate based on personal use. |
-| **Version control / revision tracking** | Interesting but scope-creeping. Tracking script revisions over time requires a data model that adds real complexity. | Each upload is standalone. User manages their own versioning externally. |
-| **Mobile-responsive design** | PROJECT.md says web-first. Filmmakers work at desks. Responsive design adds testing burden without clear value for v1. | Desktop-width web app. If it happens to look okay on tablet, great. Don't optimize for it. |
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| **Server-side database for Library** | "Real" persistence, future multi-device sync | Massively overengineered for a single-user personal tool. Adds API routes, migrations, connection management. IndexedDB gives the same persistence for this use case. | Use IndexedDB via `idb` library. Revisit server storage only if multi-device becomes a real need. |
+| **Drag-and-drop card reordering** | Users might want to rearrange evaluation cards | Adds complexity (drag library, state management for custom order, persistence of order) for minimal value. Evaluation dimensions have a logical order that should be opinionated. | Fixed card order per project type, designed for logical reading flow. |
+| **Custom theme colors / theme editor** | Power users want to customize beyond light/dark | Scope creep. Two themes (light/dark) with a good brand palette is more than enough. | Ship light and dark with orange/amber accents. Done. |
+| **Collaborative annotations on cards** | "Share feedback with my editor" | Multi-user is explicitly out of scope. Adds auth, real-time sync, comment threading. | Export the analysis as PDF/DOCX (already built) and share that. |
+| **Analysis comparison view** | "Compare two analyses side by side" | Cool but complex: requires a new layout paradigm, data alignment logic, and unclear UX for different project types. | Defer to v2+. Users can open two browser tabs for now. |
+| **Cloud sync / backup** | "What if I lose my data" | Requires a backend service, auth, and storage infrastructure. | IndexedDB is persistent across sessions. Users can export to PDF/DOCX for archival. Mention in UI that analyses are stored locally. |
+| **Tagging or folder organization in Library** | "Organize my analyses into projects" | Premature structure. Until the Library has 50+ items, flat list with search/filter is simpler and faster. | Filter by project type + search by title. Add folders later if needed. |
+
+---
+
+## Evaluation Dimensions Per Project Type
+
+This is the core intellectual design of v1.1. Each project type gets a workspace with evaluation "dimension" cards tailored to what matters for that type.
+
+### Narrative -- "Story Lab Workspace" (8 Dimensions)
+
+Already mapped 1:1 to existing NarrativeReport sections and `narrativeAnalysisSchema` data:
+
+| # | Dimension | Data Source | Card Focus |
+|---|-----------|-------------|------------|
+| 1 | Logline & Premise Clarity | `scriptCoverage.marketability.loglineQuality`, `suggestedLogline` | Quality badge + suggested logline |
+| 2 | Story Structure / Act Breakdown | `storyStructure.beats[]` | Beat-by-beat with effectiveness badges, structural strengths/weaknesses |
+| 3 | Character Arcs & Development | `scriptCoverage.characters[]` | Per-character cards with role, arc assessment, strengths/weaknesses |
+| 4 | Dialogue & Voice | `scriptCoverage.dialogueQuality` | Overall rating, strengths/weaknesses, notable lines |
+| 5 | Theme & Emotional Resonance | `themes` | Central themes as tags, emotional resonance and audience impact text |
+| 6 | Pacing & Tension | `storyStructure.pacingAssessment`, `tensionArc` | Pacing assessment + tension arc narrative |
+| 7 | Genre Positioning & Comparables | `scriptCoverage.marketability` | Comp titles, commercial viability badge, conflict assessment |
+| 8 | Development Recommendations | `developmentRecommendations`, `scriptCoverage.overallStrengths/Weaknesses` | Numbered priorities + overall strengths/weaknesses |
+
+**No schema changes needed.** The current AI output already maps perfectly to 8 cards.
+
+### Documentary -- "Interview Mining Workspace" (5 Dimensions)
+
+Maps to existing `documentaryAnalysisSchema` and `AnalysisReport` sections:
+
+| # | Dimension | Data Source | Card Focus |
+|---|-----------|-------------|------------|
+| 1 | Source Overview | `summary` | Overview, interviewee count, dominant themes, total quotes |
+| 2 | Key Quotes & Soundbites | `keyQuotes[]` | Quotes ranked by usefulness with category badges, speaker attribution |
+| 3 | Recurring Themes | `recurringThemes[]` | Theme cards with frequency badges, supporting evidence quotes |
+| 4 | Key Moments | `keyMoments[]` | Moment type badges, significance, approximate location |
+| 5 | Editorial Direction | `editorialNotes` | Narrative threads, missing perspectives, suggested structure |
+
+**No schema changes needed.**
+
+### Corporate Interview -- "Messaging Workspace" (5 Dimensions)
+
+Maps to existing `corporateAnalysisSchema` and `CorporateReport`:
+
+| # | Dimension | Data Source | Card Focus |
+|---|-----------|-------------|------------|
+| 1 | Executive Summary | `summary` | Overview, speaker count, context badge, dominant messages |
+| 2 | Soundbite Quality | `soundbites[]` | Ranked soundbites with usability badges, category tags, speaker attribution |
+| 3 | Messaging Consistency | `messagingThemes[]` | Theme cards with consistency ratings, supporting evidence |
+| 4 | Speaker Effectiveness | `speakerEffectiveness[]` | Per-speaker scorecards: strengths, areas for improvement, quotability + on-message badges |
+| 5 | Editorial Recommendations | `editorialNotes` | Recommended narrative, messaging gaps, suggested cuts |
+
+**No schema changes needed.**
+
+### TV/Episodic -- "Episode Lab Workspace" (2 Tabs, 8 Dimensions Total)
+
+Maps to existing `tvEpisodicAnalysisSchema` and `TvReport` (already uses Tabs for Episode/Series split):
+
+**Episode Arc Tab (4 cards):**
+
+| # | Dimension | Data Source | Card Focus |
+|---|-----------|-------------|------------|
+| 1 | Cold Open & Hook | `episodeAnalysis.coldOpen` | Hook strength badge, description, notes |
+| 2 | Story Strands | `episodeAnalysis.storyStrands[]` | A/B/C story with effectiveness badges, character lists |
+| 3 | Character Introductions | `episodeAnalysis.characterIntroductions[]` | Intro method + effectiveness per character |
+| 4 | Episode Arc & Pacing | `episodeAnalysis.episodeArc` | Setup/escalation/resolution flow, pacing badge, cliffhanger |
+
+**Series Structure Tab (4 cards):**
+
+| # | Dimension | Data Source | Card Focus |
+|---|-----------|-------------|------------|
+| 5 | Premise Longevity | `seriesAnalysis.premiseLongevity` | Multi-season/limited/one-season badge + reasoning |
+| 6 | Serialized Hooks | `seriesAnalysis.serializedHooks[]` | Hook type + sustainability badges |
+| 7 | Episodic vs Serial Balance | `seriesAnalysis.episodicVsSerial` | Balance badge + assessment |
+| 8 | Season Arc Potential | `seriesAnalysis.seasonArcPotential` | Suggested arc, strengths/concerns split |
+
+**No schema changes needed.** Tab structure already exists in TvReport.
+
+### Short-Form/Branded -- "Content Pulse Workspace" (6 Dimensions)
+
+Maps to existing `shortFormAnalysisSchema` and `ShortFormReport`:
+
+| # | Dimension | Data Source | Card Focus |
+|---|-----------|-------------|------------|
+| 1 | Content Overview | `summary` | Overview, detected format badge, estimated duration, primary objective |
+| 2 | Hook Strength | `hookStrength` | Hook rating badge, time to hook, suggestions |
+| 3 | Pacing | `pacing` | Overall rating badge, dead spots, recommendations |
+| 4 | Messaging Clarity | `messagingClarity` | Clarity badge, primary message, retention assessment, improvements |
+| 5 | CTA Effectiveness | `ctaEffectiveness` | Has-CTA boolean, placement badge, urgency badge, suggestions |
+| 6 | Emotional/Rational Balance | `emotionalRationalBalance` | Balance badge, emotional moments, rational elements |
+
+**No schema changes needed.**
+
+---
 
 ## Feature Dependencies
 
 ```
-Project Type Selection
-  |
-  +--> File Upload (type determines accepted formats)
-  |      |
-  |      +--> File Parsing (PDF, FDX, plain text, SRT)
-  |             |
-  |             +--> AI Analysis Engine (core)
-  |                    |
-  |                    +--> Story Structure Analysis (narrative types)
-  |                    +--> Character Analysis (narrative types)
-  |                    +--> Script Coverage Report (narrative types)
-  |                    +--> Dialogue Assessment (narrative types)
-  |                    +--> Quote/Moment Extraction (documentary/interview types)
-  |                    +--> Interview Mining with Categorization (documentary/interview)
-  |                    +--> Theme Identification (all types)
-  |                    +--> Short-form/Branded Analysis (branded type)
-  |                    |
-  |                    +--> Structured Report Output
-  |                           |
-  |                           +--> Export/Download (PDF, markdown)
-  |                           +--> Copy-paste friendly rendering
-  |
-  +--> Treatment/Outline Generation (depends on parsed material + project type)
-  +--> Production Planning Outputs (depends on parsed script + scene detection)
+Theme System (next-themes + CSS variables)
+    -- independent, no dependencies on other features --
+
+Card Workspace Redesign
+    requires --> Existing AI schemas (already built)
+    requires --> Existing report components (refactor targets)
+    requires --> Theme system (cards must work in both themes)
+
+Storage Layer (IndexedDB)
+    -- new infrastructure, no dependencies on existing features --
+
+Auto-Save
+    requires --> Storage Layer
+    requires --> WorkspaceContext (already built, needs save trigger)
+
+Library Page
+    requires --> Storage Layer
+    requires --> Auto-Save (Library is empty without saved analyses)
+
+Library: Open Analysis
+    requires --> Library Page
+    requires --> WorkspaceContext hydration from stored data
+    requires --> Card Workspace Redesign (what gets rendered when opened)
+
+Library: Delete Analysis
+    requires --> Library Page
+    requires --> Storage Layer
 ```
 
-**Key dependency insight:** Everything flows from File Parsing. If parsing is unreliable (especially PDF screenplay extraction), every downstream feature suffers. This must be rock-solid before building analysis features.
+### Dependency Notes
 
-**Second critical path:** The AI Analysis Engine quality depends entirely on prompt design per project type. The prompts ARE the product. Code is just plumbing to deliver well-crafted prompts to the LLM and format the results.
+- **Theme system is independent.** It can be built first with zero impact on other features. Good warm-up task.
+- **Card workspace redesign depends on theme system** because cards must look right in both light and dark. Build theme first, then redesign cards.
+- **Storage layer is the linchpin for Library.** Without it, Library/auto-save/open/delete are all impossible. Build storage before any Library features.
+- **Library page depends on storage + auto-save.** An empty Library is useless, so auto-save must work before the Library page matters.
+- **Opening a saved analysis requires both the workspace redesign AND the storage hydration.** This is where the two feature tracks converge.
 
-## MVP Recommendation
+---
 
-### Phase 1: Core Analysis Loop
-Prioritize these to prove the concept works:
+## MVP Definition
 
-1. **Project type selection** (Low complexity, enables everything)
-2. **File upload + parsing** (Medium complexity, critical foundation -- plain text and PDF first, FDX later)
-3. **AI analysis engine with project-type routing** (Medium complexity, this is the core product)
-4. **Theme identification** (Low complexity, works for all project types)
-5. **Story structure analysis** (Medium complexity, for narrative project types)
-6. **Quote/moment extraction** (Medium complexity, for documentary/interview types)
-7. **Structured report output** (Medium complexity, makes output professional)
+### Phase 1: Theme + Card Workspaces
 
-### Phase 2: Deep Analysis
-8. **Character analysis** (Medium)
-9. **Full script coverage report format** (High)
-10. **Interview mining with categorization** (Medium)
-11. **Dialogue assessment** (Medium)
-12. **Short-form/branded analysis** (Medium)
-13. **Export/download** (Low)
+Build first because they have no storage dependency and deliver visible UI improvement.
 
-### Phase 3: Document Generation
-14. **Treatment/outline generation** (High)
-15. **Production planning outputs** (High)
-16. **Pacing visualization** (Medium)
+- [ ] **next-themes integration** -- light/dark/system with localStorage persistence
+- [ ] **CSS variable-based brand color system** -- orange/amber accents that adapt to theme
+- [ ] **Refactor sidebar, topnav, and layout** for theme-aware colors (currently hardcoded `stone-900`)
+- [ ] **Narrative Story Lab Workspace** -- refactor NarrativeReport into workspace layout with 8 dimension cards, grid layout on wide screens
+- [ ] **Workspace header component** -- project title, type badge, date, consistent across all types
+- [ ] **Apply workspace pattern to remaining 4 types** -- Documentary, Corporate, TV/Episodic, Short-Form
 
-**Defer indefinitely:** Built-in transcription, script editing, AI rewrites, collaboration, video handling.
+### Phase 2: Storage + Library
 
-### Rationale
+Build second because it requires new infrastructure.
 
-Phase 1 proves the core value proposition: "upload, select type, get analysis." If this doesn't feel magical, nothing else matters. Phase 2 deepens the analysis to professional quality. Phase 3 extends from analysis into document generation, which is a different (harder) problem.
+- [ ] **IndexedDB storage layer** -- save/load/delete/list operations for analyses
+- [ ] **Auto-save on analysis completion** -- trigger save when streaming finishes
+- [ ] **Library page** -- list view with project-type filter, search, card previews
+- [ ] **Open saved analysis** -- hydrate workspace from stored data
+- [ ] **Delete saved analysis** -- with confirmation dialog
 
-The key risk is Phase 1 feeling underwhelming. The difference between "this is just ChatGPT with extra steps" and "this is genuinely useful" comes down to:
-- Prompt quality per project type (the core IP)
-- Report structure that matches industry expectations
-- Specific, actionable insights rather than generic AI summaries
+### Add After Validation
+
+- [ ] **Library sort options** (by date, by type, by title) -- add when Library has enough content to need sorting
+- [ ] **Analysis rename** -- edit the title of a saved analysis from Library
+- [ ] **Storage size indicator** -- show how much IndexedDB space is used, warn when approaching limits
+
+### Future Consideration (v2+)
+
+- [ ] **Analysis comparison view** -- side-by-side comparison of two analyses
+- [ ] **Cloud backup/sync** -- only if multi-device need is validated
+- [ ] **Custom card order** -- drag-and-drop reordering within a workspace
+- [ ] **Analysis versioning** -- re-run analysis on same material, compare versions
+
+---
+
+## Feature Prioritization Matrix
+
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|---------------------|----------|
+| Dark/light theme toggle | HIGH | LOW | P1 |
+| Brand color system (amber/orange) | MEDIUM | LOW | P1 |
+| Narrative Story Lab Workspace (8 cards) | HIGH | MEDIUM | P1 |
+| Workspace header with metadata | MEDIUM | LOW | P1 |
+| Doc/Corp/TV/Short workspaces (4 types) | HIGH | MEDIUM | P1 |
+| Card grid layout (2-col on wide screens) | MEDIUM | LOW | P1 |
+| IndexedDB storage layer | HIGH | MEDIUM | P1 |
+| Auto-save after analysis | HIGH | LOW | P1 |
+| Library page (browse) | HIGH | MEDIUM | P1 |
+| Library: open saved analysis | HIGH | MEDIUM | P1 |
+| Library: delete analysis | MEDIUM | LOW | P1 |
+| Named workspace identities | MEDIUM | LOW | P2 |
+| Library: project-type filter | MEDIUM | LOW | P2 |
+| Library: search | LOW | LOW | P2 |
+| Library card previews | MEDIUM | LOW | P2 |
+| Visual scoring enhancements on cards | MEDIUM | MEDIUM | P2 |
+| Library sort options | LOW | LOW | P3 |
+| Analysis rename from Library | LOW | LOW | P3 |
+
+**Priority key:**
+- P1: Must have for v1.1 launch
+- P2: Should have, add within v1.1 if time permits
+- P3: Nice to have, defer to v1.2+
+
+---
+
+## Competitor Feature Analysis
+
+| Feature | StudioBinder | Descript | Final Draft | Our Approach |
+|---------|-------------|----------|-------------|--------------|
+| Card-based analysis | N/A (breakdown sheets, not analysis) | N/A (transcription, not analysis) | N/A (writing tool) | Evaluation dimension cards per project type -- unique in this space |
+| Theme toggle | Light only | Dark/light | Dark only | Full dark/light with system preference |
+| Saved analyses library | Project-based file management | Media library for transcripts | Script list (files, not analyses) | Analysis-centric Library with type filtering and previews |
+| Project-type-aware UI | Partial (breakdown categories vary) | No (one-size-fits-all) | No (screenplay only) | Fully differentiated workspaces per type with unique dimension cards |
+| Named workspace identity | No | No | No | "Story Lab", "Interview Mining", etc. -- professional identity per workflow |
+
+No direct competitor does analysis workspace cards. The closest patterns are dashboard/scorecard UIs from business intelligence tools (Tableau, Looker) and educational rubric displays, adapted for creative analysis.
+
+---
 
 ## Sources
 
-- Training data knowledge of: ScriptReader Pro, StudioBinder, Celtx, Descript, Otter.ai, Highland 2, Final Draft, Sudowrite, NolanAI, Coverfly/ScriptHop, Simon Says, Trint, Yamdu
-- PROJECT.md requirements and constraints
-- Domain knowledge of script coverage format, documentary editing workflow, production planning conventions
-- **Note:** Web search was unavailable during this research session. Feature lists for specific competitors may have changed since training data cutoff. Recommend verifying ScriptReader Pro and NolanAI current feature sets in phase-specific research.
+- Existing codebase: `narrative-report.tsx`, `analysis-report.tsx`, `corporate-report.tsx`, `tv-report.tsx`, `short-form-report.tsx`, all 5 AI schemas, `workspace-context.tsx`, `app-sidebar.tsx`, `page.tsx`
+- PROJECT.md v1.1 milestone requirements
+- [next-themes GitHub](https://github.com/pacocoursey/next-themes) -- standard Next.js theme library
+- [shadcn/ui dark mode docs](https://ui.shadcn.com/docs/dark-mode/next) -- integration with Next.js and next-themes
+- [Card UI Design Examples (BricxLabs)](https://bricxlabs.com/blogs/card-ui-design-examples) -- card layout patterns
+- [Dashboard Design Trends 2025 (Fuselab)](https://fuselabcreative.com/top-dashboard-design-trends-2025/) -- workspace dashboard patterns
+- [Dashboard Design Trends for SaaS (UITop)](https://uitop.design/blog/design/top-dashboard-design-trends/) -- card grid and scoring patterns
+- [SaaS UI Workflow Patterns (GitHub Gist)](https://gist.github.com/mpaiva-cc/d4ef3a652872cb5a91aa529db98d62dd) -- document management UI patterns
+- Training data knowledge of StudioBinder, Descript, Final Draft feature sets (MEDIUM confidence -- may have changed since cutoff)
+
+---
+*Feature research for: FilmIntern v1.1 UI Redesign*
+*Researched: 2026-03-17*

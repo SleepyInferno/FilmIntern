@@ -1,426 +1,442 @@
 # Architecture Patterns
 
-**Domain:** AI-powered filmmaking document analysis web app
-**Researched:** 2026-03-16
-**Confidence:** MEDIUM (based on established patterns; no external search verification available)
+**Domain:** Filmmaking analysis app -- UI theming, card-based workspaces, local persistence
+**Researched:** 2026-03-17
+**Milestone:** v1.1 UI and Formatting
 
-## Recommended Architecture
+## Current Architecture Snapshot
 
-A three-tier pipeline architecture: **Upload & Parse --> Analyze (LLM) --> Generate Output**. Each tier is a clear boundary with defined inputs and outputs. The app is a single-user personal tool, so the architecture is deliberately simple -- no job queues, no worker pools, no multi-tenancy.
+The app is a Next.js 15 (app router) single-page workflow. Key structural facts:
+
+- **Layout:** `layout.tsx` wraps everything in `<Providers>` (WorkspaceProvider + TooltipProvider). The `<html>` tag is hardcoded to `className="dark"`.
+- **State:** All workspace state lives in `WorkspaceContext` (React context with `useState` calls). No persistence -- refreshing the page loses everything.
+- **Navigation:** `AppTopNav` provides horizontal nav (Projects, Dashboard, Shot Lists, Image Prompts, Exports, Settings). Routes exist as stubs.
+- **Analysis flow:** `page.tsx` (Home) owns the full workflow: select project type via `ProjectTypeTabs`, upload file, run analysis via `/api/analyze`, build report document, render in `DocumentWorkspace`.
+- **Report rendering:** Two parallel rendering paths exist:
+  1. `NarrativeReport` -- purpose-built card-based component with 8 evaluation dimension cards (already exists for narrative type only)
+  2. `DocumentWorkspace` + `TiptapContentRenderer` -- generic Tiptap JSON renderer used for all project types' report documents and generated documents
+- **Normalization registry:** `reportNormalizers` maps `AnalysisReportKind` to normalizer functions that convert typed analysis data into Tiptap JSON. Each project type has its own normalizer.
+- **CSS:** Tailwind CSS v4 with CSS custom properties for light/dark themes already defined in `globals.css` (both `:root` and `.dark` blocks exist). The app just never toggles off `.dark`.
+
+## Recommended Architecture for v1.1
+
+### Overview
+
+Three features, three layers:
 
 ```
-[Browser UI]
-    |
-    v
-[Next.js App Router / API Routes]
-    |
-    +-- /api/upload      --> File Parser Layer --> extracted text
-    +-- /api/analyze      --> Prompt Assembly --> LLM API --> structured JSON
-    +-- /api/generate     --> Output Renderer --> PDF/document
-    |
-[File System (temp storage)]
-[LLM Provider API (Claude/OpenAI)]
+Theme System         Card Workspaces              Library Persistence
+     |                     |                             |
+  globals.css        per-type workspace           IndexedDB via Dexie
+  next-themes        components that consume       +
+  ThemeProvider       existing analysis schemas    LibraryContext
+     |                     |                             |
+  layout.tsx -----> Providers.tsx <------------- providers.tsx
 ```
 
 ### Component Boundaries
 
 | Component | Responsibility | Communicates With |
 |-----------|---------------|-------------------|
-| **UI Shell** | Project type selection, file upload, progress display, report viewing | API Routes |
-| **File Upload Handler** | Receives files, validates type/size, stores temporarily | File Parser |
-| **File Parser** | Extracts plain text from PDF, FDX, plain text files | Returns text to API layer |
-| **Project Type Registry** | Maps project types to accepted file types, analysis prompts, and output templates | Prompt Assembler, UI (for validation) |
-| **Prompt Assembler** | Combines extracted text + project type config into LLM prompts | LLM Client |
-| **LLM Client** | Sends prompts to API, handles streaming/errors/retries, parses structured response | Returns structured JSON |
-| **Report Renderer** | Takes structured JSON analysis and renders as viewable report in UI | UI Shell |
-| **Document Generator** | Takes structured data and generates downloadable PDFs/documents | Returns file download |
+| `ThemeProvider` (next-themes) | Manages dark/light toggle, persists choice, prevents flash | `layout.tsx`, `globals.css` |
+| `ThemeToggle` | UI button for switching themes | `ThemeProvider` via `useTheme()` |
+| `AnalysisWorkspace` (new) | Orchestrates which card workspace renders based on project type | `page.tsx`, per-type workspace components |
+| `NarrativeWorkspace` | 8 evaluation dimension cards for narrative projects | `AnalysisWorkspace`, `NarrativeAnalysis` schema |
+| `DocumentaryWorkspace` (new) | Interview-specific evaluation cards | `AnalysisWorkspace`, `DocumentaryAnalysis` schema |
+| `CorporateWorkspace` (new) | Messaging-specific evaluation cards | `AnalysisWorkspace`, `CorporateAnalysis` schema |
+| `TvEpisodicWorkspace` (new) | Episode/series evaluation cards | `AnalysisWorkspace`, `TvEpisodicAnalysis` schema |
+| `ShortFormWorkspace` (new) | Pacing/messaging evaluation cards | `AnalysisWorkspace`, `ShortFormAnalysis` schema |
+| `LibraryProvider` / `useLibrary` (new) | CRUD operations on saved analyses in IndexedDB | `providers.tsx`, Library page, `page.tsx` (auto-save) |
+| `LibraryPage` (new) | Browse, open, delete saved analyses | `LibraryProvider`, router |
+| `DocumentWorkspace` (existing, modified) | Still handles generated docs (outline, treatment, proposal) and export | `page.tsx`, export APIs |
 
 ### Data Flow
 
+#### Current Flow (v1.0)
 ```
-1. User selects project type (e.g., "Documentary")
-2. UI shows accepted file types for that project type (e.g., transcript TXT/PDF)
-3. User uploads file
-4. File Upload Handler validates and stores temp file
-5. File Parser extracts plain text:
-   - PDF  --> pdf-parse / pdf.js extracts text
-   - FDX  --> XML parser extracts dialogue/action/scene headings
-   - TXT  --> pass through (already text)
-6. Prompt Assembler loads project-type-specific prompt template
-7. Prompt Assembler injects extracted text into template
-8. LLM Client sends prompt(s) to Claude API
-9. LLM returns structured analysis (JSON or structured text)
-10. Report Renderer displays analysis in UI
-11. (Optional) Document Generator creates downloadable PDF
+Upload -> /api/analyze -> streaming JSON -> setAnalysisData (in-memory)
+                                              |
+                                              v
+                                      buildReportDocument -> DocumentWorkspace (Tiptap render)
 ```
 
-## Component Deep Dives
+#### New Flow (v1.1)
+```
+Upload -> /api/analyze -> streaming JSON -> setAnalysisData (in-memory)
+                                              |
+                                   +----------+----------+
+                                   |                     |
+                                   v                     v
+                          AnalysisWorkspace         auto-save to
+                          (card-based, per-type)    IndexedDB via
+                               |                    LibraryProvider
+                               v
+                          DocumentWorkspace
+                          (generated docs only,
+                           export still here)
+```
 
-### File Parser Layer
+Key change: The analysis report is no longer rendered through the Tiptap normalizer path for on-screen display. Instead, `AnalysisWorkspace` dispatches to a per-type card component that renders directly from the typed analysis data (like `NarrativeReport` already does). The Tiptap/normalizer path remains for generated documents (outlines, treatments, proposals) and PDF/DOCX export.
 
-This is the most important architectural boundary. Every downstream component works with **plain text** -- the parser normalizes all input formats into a common representation.
+## Feature 1: Theme System
 
-**Recommended approach:** A parser registry pattern where each file type has a dedicated parser module.
+### Architecture Decision
+
+Use `next-themes` because:
+- It handles SSR hydration mismatch (the hardest part of theme toggles in Next.js)
+- It persists user preference to localStorage automatically
+- It prevents flash-of-wrong-theme on page load
+- It is the standard recommended by shadcn/ui docs for dark mode
+- The app already has both `:root` and `.dark` CSS custom property blocks in `globals.css`
+
+**Confidence:** HIGH -- next-themes is the de facto standard for Next.js theming, and the CSS variables are already in place.
+
+### What Changes
+
+| File | Change |
+|------|--------|
+| `src/app/layout.tsx` | Remove hardcoded `className="dark"` from `<html>`. Add `suppressHydrationWarning` to `<html>`. |
+| `src/app/providers.tsx` | Wrap children in `<ThemeProvider attribute="class" defaultTheme="dark" enableSystem>` from `next-themes`. |
+| `src/app/globals.css` | Add orange/amber brand accent CSS variables to both `:root` and `.dark` blocks (e.g., `--brand`, `--brand-foreground`). The existing light/dark variable sets are already defined. |
+| `src/components/theme-toggle.tsx` (new) | Button component using `useTheme()` from next-themes. Sun/Moon icon toggle. |
+| `src/components/app-topnav.tsx` | Add `ThemeToggle` button next to the Settings icon. |
+| Hardcoded colors | Audit `bg-stone-900`, `text-stone-50`, `bg-white`, `hover:bg-gray-100` etc. in `app-topnav.tsx`, `document-workspace.tsx` and replace with semantic tokens (`bg-background`, `text-foreground`, `bg-card`, etc.). |
+
+### Brand Color System
+
+Add to `globals.css`:
+```css
+:root {
+  --brand: oklch(0.705 0.191 47.604);      /* amber-500 equivalent */
+  --brand-foreground: oklch(0.145 0 0);
+}
+.dark {
+  --brand: oklch(0.769 0.188 70.08);       /* amber-400 equivalent */
+  --brand-foreground: oklch(0.145 0 0);
+}
+```
+
+Then reference as `bg-brand`, `text-brand` via Tailwind theme inline config. The existing amber-500/amber-600 hardcoded references in `NarrativeReport`, `AppTopNav`, and `AppSidebar` should migrate to `text-brand` / `border-brand`.
+
+### Tailwind v4 Note
+
+Tailwind CSS v4 uses the `@custom-variant dark (&:is(.dark *))` approach already present in `globals.css`. The `darkMode: 'class'` config from v3 is not needed -- the custom variant declaration handles it. next-themes toggles the `dark` class on `<html>`, which matches this setup.
+
+## Feature 2: Card-Based Analysis Workspaces
+
+### Architecture Decision
+
+Follow the pattern already established by `NarrativeReport` -- each project type gets a dedicated component that renders directly from the typed analysis schema using shadcn `Card`, `Badge`, and semantic layout. Do NOT use the Tiptap normalizer path for card rendering.
+
+**Rationale:** `NarrativeReport` already demonstrates this exact pattern and it works well. The normalizers flatten rich structured data into linear Tiptap nodes, losing the ability to do per-dimension cards with badges, strength/weakness columns, etc. Card workspaces need the full typed data.
+
+**Confidence:** HIGH -- proven pattern already in the codebase.
+
+### New Components
+
+| Component | File | Cards/Dimensions | Source Schema |
+|-----------|------|-------------------|---------------|
+| `AnalysisWorkspace` | `src/components/analysis-workspace.tsx` | Dispatcher -- renders correct workspace by project type | N/A |
+| `NarrativeWorkspace` | `src/components/workspaces/narrative-workspace.tsx` | Rename/refactor from existing `NarrativeReport` (8 cards) | `NarrativeAnalysis` |
+| `DocumentaryWorkspace` | `src/components/workspaces/documentary-workspace.tsx` | Summary, Key Quotes, Recurring Themes, Key Moments, Editorial Notes | `DocumentaryAnalysis` |
+| `CorporateWorkspace` | `src/components/workspaces/corporate-workspace.tsx` | Summary, Soundbites, Messaging Themes, Speaker Effectiveness, Editorial Notes | `CorporateAnalysis` |
+| `TvEpisodicWorkspace` | `src/components/workspaces/tv-episodic-workspace.tsx` | Cold Open, Story Strands, Episode Arc, Series Analysis, Serialized Hooks, Season Arc | `TvEpisodicAnalysis` |
+| `ShortFormWorkspace` | `src/components/workspaces/short-form-workspace.tsx` | Summary, Hook Strength, Pacing, Messaging Clarity, CTA Effectiveness | `ShortFormAnalysis` |
+
+### Workspace Registry Pattern
+
+Create a registry similar to `reportNormalizers` but for workspace components:
 
 ```typescript
-// parser-registry.ts
-interface ParseResult {
-  text: string;           // Full extracted text
-  metadata: {
-    format: 'pdf' | 'fdx' | 'txt';
-    pageCount?: number;
-    sceneCount?: number;   // For screenplays
-    wordCount: number;
-    characterNames?: string[];  // Extracted from FDX
-  };
-  sections?: Section[];    // Optional structured breakdown
+// src/components/workspaces/registry.ts
+import type { ComponentType } from 'react';
+
+export interface WorkspaceProps<T = unknown> {
+  data: Partial<T> | null;
+  isStreaming: boolean;
 }
 
-interface FileParser {
-  accepts: string[];       // MIME types
-  parse(buffer: Buffer, filename: string): Promise<ParseResult>;
-}
-
-// Each parser is a separate module:
-// parsers/pdf-parser.ts
-// parsers/fdx-parser.ts
-// parsers/txt-parser.ts
-```
-
-**FDX (Final Draft) handling:** FDX files are XML. The key is preserving structural information -- scene headings, character names, dialogue vs. action -- because this structure is valuable for screenplay analysis. Parse the XML, then output formatted text that preserves these distinctions (e.g., prefix scene headings with `## SCENE:`, dialogue with character names).
-
-**PDF handling:** Use `pdf-parse` (wrapper around pdf.js) for text extraction. PDFs are the hardest format because text extraction quality varies wildly. Screenplay PDFs are generally well-formatted text-based PDFs (not scanned), so basic text extraction works. For edge cases, consider falling back to sending the PDF directly to a multimodal LLM for extraction.
-
-**Key decision: Parse on server, not client.** File parsing should happen in API routes, not in the browser. This keeps file processing consistent and avoids browser compatibility issues with PDF/XML parsing.
-
-### Project Type Registry
-
-This is the core "brain" of the app -- it defines what happens for each project type. Use a configuration-driven approach, not hardcoded if/else chains.
-
-```typescript
-// project-types.ts
-interface ProjectTypeConfig {
-  id: string;
-  label: string;
-  description: string;
-  acceptedFileTypes: string[];       // MIME types
-  fileTypeLabel: string;             // "transcript" or "screenplay"
-  analysisPrompts: AnalysisPrompt[]; // Ordered list of analyses to run
-  outputTemplates: OutputTemplate[]; // Available output formats
-}
-
-interface AnalysisPrompt {
-  id: string;
-  label: string;                     // "Story Structure Analysis"
-  systemPrompt: string;              // The system prompt
-  userPromptTemplate: string;        // Template with {{text}} placeholder
-  outputSchema: ZodSchema;           // Expected JSON structure
-  maxTokens: number;
-}
-
-const PROJECT_TYPES: Record<string, ProjectTypeConfig> = {
-  documentary: {
-    id: 'documentary',
-    label: 'Documentary',
-    acceptedFileTypes: ['text/plain', 'application/pdf'],
-    fileTypeLabel: 'transcript',
-    analysisPrompts: [
-      interviewMiningPrompt,
-      thematicAnalysisPrompt,
-      narrativeArcPrompt,
-    ],
-    outputTemplates: [treatmentTemplate, paperEditTemplate],
-  },
-  narrative: {
-    id: 'narrative',
-    label: 'Narrative Film',
-    acceptedFileTypes: ['text/plain', 'application/pdf', 'application/fdx'],
-    fileTypeLabel: 'screenplay',
-    analysisPrompts: [
-      storyCoveragePrompt,
-      structureAnalysisPrompt,
-      characterAnalysisPrompt,
-      dialogueAnalysisPrompt,
-    ],
-    outputTemplates: [coverageReportTemplate, shotListTemplate],
-  },
-  // ... etc
+export const workspaceRegistry: Record<string, ComponentType<WorkspaceProps<any>>> = {
+  'narrative': NarrativeWorkspace,
+  'documentary': DocumentaryWorkspace,
+  'corporate': CorporateWorkspace,
+  'tv-episodic': TvEpisodicWorkspace,
+  'short-form': ShortFormWorkspace,
 };
 ```
 
-**Why a registry, not conditionals:** Adding a new project type should mean adding a config object and prompt templates, not touching analysis logic. This also makes it trivial to iterate on prompts per project type independently.
+### Shared Sub-Components
 
-### Prompt Architecture
+Extract reusable pieces from `NarrativeReport` into shared components:
 
-Use a multi-pass analysis approach rather than one massive prompt. Each analysis prompt focuses on one aspect and returns structured JSON.
+| Component | Purpose | Currently In |
+|-----------|---------|-------------|
+| `CategoryLabel` | Numbered evaluation dimension header with brand-colored circle | `narrative-report.tsx` |
+| `EffectivenessBadge` | Color-coded badge for effectiveness/quality ratings | `narrative-report.tsx` |
+| `StrengthWeaknessGrid` | Two-column green/red bullet list layout | `narrative-report.tsx` (inline) |
+| `SectionSkeleton` | Loading placeholder for streaming sections | `narrative-report.tsx` |
+| `QuoteBadge` | Styled quote display with speaker attribution | New (for documentary/corporate) |
 
-**Why multi-pass:**
-- Smaller, focused prompts produce higher quality output than one giant prompt
-- Different analyses can use different models/temperatures if needed
-- Easier to iterate on individual analyses without affecting others
-- If one analysis fails, others still succeed
+### Integration with page.tsx
 
-**Prompt structure per analysis:**
+`page.tsx` currently renders `DocumentWorkspace` for the report. The change:
 
-```
-System: You are a professional [script reader / documentary editor / etc.].
-        Analyze the following [transcript / screenplay] and return your
-        analysis as JSON matching this schema: {...}
+**Before:** Analysis complete -> `buildReportDocument` -> `DocumentWorkspace` renders report + generated docs.
 
-User:   ## Project Context
-        Project type: {{projectType}}
-        File format: {{fileFormat}}
+**After:** Analysis complete -> `AnalysisWorkspace` renders card-based report (primary display). `DocumentWorkspace` renders only generated docs (outline, treatment, proposal) when user requests them. `buildReportDocument` still runs for export purposes (PDF/DOCX still use Tiptap path).
 
-        ## Material
-        {{extractedText}}
+The `AnalysisWorkspace` replaces the report tab inside `DocumentWorkspace`. The tabs for generated documents (Outline, Treatment, Proposal) stay in `DocumentWorkspace`.
 
-        ## Analysis Instructions
-        {{specificInstructions}}
-```
+### Impact on Existing Normalizers
 
-**Structured output:** Use Zod schemas to define expected output shapes. Validate LLM responses against these schemas. If validation fails, retry with a correction prompt. This is critical -- without structured output validation, the report renderer can break on unexpected LLM output shapes.
+The normalizers in `report-normalization.ts` are NOT removed. They are still needed for:
+- PDF/DOCX export (which renders from Tiptap JSON via `render-document-html.ts`)
+- Generated documents (outlines, treatments, proposals)
 
-### LLM Client Layer
+The card workspaces are a parallel rendering path for on-screen display only.
 
-A thin wrapper around the LLM API that handles:
+## Feature 3: Library Persistence
 
-1. **Token management:** Count input tokens, split long documents if needed
-2. **Retry logic:** Exponential backoff on rate limits / transient errors
-3. **Streaming:** Stream responses for better UX on long analyses
-4. **Cost tracking:** Log token usage per analysis (personal tool, but you still want to know costs)
+### Architecture Decision
 
-**Key architectural choice: Anthropic Claude API directly, not through a framework like LangChain.** For this use case, the overhead and abstraction of LangChain adds complexity without benefit. The Anthropic SDK is straightforward. A thin wrapper with retry logic is all that is needed.
+Use **Dexie.js** (IndexedDB wrapper) because:
+- This is a personal single-user tool -- no server database needed
+- IndexedDB handles large analysis objects (JSON blobs) that would exceed localStorage's 5MB limit
+- Dexie provides a clean Promise-based API with TypeScript support and schema versioning
+- No backend changes required -- persistence is entirely client-side
+- Analyses include source text and analysis snapshots which can be large (50KB+ each)
+
+**Confidence:** MEDIUM -- Dexie is well-established but this is the most architecturally novel feature. The key risk is that IndexedDB is browser-only, so all database access must be guarded against SSR execution.
+
+### Data Model
 
 ```typescript
-// llm-client.ts
-interface LLMRequest {
-  systemPrompt: string;
-  userPrompt: string;
-  maxTokens: number;
-  temperature?: number;
-  outputSchema?: ZodSchema;
+// src/lib/storage/schema.ts
+import type { AnalysisReportKind } from '@/lib/documents/report-normalization';
+
+export interface SavedAnalysis {
+  id: string;                              // crypto.randomUUID()
+  projectType: string;                     // 'narrative' | 'documentary' | etc.
+  title: string;                           // User-editable, defaults to filename
+  createdAt: string;                       // ISO timestamp
+  updatedAt: string;                       // ISO timestamp
+  sourceFileName: string;                  // Original upload filename
+  sourceText: string;                      // Full source text
+  analysisData: Record<string, unknown>;   // Full analysis JSON
+  reportKind: AnalysisReportKind;          // For export reconstruction
+}
+```
+
+### Storage Layer
+
+```typescript
+// src/lib/storage/db.ts
+import Dexie from 'dexie';
+import type { SavedAnalysis } from './schema';
+
+class FilmInternDB extends Dexie {
+  analyses!: Dexie.Table<SavedAnalysis, string>;
+
+  constructor() {
+    super('filmintern');
+    this.version(1).stores({
+      analyses: 'id, projectType, createdAt, updatedAt, title',
+    });
+  }
 }
 
-interface LLMResponse {
-  content: string;
-  parsed?: unknown;        // Parsed JSON if outputSchema provided
-  usage: { inputTokens: number; outputTokens: number };
+export const db = new FilmInternDB();
+```
+
+### Library Context
+
+```typescript
+// src/contexts/library-context.tsx
+interface LibraryState {
+  analyses: SavedAnalysis[];
+  isLoading: boolean;
+}
+
+interface LibraryActions {
+  saveAnalysis: (data: Omit<SavedAnalysis, 'id' | 'createdAt' | 'updatedAt'>) => Promise<string>;
+  deleteAnalysis: (id: string) => Promise<void>;
+  loadAnalysis: (id: string) => Promise<SavedAnalysis | undefined>;
+  refreshList: () => Promise<void>;
 }
 ```
 
-**Long document handling:** Screenplays can be 120+ pages (30,000+ words, ~40K tokens). This fits within Claude's context window comfortably. Transcripts can be much longer (multi-hour interviews). For very long documents:
-- First check token count against model limit
-- If over limit, chunk by scenes/segments and analyze per-chunk, then synthesize
-- Prefer sending the full document when possible -- chunking loses cross-document patterns
+### Auto-Save Flow
 
-### Report Renderer (UI)
-
-The analysis results are structured JSON. The report renderer transforms this into a readable, professional-feeling report in the browser.
-
-**Approach:** React components that map analysis types to visual sections. Each analysis type has a dedicated renderer component.
+In `page.tsx`, after analysis completes and `finalData` is set:
 
 ```
-AnalysisReport
-  +-- ReportHeader (project info, file info, date)
-  +-- AnalysisSection (one per analysis)
-  |     +-- StoryStructureView
-  |     +-- CharacterAnalysisView
-  |     +-- InterviewMiningView
-  |     +-- etc.
-  +-- ReportActions (download PDF, regenerate, etc.)
+Analysis completes -> buildReportDocument (existing)
+                   -> saveAnalysis via LibraryContext (new, automatic)
 ```
 
-**Key UX pattern:** Show analysis sections as they complete (streaming/progressive loading), not waiting for all analyses to finish. A documentary transcript might run 3 analyses -- show each as it completes.
+The save happens automatically after analysis completion. No explicit "Save" button needed for v1.1.
 
-### Document Generator
+### Library Page
 
-For generating downloadable outputs (PDF reports, treatments, shot lists).
+| Route | Component | Purpose |
+|-------|-----------|---------|
+| `/dashboard` | `LibraryPage` | Grid/list of saved analyses, sorted by date |
 
-**Recommended approach:** Server-side PDF generation using a library like `@react-pdf/renderer` or `puppeteer` (render HTML to PDF). For a personal tool, `@react-pdf/renderer` is simpler and has no browser dependency.
+The existing `/dashboard` route stub becomes the Library page. Each item shows: title, project type badge, date, preview snippet. Click opens the analysis in the workspace. Delete button with confirmation.
 
-The generator takes structured analysis JSON + an output template and produces a downloadable file. This is a separate concern from the report renderer -- the in-browser view and the PDF download can have different layouts.
+### Opening a Saved Analysis
+
+When a user clicks an item in the Library, the flow is:
+1. Load `SavedAnalysis` from IndexedDB
+2. Populate `WorkspaceContext` with the loaded data (projectType, analysisData, sourceText, etc.)
+3. Navigate to `/` (the main workspace page)
+4. The workspace renders the card-based analysis from the loaded data
+
+This requires adding a `loadFromSaved` action to `WorkspaceContext` that hydrates all the relevant state fields at once.
+
+### SSR Guard
+
+Because IndexedDB is browser-only, the `LibraryProvider` must lazy-initialize:
+
+```typescript
+// In LibraryProvider
+const [isReady, setIsReady] = useState(false);
+
+useEffect(() => {
+  setIsReady(true);
+  refreshList();
+}, []);
+```
+
+All Dexie calls are naturally async and only execute client-side. The provider just needs to avoid calling `db` during SSR rendering.
+
+## Modified Existing Components
+
+| Component | Modification | Risk |
+|-----------|-------------|------|
+| `layout.tsx` | Remove `className="dark"`, add `suppressHydrationWarning` | Low -- minimal change |
+| `providers.tsx` | Add `ThemeProvider`, add `LibraryProvider` | Low -- additive wrapping |
+| `app-topnav.tsx` | Add `ThemeToggle`, replace hardcoded dark colors with semantic tokens | Low -- visual only |
+| `page.tsx` | Add `AnalysisWorkspace` above `DocumentWorkspace`, add auto-save after analysis, track `sourceFileName` | Medium -- core page logic changes |
+| `document-workspace.tsx` | Remove report tab rendering (report now in `AnalysisWorkspace`), keep generated docs + export. Replace hardcoded `bg-white`/`hover:bg-gray-100` with semantic tokens. | Medium -- structural change to tabs |
+| `narrative-report.tsx` | Rename to `narrative-workspace.tsx`, move to `workspaces/` directory, extract shared sub-components | Low -- refactor only, no behavior change |
+| `globals.css` | Add `--brand` / `--brand-foreground` CSS variables | Low -- additive |
+| `workspace-context.tsx` | Add `sourceFileName` field, add `loadFromSaved` action for Library | Medium -- context shape change |
+
+## New Files Summary
+
+| File | Purpose |
+|------|---------|
+| `src/components/theme-toggle.tsx` | Dark/light mode toggle button |
+| `src/components/analysis-workspace.tsx` | Project-type dispatcher for card workspaces |
+| `src/components/workspaces/narrative-workspace.tsx` | Narrative 8-card workspace (from existing NarrativeReport) |
+| `src/components/workspaces/documentary-workspace.tsx` | Documentary card workspace |
+| `src/components/workspaces/corporate-workspace.tsx` | Corporate card workspace |
+| `src/components/workspaces/tv-episodic-workspace.tsx` | TV/Episodic card workspace |
+| `src/components/workspaces/short-form-workspace.tsx` | Short-form card workspace |
+| `src/components/workspaces/registry.ts` | Workspace component registry |
+| `src/components/workspaces/shared.tsx` | Shared sub-components (CategoryLabel, EffectivenessBadge, etc.) |
+| `src/lib/storage/db.ts` | Dexie database definition |
+| `src/lib/storage/schema.ts` | SavedAnalysis type definition |
+| `src/contexts/library-context.tsx` | Library CRUD context |
+| `src/app/dashboard/page.tsx` | Library page (replace existing stub) |
 
 ## Patterns to Follow
 
-### Pattern 1: Configuration-Driven Pipeline
-**What:** All behavior differences between project types are driven by configuration objects, not conditional logic in components.
-**When:** Always. This is the core architectural pattern for this app.
-**Why:** The main value of the tool is in the prompt engineering per project type. Making prompts and analysis configs easy to iterate on independently is critical.
+### Pattern 1: Registry-Based Dispatch
+**What:** Map project type strings to components/functions instead of switch statements.
+**When:** Anywhere behavior varies by project type.
+**Why:** Already established with `reportNormalizers`. Keeps `page.tsx` clean and makes adding new project types a single-file addition.
 
-### Pattern 2: Parse Once, Analyze Many
-**What:** File parsing happens once and produces a normalized text representation. All analyses work from this same text.
-**When:** On every upload.
-**Why:** Avoids re-parsing, ensures consistency across analyses, and creates a clean boundary between file handling and analysis logic.
+### Pattern 2: Typed Analysis Props with Streaming Support
+**What:** Each workspace component accepts `Partial<T> | null` where T is the specific analysis schema type (e.g., `NarrativeAnalysis`).
+**When:** All card workspace components.
+**Why:** Enables streaming (partial data renders as cards fill in with skeleton fallbacks) and type safety. Already proven in `NarrativeReport`.
 
-### Pattern 3: Structured Output with Validation
-**What:** Every LLM analysis has a defined output schema (Zod). Responses are validated before rendering.
-**When:** Every LLM call.
-**Why:** LLMs sometimes return malformed JSON, missing fields, or unexpected structures. Validation catches this before it reaches the UI.
+### Pattern 3: CSS Custom Properties for Theme
+**What:** All colors referenced through CSS variables, toggled via class on `<html>`.
+**When:** All styling decisions.
+**Why:** The infrastructure is already in `globals.css`. Adding next-themes just automates the class toggle. Brand accent color should be a variable, not hardcoded `amber-500`.
 
-### Pattern 4: Progressive Analysis Display
-**What:** Run multiple analyses concurrently (or sequentially) and display each result as it arrives.
-**When:** When a project type triggers multiple analyses.
-**Why:** Total analysis time for a screenplay might be 30-60 seconds across multiple prompts. Showing results progressively makes the wait feel shorter.
+### Pattern 4: Shared Sub-Component Extraction
+**What:** Extract common card patterns (numbered headers, effectiveness badges, strength/weakness grids) into shared components.
+**When:** Building the 4 new workspace components.
+**Why:** `NarrativeReport` already has these patterns. Duplicating across 5 workspaces would create maintenance burden.
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: One Giant Prompt
-**What:** Stuffing all analysis instructions into a single massive prompt.
-**Why bad:** Degrades output quality on every dimension. The LLM loses focus when asked to do 8 things at once. Also makes iteration impossible -- changing one analysis type risks affecting all others.
-**Instead:** Multi-pass analysis with focused prompts.
+### Anti-Pattern 1: Rendering Cards via Tiptap Normalizers
+**What:** Trying to make the normalizer output render as cards.
+**Why bad:** Normalizers flatten structured data into linear document nodes. Cards need the original typed structure for layouts like two-column strength/weakness grids, badges, etc.
+**Instead:** Use normalizers for export only. Card workspaces render from typed analysis data directly.
 
-### Anti-Pattern 2: Client-Side File Parsing
-**What:** Parsing PDFs or FDX files in the browser.
-**Why bad:** Browser PDF parsing is unreliable. FDX/XML parsing in the browser adds bundle size. Error handling is harder.
-**Instead:** Upload the raw file, parse server-side in API routes.
+### Anti-Pattern 2: Server-Side Database for Library
+**What:** Adding SQLite/Postgres for a single-user personal tool.
+**Why bad:** Massive complexity increase for no benefit. No multi-device sync is needed.
+**Instead:** IndexedDB via Dexie. Zero server changes. Data lives in the browser.
 
-### Anti-Pattern 3: Storing Files Permanently
-**What:** Keeping uploaded files in persistent storage.
-**Why bad:** For a personal tool, there is no need for a file database. It adds storage management complexity. The user has the original files.
-**Instead:** Temp file storage during processing. Store only the extracted text and analysis results if you want history. Consider using the file system temp directory or an in-memory buffer.
+### Anti-Pattern 3: Lifting All State to URL/Search Params
+**What:** Trying to make every workspace state URL-addressable.
+**Why bad:** Analysis data is large (can be 50KB+ JSON). URL state is for navigation, not data storage.
+**Instead:** React context for active session, IndexedDB for persistence. URL only for Library item IDs (e.g., `/dashboard?open=abc` to deep-link a saved analysis).
 
-### Anti-Pattern 4: LangChain / Heavy AI Framework
-**What:** Using LangChain, LlamaIndex, or similar abstraction frameworks.
-**Why bad:** Massive dependency overhead. Abstractions leak. For direct LLM API calls with structured output, the Anthropic SDK is sufficient. These frameworks add value for RAG, agents, complex chains -- none of which this app needs.
-**Instead:** Direct Anthropic SDK + thin wrapper for retry/streaming.
-
-### Anti-Pattern 5: Over-Engineering State Management
-**What:** Using Redux, Zustand, or complex state management for the analysis pipeline.
-**Why bad:** The data flow is linear (upload -> parse -> analyze -> display). There is no complex shared state.
-**Instead:** React Server Components for data fetching, local component state for UI interactions, or simple React context if needed.
-
-## Data Persistence Strategy
-
-For a personal tool, keep persistence minimal:
-
-| Data | Storage | Rationale |
-|------|---------|-----------|
-| Uploaded files | Temp only (delete after parsing) | User has originals |
-| Extracted text | Optional: SQLite or JSON file | Enables re-analysis without re-upload |
-| Analysis results | SQLite or JSON file | Enables viewing past analyses |
-| Project type configs | Code (TypeScript objects) | Changes with code deploys |
-| Prompt templates | Code (TypeScript template literals) | Core IP, version controlled |
-
-**If you want history:** Use SQLite (via better-sqlite3 or Drizzle + SQLite) for storing past analyses. It is a single file, zero infrastructure, perfect for a personal tool.
-
-**If you do not want history:** Store nothing. The app is purely functional: upload -> analyze -> view -> done.
-
-**Recommendation:** Start with no persistence. Add SQLite later if the "view past analyses" feature becomes valuable.
+### Anti-Pattern 4: Removing the Normalizer Layer
+**What:** Deleting `report-normalization.ts` because card workspaces replace on-screen rendering.
+**Why bad:** The normalizer layer is still needed for PDF/DOCX export via `render-document-html.ts` and for generated documents.
+**Instead:** Keep both paths. Cards for screen, Tiptap for export.
 
 ## Suggested Build Order
 
-Build order follows the data flow pipeline, with each layer testable independently:
+Build order is driven by dependencies:
 
-```
-Phase 1: Core Pipeline (Vertical Slice)
-  1. Project Type Registry (config objects)
-  2. File Upload Handler (single file type: plain text)
-  3. Text Parser (plain text pass-through)
-  4. Prompt Assembler (one project type: documentary)
-  5. LLM Client (basic Claude API call, no streaming)
-  6. Basic Report View (render JSON as formatted text)
-  --> Deliverable: Upload a TXT transcript, get documentary analysis
+### Phase 1: Theme System (no dependencies on other features)
+1. Install `next-themes`
+2. Create `ThemeProvider` wrapper in `providers.tsx`
+3. Update `layout.tsx` (remove hardcoded dark, add `suppressHydrationWarning`)
+4. Create `ThemeToggle` component
+5. Add to `AppTopNav`
+6. Add brand CSS variables to `globals.css`
+7. Audit and replace hardcoded colors in existing components
 
-Phase 2: File Format Support
-  7. PDF Parser
-  8. FDX Parser
-  9. File type validation per project type
-  --> Deliverable: All file formats working
+**Why first:** Zero risk to existing functionality. Purely additive. Establishes the visual foundation that card workspaces will use.
 
-Phase 3: All Project Types
-  10. Narrative film prompts + analysis
-  11. TV/episodic prompts + analysis
-  12. Short-form/branded prompts + analysis
-  13. Corporate interview prompts + analysis
-  --> Deliverable: All project types producing analysis
+### Phase 2: Card Workspaces (depends on theme for consistent styling)
+1. Extract shared sub-components from `NarrativeReport` into `workspaces/shared.tsx`
+2. Move `NarrativeReport` to `workspaces/narrative-workspace.tsx` (refactor, keep behavior)
+3. Create `AnalysisWorkspace` dispatcher and workspace registry
+4. Build remaining 4 workspace components (documentary, corporate, tv-episodic, short-form)
+5. Integrate `AnalysisWorkspace` into `page.tsx`
+6. Adjust `DocumentWorkspace` to only handle generated docs (remove report tab)
 
-Phase 4: Output Generation
-  14. PDF report generation
-  15. Document generation (treatments, outlines, shot lists)
-  16. Download functionality
-  --> Deliverable: Downloadable outputs
+**Why second:** The schemas and normalizers already exist as a reference for what each workspace must display. The pattern is proven by `NarrativeReport`. This is mostly feature work, not infrastructure.
 
-Phase 5: Polish
-  17. Streaming/progressive display
-  18. Error handling and retry UX
-  19. Analysis history (if desired)
-  20. Prompt iteration and quality tuning
-  --> Deliverable: Production-quality personal tool
-```
+### Phase 3: Library Persistence (depends on workspaces for "open saved analysis" flow)
+1. Install `dexie`
+2. Create `db.ts` and `schema.ts`
+3. Create `LibraryContext` with CRUD operations
+4. Add `LibraryProvider` to `providers.tsx`
+5. Add `sourceFileName` tracking to `WorkspaceContext`
+6. Add auto-save after analysis completion in `page.tsx`
+7. Build Library page at `/dashboard`
+8. Add `loadFromSaved` to `WorkspaceContext` for opening saved analyses
+9. Wire up "open from Library" navigation flow
 
-**Build order rationale:**
-- Phase 1 proves the entire pipeline works end-to-end with the simplest possible inputs
-- Phase 2 adds file format complexity (isolated from analysis logic)
-- Phase 3 is prompt engineering work (isolated from infrastructure)
-- Phase 4 is output formatting (requires analysis to be working first)
-- Phase 5 is polish that requires everything else to be stable
-
-## Handling Different File Types
-
-| Format | Parser Library | Structural Info Available | Notes |
-|--------|---------------|--------------------------|-------|
-| Plain text (.txt) | None (pass-through) | None | Simplest path. Good for transcripts. |
-| PDF (.pdf) | `pdf-parse` (wraps pdf.js) | Page breaks | Works well for text-based screenplay PDFs. Scanned PDFs will fail -- out of scope for v1. |
-| Final Draft (.fdx) | Custom XML parser (xml2js or fast-xml-parser) | Scene headings, character names, dialogue vs. action, transitions | Richest format. Preserving structure in the extracted text improves analysis quality significantly. |
-
-**FDX parsing detail:** FDX is XML with elements like `<Paragraph Type="Scene Heading">`, `<Paragraph Type="Character">`, `<Paragraph Type="Dialogue">`. Parse these into a structured intermediate format, then serialize to text that preserves formatting:
-
-```
-## SCENE: INT. OFFICE - DAY
-
-SARAH
-(excited)
-Did you see the report?
-
-Action: Sarah crosses to the window and looks out.
-```
-
-This structured text format gives the LLM much better context than raw extracted text.
-
-## Prompt Organization Strategy
-
-```
-/prompts
-  /documentary
-    interview-mining.ts       # Best quotes, key moments, themes
-    thematic-analysis.ts      # Recurring themes, narrative threads
-    narrative-arc.ts          # Story arc in the raw material
-  /narrative
-    story-coverage.ts         # Traditional script coverage
-    structure-analysis.ts     # Act breaks, turning points, pacing
-    character-analysis.ts     # Character arcs, relationships
-    dialogue-analysis.ts      # Dialogue quality, voice distinctiveness
-  /tv-episodic
-    episode-structure.ts      # Cold open, act breaks, cliffhangers
-    series-arc.ts             # Season-level story tracking
-  /short-form
-    message-clarity.ts        # Is the core message landing?
-    pacing-analysis.ts        # Timing for short format
-  /corporate-interview
-    quote-extraction.ts       # Best soundbites
-    topic-coverage.ts         # Did they cover all needed topics?
-  /shared
-    system-prompts.ts         # Shared system prompt fragments
-    output-schemas.ts         # Zod schemas for all output types
-```
-
-Each prompt file exports a function that takes extracted text + metadata and returns a complete LLM request. This makes prompts testable and iterable independently.
+**Why third:** Persistence is the most self-contained feature but needs the workspace rendering to be in place so that opening a saved analysis displays correctly in the card-based format.
 
 ## Scalability Considerations
 
-| Concern | At 1 user (v1) | If scaled later |
-|---------|----------------|-----------------|
-| File storage | Temp files, delete after processing | Object storage (S3) |
-| Analysis queue | Direct API calls, wait for response | Job queue (BullMQ) |
-| LLM costs | Pay-per-use, monitor manually | Rate limiting, usage caps |
-| History | Optional SQLite | PostgreSQL |
-| Auth | None needed | NextAuth.js |
+| Concern | At 10 analyses | At 100 analyses | At 1000 analyses |
+|---------|----------------|-----------------|------------------|
+| IndexedDB storage | Trivial (~5MB) | Fine (~50MB) | May need cleanup UI (~500MB) |
+| Library page rendering | Simple list | Paginate or virtual scroll | Virtual scroll + search |
+| Memory (open analysis) | Fine | Fine (only 1 loaded at a time) | Fine |
 
-**Key insight:** This is a personal tool. Do not build for scale. Build for simplicity and iteration speed on prompts. If it becomes a product later, the component boundaries support scaling each piece independently.
+For a personal tool, 100 analyses is the likely ceiling. No virtual scrolling needed in v1.1. Simple date-sorted list is sufficient.
 
 ## Sources
 
-- Architecture patterns based on established document processing pipeline designs (MEDIUM confidence -- well-known patterns, but not verified against specific current library versions)
-- FDX format structure based on Final Draft XML specification (HIGH confidence -- stable format)
-- PDF parsing approach based on pdf-parse/pdf.js ecosystem (MEDIUM confidence -- library is mature and widely used, but version specifics not verified)
-- LLM integration patterns based on Anthropic Claude API design (MEDIUM confidence -- API is stable, but should verify current SDK features at implementation time)
+- [next-themes GitHub](https://github.com/pacocoursey/next-themes) -- HIGH confidence, de facto standard for Next.js dark mode
+- [shadcn/ui dark mode docs](https://ui.shadcn.com/docs/dark-mode/next) -- HIGH confidence, official docs recommending next-themes
+- [Dark mode in Next.js 15 + Tailwind v4](https://www.sujalvanjare.com/blog/dark-mode-nextjs15-tailwind-v4) -- MEDIUM confidence, community guide confirming approach
+- [Dexie.js](https://dexie.org/) -- HIGH confidence, mature IndexedDB wrapper with TypeScript support
+- [Next.js + IndexedDB pattern](https://oluwadaprof.medium.com/building-an-offline-first-pwa-notes-app-with-next-js-indexeddb-and-supabase-f861aa3a06f9) -- MEDIUM confidence, reference architecture for client-side persistence
