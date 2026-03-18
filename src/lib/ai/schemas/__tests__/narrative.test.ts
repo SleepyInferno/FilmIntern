@@ -58,6 +58,16 @@ const validAnalysis = {
     overallStrengths: ['Compelling central mystery', 'Strong dialogue craft', 'Well-drawn protagonist'],
     overallWeaknesses: ['Second act pacing', 'Rushed resolution', 'Underdeveloped antagonist'],
   },
+  themes: {
+    centralThemes: ['Family loyalty vs. justice', 'Truth and its consequences'],
+    emotionalResonance: 'The script effectively evokes tension and emotional conflict through the central mystery.',
+    audienceImpact: 'Viewers will leave questioning the nature of loyalty and what it means to protect family.',
+  },
+  developmentRecommendations: [
+    'Establish protagonist\'s motivation in the opening scene to anchor the audience earlier',
+    'Tighten the second act by cutting the repetitive dialogue scenes between pages 60-75',
+    'Develop the antagonist with a scene showing their perspective',
+  ],
 };
 
 describe('narrativeAnalysisSchema', () => {
