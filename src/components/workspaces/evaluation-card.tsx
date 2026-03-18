@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import type React from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardAction } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -23,9 +22,16 @@ export function EvaluationCard({ title, ready, children, className }: Evaluation
         className="cursor-pointer"
         onClick={() => setCollapsed(!collapsed)}
       >
-        <CardTitle>{title}</CardTitle>
+        <CardTitle className="text-base font-semibold">{title}</CardTitle>
         <CardAction>
-          <button aria-label={collapsed ? 'Expand card' : 'Collapse card'}>
+          <button
+            aria-label={collapsed ? 'Expand card' : 'Collapse card'}
+            className="p-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              setCollapsed(!collapsed);
+            }}
+          >
             {collapsed ? (
               <ChevronDown className="h-4 w-4" />
             ) : (
@@ -35,19 +41,17 @@ export function EvaluationCard({ title, ready, children, className }: Evaluation
         </CardAction>
       </CardHeader>
       {!collapsed && (
-        <div className="overflow-hidden">
-          <CardContent>
-            {ready ? (
-              children
-            ) : (
-              <div className="space-y-3">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-              </div>
-            )}
-          </CardContent>
-        </div>
+        <CardContent className="overflow-hidden">
+          {ready ? (
+            children
+          ) : (
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          )}
+        </CardContent>
       )}
     </Card>
   );
