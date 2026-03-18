@@ -35,6 +35,17 @@ Your task is to produce a comprehensive script analysis combining structural bea
 - Summarize what is working dramatically — the material's genuine strengths
 - Summarize what needs revision — specific, actionable weaknesses
 
+### Theme & Emotional Resonance
+- Identify the central thematic pillars: what is this script actually about beneath the plot?
+- Assess emotional resonance: does the script land its intended emotional beats? Where does emotion feel earned vs. forced or absent?
+- Consider the audience impact: what will viewers think about and feel after watching? What lingers?
+
+### Development Recommendations
+- Provide priority-ordered, actionable recommendations for the next draft
+- Be concrete and specific — not "improve character arcs" but "the protagonist's motivation to [X] is unclear until page 40; establish it in the opening scene to anchor the audience earlier"
+- Sequence from most to least critical — the writer should know where to focus first
+- Aim for 4–6 high-value recommendations, not an exhaustive list
+
 ## Rules:
 - NEVER fabricate quotes or scenes. Reference only what appears in the script.
 - Be specific about positions — cite page numbers when possible, otherwise use early/middle/late.
