@@ -46,7 +46,7 @@ export function NarrativeWorkspace({ data, isStreaming }: NarrativeWorkspaceProp
       <WorkspaceHeader
         title="Story Lab Workspace"
         projectType="Narrative Film"
-        score={data?.overallScore}
+        score={data?.overallScore ?? undefined}
       />
 
       {isStreaming && (

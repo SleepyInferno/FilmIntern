@@ -8,7 +8,6 @@ import { useTheme } from 'next-themes';
 import { applyAccentColor, getStoredAccent } from '@/lib/theme';
 
 const navItems = [
-  { label: 'Projects', href: '/' },
   { label: 'Dashboard', href: '/dashboard' },
   { label: 'Shot Lists', href: '/shot-lists' },
   { label: 'Image Prompts', href: '/image-prompts' },

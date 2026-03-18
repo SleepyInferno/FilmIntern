@@ -42,3 +42,8 @@ next-env.d.ts
 
 # filmintern settings
 .filmintern/
+
+# database
+/dev.db
+/dev.db-shm
+/dev.db-wal

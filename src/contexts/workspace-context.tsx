@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useMemo,
+  useCallback,
   type Dispatch,
   type SetStateAction,
   type ReactNode,
@@ -17,7 +18,17 @@ export interface UploadData {
   metadata: ParseResult['metadata'];
 }
 
+export interface ProjectListItem {
+  id: string;
+  title: string;
+  projectType: string;
+  fileName: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface WorkspaceState {
+  currentProjectId: string | null;
   projectType: string;
   inputType: string;
   uploadData: UploadData | null;
@@ -29,9 +40,11 @@ interface WorkspaceState {
   activeDocumentId: string;
   title: string;
   writtenBy: string;
+  isNewProjectMode: boolean;
 }
 
 interface WorkspaceActions {
+  setCurrentProjectId: Dispatch<SetStateAction<string | null>>;
   setProjectType: Dispatch<SetStateAction<string>>;
   setInputType: Dispatch<SetStateAction<string>>;
   setUploadData: Dispatch<SetStateAction<UploadData | null>>;
@@ -43,11 +56,21 @@ interface WorkspaceActions {
   setActiveDocumentId: Dispatch<SetStateAction<string>>;
   setTitle: Dispatch<SetStateAction<string>>;
   setWrittenBy: Dispatch<SetStateAction<string>>;
+  setIsNewProjectMode: Dispatch<SetStateAction<boolean>>;
+  resetWorkspace: () => void;
+  loadProject: (id: string) => Promise<void>;
+  saveAnalysis: (projectId: string, data: {
+    uploadData: UploadData;
+    analysisData: Record<string, unknown>;
+    reportDocument: GeneratedDocument;
+  }) => Promise<void>;
+  saveGeneratedDocuments: (projectId: string, docs: GeneratedDocument[]) => Promise<void>;
 }
 
 const WorkspaceContext = createContext<(WorkspaceState & WorkspaceActions) | null>(null);
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [projectType, setProjectType] = useState('documentary');
   const [inputType, setInputType] = useState('script-storyboard');
   const [uploadData, setUploadData] = useState<UploadData | null>(null);
@@ -57,11 +80,64 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [reportDocument, setReportDocument] = useState<GeneratedDocument | null>(null);
   const [generatedDocuments, setGeneratedDocuments] = useState<GeneratedDocument[]>([]);
   const [activeDocumentId, setActiveDocumentId] = useState('');
-  const [title, setTitle] = useState('Untitled');
+  const [title, setTitle] = useState('');
   const [writtenBy, setWrittenBy] = useState('FilmIntern');
+  const [isNewProjectMode, setIsNewProjectMode] = useState(false);
+
+  const resetWorkspace = useCallback(() => {
+    setCurrentProjectId(null);
+    setUploadData(null);
+    setAnalysisData(null);
+    setIsAnalyzing(false);
+    setAnalysisError(null);
+    setReportDocument(null);
+    setGeneratedDocuments([]);
+    setActiveDocumentId('');
+    setTitle('');
+    setIsNewProjectMode(false);
+  }, []);
+
+  const loadProject = useCallback(async (id: string) => {
+    const res = await fetch(`/api/projects/${id}`);
+    if (!res.ok) return;
+    const project = await res.json();
+
+    setCurrentProjectId(project.id);
+    setProjectType(project.projectType);
+    setTitle(project.title);
+    setUploadData(project.uploadData ? JSON.parse(project.uploadData) : null);
+    setAnalysisData(project.analysisData ? JSON.parse(project.analysisData) : null);
+    setReportDocument(project.reportDocument ? JSON.parse(project.reportDocument) : null);
+    const docs: GeneratedDocument[] = project.generatedDocuments ? JSON.parse(project.generatedDocuments) : [];
+    setGeneratedDocuments(docs);
+    setActiveDocumentId(project.reportDocument ? JSON.parse(project.reportDocument).id : docs[0]?.id ?? '');
+    setAnalysisError(null);
+    setIsAnalyzing(false);
+    setIsNewProjectMode(false);
+  }, []);
+
+  const saveAnalysis = useCallback(async (
+    projectId: string,
+    data: { uploadData: UploadData; analysisData: Record<string, unknown>; reportDocument: GeneratedDocument }
+  ) => {
+    await fetch(`/api/projects/${projectId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  }, []);
+
+  const saveGeneratedDocuments = useCallback(async (projectId: string, docs: GeneratedDocument[]) => {
+    await fetch(`/api/projects/${projectId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ generatedDocuments: docs }),
+    });
+  }, []);
 
   const value = useMemo(
     () => ({
+      currentProjectId,
       projectType,
       inputType,
       uploadData,
@@ -73,6 +149,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       activeDocumentId,
       title,
       writtenBy,
+      isNewProjectMode,
+      setCurrentProjectId,
       setProjectType,
       setInputType,
       setUploadData,
@@ -84,8 +162,14 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       setActiveDocumentId,
       setTitle,
       setWrittenBy,
+      setIsNewProjectMode,
+      resetWorkspace,
+      loadProject,
+      saveAnalysis,
+      saveGeneratedDocuments,
     }),
     [
+      currentProjectId,
       projectType,
       inputType,
       uploadData,
@@ -97,6 +181,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       activeDocumentId,
       title,
       writtenBy,
+      isNewProjectMode,
+      resetWorkspace,
+      loadProject,
+      saveAnalysis,
+      saveGeneratedDocuments,
     ]
   );
 

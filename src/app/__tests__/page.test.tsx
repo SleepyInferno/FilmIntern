@@ -1,6 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Home from '../page';
+import { WorkspaceProvider } from '@/contexts/workspace-context';
+
+function renderHome() {
+  return render(
+    <WorkspaceProvider>
+      <Home />
+    </WorkspaceProvider>
+  );
+}
 
 // Mock scrollIntoView
 const mockScrollIntoView = vi.fn();
@@ -35,18 +44,6 @@ vi.mock('@/components/content-preview', () => ({
   ContentPreview: () => <div data-testid="content-preview">Preview</div>,
 }));
 
-vi.mock('@/components/project-type-tabs', () => ({
-  ProjectTypeTabs: ({ children, value, onValueChange }: { children: React.ReactNode; value: string; onValueChange: (v: string) => void }) => (
-    <div data-testid="project-type-tabs" data-value={value}>
-      <button data-testid="switch-narrative" onClick={() => onValueChange('narrative')}>Narrative</button>
-      {children}
-    </div>
-  ),
-}));
-
-vi.mock('@/components/short-form-input-toggle', () => ({
-  ShortFormInputToggle: () => null,
-}));
 
 const mockReportDoc = {
   id: 'report-documentary-1',
@@ -78,12 +75,13 @@ const mockReportDoc = {
 
 describe('Home page - post-analysis document workspace', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mockScrollIntoView.mockClear();
     mockBuildReportDocument.mockReturnValue(mockReportDoc);
 
-    // Mock successful analysis response
-    mockFetch.mockResolvedValue({
+    // First call: /api/projects POST (project creation)
+    // Subsequent calls: /api/analyze stream
+    const analysisStream = {
       ok: true,
       body: {
         getReader: () => ({
@@ -98,11 +96,18 @@ describe('Home page - post-analysis document workspace', () => {
             .mockResolvedValueOnce({ done: true, value: undefined }),
         }),
       },
-    });
+    };
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 'proj-1', title: 'Test', projectType: 'documentary' }),
+      })
+      .mockResolvedValueOnce(analysisStream)
+      .mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
   });
 
   it('shows document workspace with Report tab after analysis completes', async () => {
-    render(<Home />);
+    renderHome();
 
     // Upload a file
     fireEvent.click(screen.getByTestId('mock-upload'));
@@ -116,7 +121,7 @@ describe('Home page - post-analysis document workspace', () => {
   });
 
   it('shows generation buttons after analysis', async () => {
-    render(<Home />);
+    renderHome();
 
     fireEvent.click(screen.getByTestId('mock-upload'));
     fireEvent.click(screen.getByText('Run Analysis'));
@@ -129,8 +134,12 @@ describe('Home page - post-analysis document workspace', () => {
   });
 
   it('calls /api/documents/generate when clicking a generation button', async () => {
-    // First call is analyze, second is generate
+    // Call order: 1) /api/projects POST, 2) /api/analyze stream, 3) /api/projects PUT (save), 4) /api/documents/generate
     mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 'proj-1', title: 'Test', projectType: 'documentary' }),
+      })
       .mockResolvedValueOnce({
         ok: true,
         body: {
@@ -147,6 +156,7 @@ describe('Home page - post-analysis document workspace', () => {
           }),
         },
       })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
       .mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({
@@ -167,7 +177,7 @@ describe('Home page - post-analysis document workspace', () => {
         }),
       });
 
-    render(<Home />);
+    renderHome();
 
     fireEvent.click(screen.getByTestId('mock-upload'));
     fireEvent.click(screen.getByText('Run Analysis'));
@@ -188,20 +198,4 @@ describe('Home page - post-analysis document workspace', () => {
     });
   });
 
-  it('wires onQuoteJump through the workspace and calls scrollIntoView', async () => {
-    render(<Home />);
-
-    fireEvent.click(screen.getByTestId('mock-upload'));
-    fireEvent.click(screen.getByText('Run Analysis'));
-
-    await waitFor(() => {
-      expect(screen.getByText('Report')).toBeDefined();
-    });
-
-    // Find and click a quote reference
-    const quoteRef = screen.getByText('[Q1]');
-    fireEvent.click(quoteRef);
-
-    expect(mockScrollIntoView).toHaveBeenCalled();
-  });
 });

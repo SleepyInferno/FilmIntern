@@ -11,7 +11,6 @@ import { NarrativeWorkspace } from '@/components/workspaces/narrative-workspace'
 import { DocumentaryWorkspace } from '@/components/workspaces/documentary-workspace';
 import { CorporateWorkspace } from '@/components/workspaces/corporate-workspace';
 import { TvWorkspace } from '@/components/workspaces/tv-workspace';
-import { ShortFormWorkspace } from '@/components/workspaces/short-form-workspace';
 import type {
   GeneratedDocument,
   DocumentKind,
@@ -21,7 +20,6 @@ import type { NarrativeAnalysis } from '@/lib/ai/schemas/narrative';
 import type { DocumentaryAnalysis } from '@/lib/ai/schemas/documentary';
 import type { CorporateAnalysis } from '@/lib/ai/schemas/corporate';
 import type { TvEpisodicAnalysis } from '@/lib/ai/schemas/tv-episodic';
-import type { ShortFormAnalysis } from '@/lib/ai/schemas/short-form';
 
 interface DocumentWorkspaceProps {
   projectType: string;
@@ -51,8 +49,6 @@ function WorkspaceForType({ projectType, data, isStreaming }: {
       return <CorporateWorkspace data={data as Partial<CorporateAnalysis> | null} isStreaming={isStreaming} />;
     case 'tv-episodic':
       return <TvWorkspace data={data as Partial<TvEpisodicAnalysis> | null} isStreaming={isStreaming} />;
-    case 'short-form':
-      return <ShortFormWorkspace data={data as Partial<ShortFormAnalysis> | null} isStreaming={isStreaming} />;
     default:
       return <DocumentaryWorkspace data={data as Partial<DocumentaryAnalysis> | null} isStreaming={isStreaming} />;
   }
