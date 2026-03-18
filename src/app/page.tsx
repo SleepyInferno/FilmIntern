@@ -6,6 +6,11 @@ import { FileDropzone } from '@/components/file-dropzone';
 import { ContentPreview } from '@/components/content-preview';
 import { DocumentWorkspace } from '@/components/document-workspace';
 import { ShortFormInputToggle } from '@/components/short-form-input-toggle';
+import { NarrativeWorkspace } from '@/components/workspaces/narrative-workspace';
+import { DocumentaryWorkspace } from '@/components/workspaces/documentary-workspace';
+import { CorporateWorkspace } from '@/components/workspaces/corporate-workspace';
+import { TvWorkspace } from '@/components/workspaces/tv-workspace';
+import { ShortFormWorkspace } from '@/components/workspaces/short-form-workspace';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -14,6 +19,32 @@ import { buildReportDocument } from '@/lib/documents/report-document';
 import { useWorkspace } from '@/contexts/workspace-context';
 import type { GeneratedDocument, DocumentKind, ExportFormat } from '@/lib/documents/types';
 import type { AnalysisReportKind } from '@/lib/documents/report-normalization';
+import type { NarrativeAnalysis } from '@/lib/ai/schemas/narrative';
+import type { DocumentaryAnalysis } from '@/lib/ai/schemas/documentary';
+import type { CorporateAnalysis } from '@/lib/ai/schemas/corporate';
+import type { TvEpisodicAnalysis } from '@/lib/ai/schemas/tv-episodic';
+import type { ShortFormAnalysis } from '@/lib/ai/schemas/short-form';
+
+function WorkspaceForType({ projectType, data, isStreaming }: {
+  projectType: string;
+  data: Record<string, unknown> | null;
+  isStreaming: boolean;
+}) {
+  switch (projectType) {
+    case 'narrative':
+      return <NarrativeWorkspace data={data as Partial<NarrativeAnalysis> | null} isStreaming={isStreaming} />;
+    case 'documentary':
+      return <DocumentaryWorkspace data={data as Partial<DocumentaryAnalysis> | null} isStreaming={isStreaming} />;
+    case 'corporate':
+      return <CorporateWorkspace data={data as Partial<CorporateAnalysis> | null} isStreaming={isStreaming} />;
+    case 'tv-episodic':
+      return <TvWorkspace data={data as Partial<TvEpisodicAnalysis> | null} isStreaming={isStreaming} />;
+    case 'short-form':
+      return <ShortFormWorkspace data={data as Partial<ShortFormAnalysis> | null} isStreaming={isStreaming} />;
+    default:
+      return <DocumentaryWorkspace data={data as Partial<DocumentaryAnalysis> | null} isStreaming={isStreaming} />;
+  }
+}
 
 function getReportKind(projectType: string): AnalysisReportKind {
   switch (projectType) {
@@ -265,13 +296,17 @@ export default function Home() {
             onUpdateDocument={handleUpdateDocument}
             onQuoteJump={handleQuoteJump}
             onExport={handleExport}
+            analysisData={analysisData}
+            workspaceProjectType={projectType}
           />
         )}
 
         {isAnalyzing && (
-          <p className="text-sm text-muted-foreground">
-            Analyzing your material...
-          </p>
+          <WorkspaceForType
+            projectType={projectType}
+            data={analysisData}
+            isStreaming={true}
+          />
         )}
       </div>
     </ProjectTypeTabs>

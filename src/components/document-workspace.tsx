@@ -1,16 +1,27 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, Fragment } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
 import { getAvailableDocumentKinds } from '@/lib/documents/availability';
+import { NarrativeWorkspace } from '@/components/workspaces/narrative-workspace';
+import { DocumentaryWorkspace } from '@/components/workspaces/documentary-workspace';
+import { CorporateWorkspace } from '@/components/workspaces/corporate-workspace';
+import { TvWorkspace } from '@/components/workspaces/tv-workspace';
+import { ShortFormWorkspace } from '@/components/workspaces/short-form-workspace';
 import type {
   GeneratedDocument,
   DocumentKind,
   ExportFormat,
 } from '@/lib/documents/types';
+import type { NarrativeAnalysis } from '@/lib/ai/schemas/narrative';
+import type { DocumentaryAnalysis } from '@/lib/ai/schemas/documentary';
+import type { CorporateAnalysis } from '@/lib/ai/schemas/corporate';
+import type { TvEpisodicAnalysis } from '@/lib/ai/schemas/tv-episodic';
+import type { ShortFormAnalysis } from '@/lib/ai/schemas/short-form';
 
 interface DocumentWorkspaceProps {
   projectType: string;
@@ -22,6 +33,29 @@ interface DocumentWorkspaceProps {
   onUpdateDocument: (id: string, content: Record<string, unknown>) => void;
   onQuoteJump: (quoteId: string) => void;
   onExport: (format: ExportFormat, document: GeneratedDocument) => Promise<void> | void;
+  analysisData?: Record<string, unknown> | null;
+  workspaceProjectType?: string;
+}
+
+function WorkspaceForType({ projectType, data, isStreaming }: {
+  projectType: string;
+  data: Record<string, unknown> | null;
+  isStreaming: boolean;
+}) {
+  switch (projectType) {
+    case 'narrative':
+      return <NarrativeWorkspace data={data as Partial<NarrativeAnalysis> | null} isStreaming={isStreaming} />;
+    case 'documentary':
+      return <DocumentaryWorkspace data={data as Partial<DocumentaryAnalysis> | null} isStreaming={isStreaming} />;
+    case 'corporate':
+      return <CorporateWorkspace data={data as Partial<CorporateAnalysis> | null} isStreaming={isStreaming} />;
+    case 'tv-episodic':
+      return <TvWorkspace data={data as Partial<TvEpisodicAnalysis> | null} isStreaming={isStreaming} />;
+    case 'short-form':
+      return <ShortFormWorkspace data={data as Partial<ShortFormAnalysis> | null} isStreaming={isStreaming} />;
+    default:
+      return <DocumentaryWorkspace data={data as Partial<DocumentaryAnalysis> | null} isStreaming={isStreaming} />;
+  }
 }
 
 function kindLabel(kind: Exclude<DocumentKind, 'report'>): string {
@@ -32,6 +66,17 @@ function kindLabel(kind: Exclude<DocumentKind, 'report'>): string {
       return 'Generate Treatment';
     case 'proposal':
       return 'Generate Proposal';
+  }
+}
+
+function kindShortLabel(kind: Exclude<DocumentKind, 'report'>): string {
+  switch (kind) {
+    case 'outline':
+      return 'Outline';
+    case 'treatment':
+      return 'Treatment';
+    case 'proposal':
+      return 'Proposal';
   }
 }
 
@@ -57,28 +102,76 @@ function QuoteRefList({ quoteRefs, onQuoteClick }: QuoteRefListProps) {
   );
 }
 
+function DocumentCoverHeader({ cover }: { cover: GeneratedDocument['cover'] }) {
+  const date = new Date(cover.dateLabel).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  return (
+    <div className="mb-6 pb-4 border-b">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+        {cover.projectTypeLabel} · {cover.typeLabel}
+      </p>
+      <h1 className="text-xl font-semibold leading-tight">{cover.title}</h1>
+      <p className="text-sm text-muted-foreground mt-1">
+        {cover.writtenBy} · {date}
+      </p>
+    </div>
+  );
+}
+
+function renderTextNode(node: Record<string, unknown>, i: number) {
+  const text = (node.text as string) ?? '';
+  const marks = (node.marks as Array<{ type: string }>) ?? [];
+  if (marks.some((m) => m.type === 'bold')) {
+    return <strong key={i}>{text}</strong>;
+  }
+  return <Fragment key={i}>{text}</Fragment>;
+}
+
+function renderNode(node: Record<string, unknown>, i: number) {
+  const type = node.type as string;
+  const children = (node.content as Array<Record<string, unknown>>) ?? [];
+
+  if (type === 'heading') {
+    const level = (node.attrs as { level: number })?.level ?? 2;
+    const Tag = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+    return <Tag key={i}>{children.map(renderTextNode)}</Tag>;
+  }
+  if (type === 'paragraph') {
+    if (children.length === 0) return null;
+    return <p key={i}>{children.map(renderTextNode)}</p>;
+  }
+  if (type === 'bulletList') {
+    return <ul key={i}>{children.map((child, j) => renderNode(child, j))}</ul>;
+  }
+  if (type === 'listItem') {
+    return (
+      <li key={i}>
+        {children.map((child, j) => {
+          if (child.type === 'paragraph') {
+            const textNodes = (child.content as Array<Record<string, unknown>>) ?? [];
+            return <Fragment key={j}>{textNodes.map(renderTextNode)}</Fragment>;
+          }
+          return renderNode(child, j);
+        })}
+      </li>
+    );
+  }
+  return null;
+}
+
 interface TiptapContentProps {
   content: Record<string, unknown>;
   quoteRefs: GeneratedDocument['quoteRefs'];
 }
 
 function TiptapContentRenderer({ content, quoteRefs }: TiptapContentProps) {
-  const nodes = (content as { type: string; content?: Array<Record<string, unknown>> }).content ?? [];
+  const nodes = (content as { content?: Array<Record<string, unknown>> }).content ?? [];
   return (
     <div className="prose prose-sm max-w-none">
-      {nodes.map((node, i) => {
-        const nodeType = node.type as string;
-        const textContent = ((node.content as Array<{ text?: string }>) ?? [])
-          .map((c) => c.text ?? '')
-          .join('');
-
-        if (nodeType === 'heading') {
-          const level = (node.attrs as { level: number })?.level ?? 2;
-          const HeadingTag = (`h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6');
-          return <HeadingTag key={i}>{textContent}</HeadingTag>;
-        }
-        return <p key={i}>{textContent}</p>;
-      })}
+      {nodes.map((node, i) => renderNode(node, i))}
       {quoteRefs.map((ref) => (
         <span
           key={ref.id}
@@ -103,6 +196,8 @@ export function DocumentWorkspace({
   onUpdateDocument,
   onQuoteJump,
   onExport,
+  analysisData,
+  workspaceProjectType,
 }: DocumentWorkspaceProps) {
   const [exportOpen, setExportOpen] = useState(false);
   const [generatingKind, setGeneratingKind] = useState<Exclude<DocumentKind, 'report'> | null>(null);
@@ -224,8 +319,10 @@ export function DocumentWorkspace({
 
       {/* Tabs */}
       <Tabs
-        value={activeDocumentId}
-        onValueChange={(v) => onActiveDocumentChange(v as string)}
+        value={generatingKind !== null ? '__generating__' : activeDocumentId}
+        onValueChange={(v) => {
+          if (v !== '__generating__') onActiveDocumentChange(v);
+        }}
       >
         <TabsList>
           <TabsTrigger value={reportDocument.id}>Report</TabsTrigger>
@@ -234,27 +331,43 @@ export function DocumentWorkspace({
               {doc.cover.typeLabel}
             </TabsTrigger>
           ))}
+          {generatingKind !== null && (
+            <TabsTrigger value="__generating__">
+              <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+              {kindShortLabel(generatingKind)}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value={reportDocument.id}>
-          <Card>
-            <CardContent className="pt-4">
-              <QuoteRefList
-                quoteRefs={reportDocument.quoteRefs}
-                onQuoteClick={handleQuoteClick}
-              />
-              <TiptapContentRenderer
-                content={reportDocument.content}
-                quoteRefs={reportDocument.quoteRefs}
-              />
-            </CardContent>
-          </Card>
+          {analysisData && workspaceProjectType ? (
+            <WorkspaceForType
+              projectType={workspaceProjectType}
+              data={analysisData}
+              isStreaming={false}
+            />
+          ) : (
+            <Card>
+              <CardContent className="pt-4">
+                <DocumentCoverHeader cover={reportDocument.cover} />
+                <QuoteRefList
+                  quoteRefs={reportDocument.quoteRefs}
+                  onQuoteClick={handleQuoteClick}
+                />
+                <TiptapContentRenderer
+                  content={reportDocument.content}
+                  quoteRefs={reportDocument.quoteRefs}
+                />
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {generatedDocuments.map((doc) => (
           <TabsContent key={doc.id} value={doc.id}>
             <Card>
               <CardContent className="pt-4">
+                <DocumentCoverHeader cover={doc.cover} />
                 <QuoteRefList
                   quoteRefs={doc.quoteRefs}
                   onQuoteClick={handleQuoteClick}
@@ -275,6 +388,32 @@ export function DocumentWorkspace({
             </Card>
           </TabsContent>
         ))}
+
+        {generatingKind !== null && (
+          <TabsContent value="__generating__">
+            <Card>
+              <CardContent className="pt-4 space-y-3">
+                <Skeleton className="h-5 w-1/2" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+                <div className="pt-1">
+                  <Skeleton className="h-5 w-1/3" />
+                </div>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-4/5" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/5" />
+                <div className="pt-1">
+                  <Skeleton className="h-5 w-2/5" />
+                </div>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
