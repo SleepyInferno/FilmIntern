@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppTopNav } from "@/components/app-topnav";
 import { Providers } from "./providers";
+import { ACCENT_FLASH_SCRIPT } from "@/lib/theme";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -21,26 +22,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: ACCENT_FLASH_SCRIPT }} />
+      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <Providers>
-          <div className="flex h-screen">
-            <AppSidebar />
-            <div className="flex-1 flex flex-col min-w-0">
-              {/* Breadcrumb bar */}
-              <div className="h-12 border-b border-border flex items-center justify-between px-8 shrink-0">
-                <span className="text-sm font-semibold text-foreground">
-                  Projects
-                </span>
-                <div className="w-8 h-8 rounded-full bg-muted" />
+          <div className="flex flex-col h-screen">
+            <AppTopNav />
+            <main className="flex-1 overflow-y-auto">
+              <div className="max-w-[1200px] mx-auto px-8 py-6">
+                {children}
               </div>
-              {/* Main content */}
-              <main className="flex-1 overflow-y-auto">
-                <div className="max-w-[1200px] mx-auto px-8 py-6">
-                  {children}
-                </div>
-              </main>
-            </div>
+            </main>
           </div>
         </Providers>
       </body>
