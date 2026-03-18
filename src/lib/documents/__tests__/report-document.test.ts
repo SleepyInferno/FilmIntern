@@ -5,7 +5,6 @@ import type { DocumentaryAnalysis } from '@/lib/ai/schemas/documentary';
 import type { CorporateAnalysis } from '@/lib/ai/schemas/corporate';
 import type { NarrativeAnalysis } from '@/lib/ai/schemas/narrative';
 import type { TvEpisodicAnalysis } from '@/lib/ai/schemas/tv-episodic';
-import type { ShortFormAnalysis } from '@/lib/ai/schemas/short-form';
 
 // --- Minimal fixtures ---
 
@@ -116,7 +115,9 @@ const narrativeStructureFixture: NarrativeAnalysis = {
       {
         name: 'Hero',
         role: 'protagonist',
+        roleFunction: null,
         arcAssessment: 'Compelling arc',
+        innerConflict: null,
         strengths: ['Relatable'],
         weaknesses: ['Underdeveloped backstory'],
       },
@@ -147,6 +148,9 @@ const narrativeStructureFixture: NarrativeAnalysis = {
     audienceImpact: 'Leaves viewers reflecting on resilience',
   },
   developmentRecommendations: ['Tighten the Act 2 midpoint', 'Clarify antagonist motivation'],
+  verdict: null,
+  overallScore: null,
+  overallSummary: null,
 };
 
 const tvEpisodicFixture: TvEpisodicAnalysis = {
@@ -203,45 +207,6 @@ const tvEpisodicFixture: TvEpisodicAnalysis = {
   },
 };
 
-const shortFormFixture: ShortFormAnalysis = {
-  summary: {
-    overview: 'A 30-second brand hero spot.',
-    detectedFormat: 'brand-hero',
-    estimatedDuration: '30 seconds',
-    primaryObjective: 'Brand awareness',
-  },
-  hookStrength: {
-    opening: 'Strong visual hook',
-    hookRating: 'scroll-stopping',
-    timeToHook: '2 seconds',
-    suggestions: ['Add sound design'],
-  },
-  pacing: {
-    overall: 'tight',
-    assessment: 'Fast-paced and engaging',
-    deadSpots: [],
-    recommendations: ['Maintain energy'],
-  },
-  messagingClarity: {
-    primaryMessage: 'Brand X leads innovation',
-    clarity: 'crystal-clear',
-    messageRetention: 'High recall expected',
-    improvements: [],
-  },
-  ctaEffectiveness: {
-    hasCta: true,
-    ctaText: 'Visit brandx.com',
-    placement: 'strong-close',
-    urgency: 'compelling',
-    suggestions: [],
-  },
-  emotionalRationalBalance: {
-    balance: 'emotion-led',
-    assessment: 'Emotion drives the piece well',
-    emotionalMoments: ['Opening montage'],
-    rationalElements: ['Brand stats overlay'],
-  },
-};
 
 // --- Tests ---
 
@@ -282,11 +247,6 @@ describe('buildReportDocument', () => {
         reportKind: 'tv-episodic',
         projectType: 'tv-episodic',
         analysis: tvEpisodicFixture,
-      },
-      {
-        reportKind: 'short-form',
-        projectType: 'short-form',
-        analysis: shortFormFixture,
       },
     ];
 
@@ -369,15 +329,6 @@ describe('buildReportDocument', () => {
       expect(doc.content).toHaveProperty('type', 'doc');
     });
 
-    it('short-form normalizer produces sections', () => {
-      const doc = buildReportDocument({
-        reportKind: 'short-form',
-        projectType: 'short-form',
-        analysis: shortFormFixture,
-        ...baseInput,
-      });
-      expect(doc.content).toHaveProperty('type', 'doc');
-    });
   });
 
   describe('quote extraction', () => {
@@ -410,11 +361,11 @@ describe('buildReportDocument', () => {
       expect(doc.quoteRefs[0].speaker).toBe('CEO');
     });
 
-    it('returns empty quoteRefs for schemas without explicit quotes', () => {
+    it('returns empty quoteRefs for tv-episodic (no explicit quotes)', () => {
       const doc = buildReportDocument({
-        reportKind: 'short-form',
-        projectType: 'short-form',
-        analysis: shortFormFixture,
+        reportKind: 'tv-episodic',
+        projectType: 'tv-episodic',
+        analysis: tvEpisodicFixture,
         ...baseInput,
       });
       expect(doc.quoteRefs).toEqual([]);
@@ -460,16 +411,5 @@ describe('buildReportDocument', () => {
       );
     });
 
-    it('stores analysisSnapshot for short-form', () => {
-      const doc = buildReportDocument({
-        reportKind: 'short-form',
-        projectType: 'short-form',
-        analysis: shortFormFixture,
-        ...baseInput,
-      });
-      expect(doc.analysisSnapshot).toEqual(
-        shortFormFixture as unknown as Record<string, unknown>
-      );
-    });
   });
 });

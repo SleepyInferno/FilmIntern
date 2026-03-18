@@ -39,13 +39,6 @@ describe('getAvailableDocumentKinds', () => {
     ]);
   });
 
-  it('returns report, outline for short-form', () => {
-    expect(getAvailableDocumentKinds('short-form')).toEqual([
-      'report',
-      'outline',
-    ]);
-  });
-
   it('throws for unknown project type', () => {
     expect(() => getAvailableDocumentKinds('unknown')).toThrow(
       'Unknown project type: unknown'
@@ -71,10 +64,6 @@ describe('getOutlineModes', () => {
 
   it('returns beats only for corporate', () => {
     expect(getOutlineModes('corporate')).toEqual(['beats']);
-  });
-
-  it('returns beats only for short-form', () => {
-    expect(getOutlineModes('short-form')).toEqual(['beats']);
   });
 
   it('throws for unknown project type', () => {
@@ -103,10 +92,6 @@ describe('supportsDocumentKind', () => {
 
   it('returns false for narrative + proposal', () => {
     expect(supportsDocumentKind('narrative', 'proposal')).toBe(false);
-  });
-
-  it('returns false for short-form + treatment', () => {
-    expect(supportsDocumentKind('short-form', 'treatment')).toBe(false);
   });
 
   it('throws for unknown project type', () => {

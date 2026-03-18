@@ -63,13 +63,6 @@ vi.mock('@/lib/ai/prompts/tv-episodic', () => ({
   tvEpisodicSystemPrompt: 'tv-episodic-prompt',
 }));
 
-vi.mock('@/lib/ai/schemas/short-form', () => ({
-  shortFormAnalysisSchema: { _type: 'short-form-schema' },
-}));
-
-vi.mock('@/lib/ai/prompts/short-form', () => ({
-  shortFormSystemPrompt: 'short-form-prompt',
-}));
 
 import { POST } from '../route';
 
@@ -219,46 +212,6 @@ describe('POST /api/analyze', () => {
       expect.objectContaining({
         system: 'tv-episodic-prompt',
         prompt: expect.stringContaining('sample pilot script'),
-      })
-    );
-  });
-
-  it('calls streamText with shortFormAnalysisSchema for short-form projectType', async () => {
-    const req = makeRequest({ text: 'sample brand script', projectType: 'short-form' });
-    const res = await POST(req);
-
-    expect(res.status).toBe(200);
-    expect(mockOutputObject).toHaveBeenCalledWith({
-      schema: { _type: 'short-form-schema' },
-    });
-    expect(mockStreamText).toHaveBeenCalledWith(
-      expect.objectContaining({
-        system: 'short-form-prompt',
-        prompt: expect.stringContaining('sample brand script'),
-      })
-    );
-  });
-
-  it('includes inputType in prompt for short-form projectType', async () => {
-    const req = makeRequest({ text: 'sample vo script', projectType: 'short-form', inputType: 'vo-transcript' });
-    const res = await POST(req);
-
-    expect(res.status).toBe(200);
-    expect(mockStreamText).toHaveBeenCalledWith(
-      expect.objectContaining({
-        prompt: expect.stringContaining('[Input Type: vo-transcript]'),
-      })
-    );
-  });
-
-  it('does not include inputType for non-short-form projectType', async () => {
-    const req = makeRequest({ text: 'sample', projectType: 'documentary', inputType: 'vo-transcript' });
-    const res = await POST(req);
-
-    expect(res.status).toBe(200);
-    expect(mockStreamText).toHaveBeenCalledWith(
-      expect.objectContaining({
-        prompt: expect.not.stringContaining('[Input Type:'),
       })
     );
   });

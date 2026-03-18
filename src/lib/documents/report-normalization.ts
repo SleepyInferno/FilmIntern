@@ -12,7 +12,6 @@ import type { DocumentaryAnalysis } from '@/lib/ai/schemas/documentary';
 import type { CorporateAnalysis } from '@/lib/ai/schemas/corporate';
 import type { NarrativeAnalysis } from '@/lib/ai/schemas/narrative';
 import type { TvEpisodicAnalysis } from '@/lib/ai/schemas/tv-episodic';
-import type { ShortFormAnalysis } from '@/lib/ai/schemas/short-form';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -23,8 +22,7 @@ export type AnalysisReportKind =
   | 'corporate'
   | 'narrative-structure'
   | 'narrative-coverage'
-  | 'tv-episodic'
-  | 'short-form';
+  | 'tv-episodic';
 
 export interface NormalizedReport {
   /** Tiptap-compatible JSON document */
@@ -245,33 +243,36 @@ const corporateNormalizer: ReportNormalizer<CorporateAnalysis> = {
 };
 
 // ---------------------------------------------------------------------------
-// Normalizer: Narrative Structure
+// Normalizer: Narrative (all 8 evaluation categories)
 // ---------------------------------------------------------------------------
+
+function formatBeatName(slug: string): string {
+  return slug
+    .split('-')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
 
 const narrativeStructureNormalizer: ReportNormalizer<NarrativeAnalysis> = {
   normalize(analysis) {
     const nodes: TiptapNode[] = [];
-    const quoteRefs: DocumentQuoteRef[] = [];
 
-    // Story Structure
-    nodes.push(heading(2, 'Story Structure'));
-    nodes.push(
-      boldParagraph('Pacing: ', analysis.storyStructure.pacingAssessment)
-    );
-    nodes.push(
-      boldParagraph('Tension Arc: ', analysis.storyStructure.tensionArc)
-    );
+    // 1. Logline & Premise Clarity
+    nodes.push(heading(2, '1. Logline & Premise Clarity'));
+    const mkt = analysis.scriptCoverage.marketability;
+    nodes.push(boldParagraph('Logline Quality: ', mkt.loglineQuality));
+    if (mkt.suggestedLogline) {
+      nodes.push(boldParagraph('Suggested Logline: ', mkt.suggestedLogline));
+    }
 
-    nodes.push(heading(3, 'Story Beats'));
+    // 2. Story Structure / Act Breakdown
+    nodes.push(heading(2, '2. Story Structure / Act Breakdown'));
     analysis.storyStructure.beats.forEach((b) => {
       nodes.push(
-        boldParagraph(
-          `${b.name} (${b.effectiveness}): `,
-          b.description
-        )
+        boldParagraph(`${formatBeatName(b.name)} [${b.effectiveness}]: `, b.description)
       );
+      nodes.push(paragraph(`Position: ${b.approximatePosition}`));
     });
-
     if (analysis.storyStructure.structuralStrengths.length > 0) {
       nodes.push(heading(3, 'Structural Strengths'));
       nodes.push(bulletList(analysis.storyStructure.structuralStrengths));
@@ -281,79 +282,67 @@ const narrativeStructureNormalizer: ReportNormalizer<NarrativeAnalysis> = {
       nodes.push(bulletList(analysis.storyStructure.structuralWeaknesses));
     }
 
-    // Notable dialogue lines as quote refs
-    const notableLines =
-      analysis.scriptCoverage.dialogueQuality.notableLines;
-    notableLines.forEach((line, i) => {
-      quoteRefs.push({
-        id: `quote-${i + 1}`,
-        label: `Q${i + 1}`,
-        text: line,
-        sourceSection: 'keyQuotes',
-      });
-    });
-
-    return { content: { type: 'doc', content: nodes }, quoteRefs };
-  },
-};
-
-// ---------------------------------------------------------------------------
-// Normalizer: Narrative Coverage
-// ---------------------------------------------------------------------------
-
-const narrativeCoverageNormalizer: ReportNormalizer<NarrativeAnalysis> = {
-  normalize(analysis) {
-    const nodes: TiptapNode[] = [];
-    const quoteRefs: DocumentQuoteRef[] = [];
-
-    // Script Coverage
-    nodes.push(heading(2, 'Script Coverage'));
-
-    // Characters
-    nodes.push(heading(3, 'Characters'));
+    // 3. Character Arcs & Development
+    nodes.push(heading(2, '3. Character Arcs & Development'));
     analysis.scriptCoverage.characters.forEach((c) => {
       nodes.push(boldParagraph(`${c.name} (${c.role}): `, c.arcAssessment));
+      if (c.strengths.length > 0) nodes.push(bulletList(c.strengths.map((s) => `+ ${s}`)));
+      if (c.weaknesses.length > 0) nodes.push(bulletList(c.weaknesses.map((w) => `- ${w}`)));
     });
 
-    // Conflict
-    nodes.push(heading(3, 'Conflict Assessment'));
-    nodes.push(
-      boldParagraph(
-        'Primary: ',
-        analysis.scriptCoverage.conflictAssessment.primary
-      )
-    );
-    if (analysis.scriptCoverage.conflictAssessment.secondary.length > 0) {
-      nodes.push(
-        bulletList(analysis.scriptCoverage.conflictAssessment.secondary)
-      );
+    // 4. Dialogue & Voice
+    nodes.push(heading(2, '4. Dialogue & Voice'));
+    const dq = analysis.scriptCoverage.dialogueQuality;
+    nodes.push(boldParagraph('Overall: ', dq.overall));
+    if (dq.strengths.length > 0) {
+      nodes.push(heading(3, 'Strengths'));
+      nodes.push(bulletList(dq.strengths));
+    }
+    if (dq.weaknesses.length > 0) {
+      nodes.push(heading(3, 'Weaknesses'));
+      nodes.push(bulletList(dq.weaknesses));
+    }
+    if (dq.notableLines && dq.notableLines.length > 0) {
+      nodes.push(heading(3, 'Notable Lines'));
+      nodes.push(bulletList(dq.notableLines.map((l) => `"${l}"`)));
     }
 
-    // Dialogue Quality
-    nodes.push(heading(3, 'Dialogue Quality'));
-    nodes.push(
-      boldParagraph(
-        'Overall: ',
-        analysis.scriptCoverage.dialogueQuality.overall
-      )
-    );
+    // 5. Theme & Emotional Resonance
+    nodes.push(heading(2, '5. Theme & Emotional Resonance'));
+    if (analysis.themes) {
+      if (analysis.themes.centralThemes?.length > 0) {
+        nodes.push(boldParagraph('Central Themes: ', analysis.themes.centralThemes.join(', ')));
+      }
+      if (analysis.themes.emotionalResonance) {
+        nodes.push(boldParagraph('Emotional Resonance: ', analysis.themes.emotionalResonance));
+      }
+      if (analysis.themes.audienceImpact) {
+        nodes.push(boldParagraph('Audience Impact: ', analysis.themes.audienceImpact));
+      }
+    }
 
-    // Marketability
-    nodes.push(heading(3, 'Marketability'));
-    nodes.push(
-      boldParagraph(
-        'Suggested Logline: ',
-        analysis.scriptCoverage.marketability.suggestedLogline
-      )
-    );
-    nodes.push(
-      boldParagraph(
-        'Commercial Viability: ',
-        analysis.scriptCoverage.marketability.commercialViability
-      )
-    );
+    // 6. Pacing & Tension
+    nodes.push(heading(2, '6. Pacing & Tension'));
+    nodes.push(boldParagraph('Pacing: ', analysis.storyStructure.pacingAssessment));
+    nodes.push(boldParagraph('Tension Arc: ', analysis.storyStructure.tensionArc));
 
-    // Overall
+    // 7. Genre Positioning & Comparables
+    nodes.push(heading(2, '7. Genre Positioning & Comparables'));
+    if (mkt.compTitles?.length > 0) {
+      nodes.push(boldParagraph('Comp Titles: ', mkt.compTitles.join(', ')));
+    }
+    nodes.push(boldParagraph('Commercial Viability: ', mkt.commercialViability));
+    const conflict = analysis.scriptCoverage.conflictAssessment;
+    nodes.push(boldParagraph('Primary Conflict: ', conflict.primary));
+    if (conflict.secondary.length > 0) {
+      nodes.push(bulletList(conflict.secondary));
+    }
+
+    // 8. Development Recommendations
+    nodes.push(heading(2, '8. Development Recommendations'));
+    if (analysis.developmentRecommendations?.length > 0) {
+      nodes.push(bulletList(analysis.developmentRecommendations));
+    }
     if (analysis.scriptCoverage.overallStrengths.length > 0) {
       nodes.push(heading(3, 'Overall Strengths'));
       nodes.push(bulletList(analysis.scriptCoverage.overallStrengths));
@@ -363,19 +352,14 @@ const narrativeCoverageNormalizer: ReportNormalizer<NarrativeAnalysis> = {
       nodes.push(bulletList(analysis.scriptCoverage.overallWeaknesses));
     }
 
-    // Notable dialogue lines as quote refs
-    const notableLines =
-      analysis.scriptCoverage.dialogueQuality.notableLines;
-    notableLines.forEach((line, i) => {
-      quoteRefs.push({
-        id: `quote-${i + 1}`,
-        label: `Q${i + 1}`,
-        text: line,
-        sourceSection: 'keyQuotes',
-      });
-    });
+    return { content: { type: 'doc', content: nodes }, quoteRefs: [] };
+  },
+};
 
-    return { content: { type: 'doc', content: nodes }, quoteRefs };
+// narrativeCoverageNormalizer kept for registry completeness (unused by page.tsx)
+const narrativeCoverageNormalizer: ReportNormalizer<NarrativeAnalysis> = {
+  normalize(analysis) {
+    return narrativeStructureNormalizer.normalize(analysis);
   },
 };
 
@@ -462,73 +446,6 @@ const tvEpisodicNormalizer: ReportNormalizer<TvEpisodicAnalysis> = {
 };
 
 // ---------------------------------------------------------------------------
-// Normalizer: Short-form
-// ---------------------------------------------------------------------------
-
-const shortFormNormalizer: ReportNormalizer<ShortFormAnalysis> = {
-  normalize(analysis) {
-    const nodes: TiptapNode[] = [];
-    const quoteRefs: DocumentQuoteRef[] = [];
-
-    // Summary
-    nodes.push(heading(2, 'Summary'));
-    nodes.push(paragraph(analysis.summary.overview));
-    nodes.push(
-      boldParagraph('Format: ', analysis.summary.detectedFormat)
-    );
-    nodes.push(
-      boldParagraph(
-        'Estimated Duration: ',
-        analysis.summary.estimatedDuration
-      )
-    );
-    nodes.push(
-      boldParagraph('Objective: ', analysis.summary.primaryObjective)
-    );
-
-    // Hook Strength
-    nodes.push(heading(2, 'Hook Strength'));
-    nodes.push(paragraph(analysis.hookStrength.opening));
-    nodes.push(
-      boldParagraph('Rating: ', analysis.hookStrength.hookRating)
-    );
-    nodes.push(
-      boldParagraph('Time to Hook: ', analysis.hookStrength.timeToHook)
-    );
-
-    // Pacing
-    nodes.push(heading(2, 'Pacing'));
-    nodes.push(
-      boldParagraph('Overall: ', analysis.pacing.overall)
-    );
-    nodes.push(paragraph(analysis.pacing.assessment));
-
-    // Messaging Clarity
-    nodes.push(heading(2, 'Messaging Clarity'));
-    nodes.push(
-      boldParagraph(
-        'Primary Message: ',
-        analysis.messagingClarity.primaryMessage
-      )
-    );
-    nodes.push(
-      boldParagraph('Clarity: ', analysis.messagingClarity.clarity)
-    );
-
-    // CTA Effectiveness
-    nodes.push(heading(2, 'CTA Effectiveness'));
-    nodes.push(
-      boldParagraph('Placement: ', analysis.ctaEffectiveness.placement)
-    );
-    nodes.push(
-      boldParagraph('Urgency: ', analysis.ctaEffectiveness.urgency)
-    );
-
-    return { content: { type: 'doc', content: nodes }, quoteRefs };
-  },
-};
-
-// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
@@ -541,5 +458,4 @@ export const reportNormalizers: Record<
   'narrative-structure': narrativeStructureNormalizer,
   'narrative-coverage': narrativeCoverageNormalizer,
   'tv-episodic': tvEpisodicNormalizer,
-  'short-form': shortFormNormalizer,
 };

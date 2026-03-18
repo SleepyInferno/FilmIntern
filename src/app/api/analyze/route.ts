@@ -10,22 +10,18 @@ import { narrativeAnalysisSchema } from '@/lib/ai/schemas/narrative';
 import { narrativeSystemPrompt } from '@/lib/ai/prompts/narrative';
 import { tvEpisodicAnalysisSchema } from '@/lib/ai/schemas/tv-episodic';
 import { tvEpisodicSystemPrompt } from '@/lib/ai/prompts/tv-episodic';
-import { shortFormAnalysisSchema } from '@/lib/ai/schemas/short-form';
-import { shortFormSystemPrompt } from '@/lib/ai/prompts/short-form';
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const analysisConfig: Record<string, { schema: z.ZodObject<any>; prompt: string }> = {
   documentary: { schema: documentaryAnalysisSchema, prompt: documentarySystemPrompt },
   corporate: { schema: corporateAnalysisSchema, prompt: corporateSystemPrompt },
   narrative: { schema: narrativeAnalysisSchema, prompt: narrativeSystemPrompt },
   'tv-episodic': { schema: tvEpisodicAnalysisSchema, prompt: tvEpisodicSystemPrompt },
-  'short-form': { schema: shortFormAnalysisSchema, prompt: shortFormSystemPrompt },
 };
 
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  const { text, projectType, inputType } = await req.json();
+  const { text, projectType } = await req.json();
 
   const config = analysisConfig[projectType as string];
   if (!config) {
@@ -54,15 +50,11 @@ export async function POST(req: Request) {
     ollama: `ollama:${settings.ollama.model}`,
   } as const)[settings.provider];
 
-  const inputTypePrefix = projectType === 'short-form' && inputType
-    ? `[Input Type: ${inputType}]\n\n`
-    : '';
-
   const result = streamText({
     model: registry.languageModel(modelId),
     output: Output.object({ schema: config.schema }),
     system: config.prompt,
-    prompt: `${inputTypePrefix}Analyze this material:\n\n${text}`,
+    prompt: `Analyze this material:\n\n${text}`,
     ...(settings.provider === 'anthropic' ? {
       providerOptions: {
         anthropic: { structuredOutputMode: 'auto' },

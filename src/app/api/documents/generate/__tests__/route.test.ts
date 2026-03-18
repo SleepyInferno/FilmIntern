@@ -70,7 +70,7 @@ describe('POST /api/documents/generate', () => {
   it('rejects disallowed document kinds with status 400', async () => {
     const req = makeRequest({
       ...basePayload,
-      projectType: 'short-form',
+      projectType: 'documentary',
       documentKind: 'treatment',
     });
     const res = await POST(req);

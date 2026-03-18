@@ -27,12 +27,12 @@ describe('settings', () => {
       expect(DEFAULT_SETTINGS.provider).toBe('anthropic');
     });
 
-    it('has claude-sonnet-4-5 as default anthropic model', () => {
-      expect(DEFAULT_SETTINGS.anthropic.model).toBe('claude-sonnet-4-5');
+    it('has claude-sonnet-4-6 as default anthropic model', () => {
+      expect(DEFAULT_SETTINGS.anthropic.model).toBe('claude-sonnet-4-6');
     });
 
-    it('has gpt-4o as default openai model', () => {
-      expect(DEFAULT_SETTINGS.openai.model).toBe('gpt-4o');
+    it('has gpt-5.4 as default openai model', () => {
+      expect(DEFAULT_SETTINGS.openai.model).toBe('gpt-5.4');
     });
 
     it('has llama3.1 as default ollama model', () => {
@@ -57,8 +57,8 @@ describe('settings', () => {
     it('reads and parses settings from disk', async () => {
       const saved: AISettings = {
         provider: 'openai',
-        anthropic: { model: 'claude-sonnet-4-5' },
-        openai: { model: 'gpt-4o-mini' },
+        anthropic: { model: 'claude-sonnet-4-6', apiKey: '' },
+        openai: { model: 'gpt-4o-mini', apiKey: '' },
         ollama: { model: 'llama3.1', baseURL: 'http://localhost:11434/api' },
       };
       mockReadFile.mockResolvedValue(JSON.stringify(saved));
@@ -75,8 +75,8 @@ describe('settings', () => {
       const settings = await loadSettings();
       expect(settings.provider).toBe('ollama');
       // Should have defaults for missing fields
-      expect(settings.anthropic.model).toBe('claude-sonnet-4-5');
-      expect(settings.openai.model).toBe('gpt-4o');
+      expect(settings.anthropic.model).toBe('claude-sonnet-4-6');
+      expect(settings.openai.model).toBe('gpt-5.4');
     });
   });
 
@@ -87,8 +87,8 @@ describe('settings', () => {
 
       const settings: AISettings = {
         provider: 'openai',
-        anthropic: { model: 'claude-sonnet-4-5' },
-        openai: { model: 'gpt-4o' },
+        anthropic: { model: 'claude-sonnet-4-6', apiKey: '' },
+        openai: { model: 'gpt-4o', apiKey: '' },
         ollama: { model: 'llama3.1', baseURL: 'http://localhost:11434/api' },
       };
 

@@ -47,13 +47,4 @@ export const PROJECT_TYPES: Record<string, ProjectTypeConfig> = {
     acceptedMimeTypes: ['application/pdf', 'application/xml', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
     fileTypeLabel: 'script',
   },
-  'short-form': {
-    id: 'short-form',
-    label: 'Short-form / Branded',
-    description: 'Pacing, messaging effectiveness, and CTA clarity analysis',
-    icon: 'Clapperboard',
-    acceptedExtensions: ['.txt', '.pdf', '.fdx', '.docx'],
-    acceptedMimeTypes: ['text/plain', 'application/pdf', 'application/xml', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-    fileTypeLabel: 'script',
-  },
 };

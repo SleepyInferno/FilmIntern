@@ -11,7 +11,6 @@ const DOCUMENT_KIND_MATRIX: Record<string, DocumentKind[]> = {
   corporate: ['report', 'outline', 'proposal'],
   narrative: ['report', 'outline', 'treatment'],
   'tv-episodic': ['report', 'outline', 'treatment'],
-  'short-form': ['report', 'outline'],
 };
 
 /**
@@ -23,7 +22,6 @@ const OUTLINE_MODE_MATRIX: Record<string, OutlineMode[]> = {
   corporate: ['beats'],
   narrative: ['beats', 'scene-by-scene'],
   'tv-episodic': ['beats', 'scene-by-scene'],
-  'short-form': ['beats'],
 };
 
 function assertKnownProjectType(projectType: string): void {

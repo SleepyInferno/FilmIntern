@@ -44,14 +44,14 @@ export const narrativeAnalysisSchema = z.object({
         role: z.enum(['protagonist', 'antagonist', 'supporting', 'minor']),
         roleFunction: z
           .string()
-          .optional()
+          .nullable()
           .describe('Dramatic function label — e.g. emotional anchor, truth catalyst, mirror character, destabilizer'),
         arcAssessment: z
           .string()
           .describe('Assessment of this characters arc and development'),
         innerConflict: z
           .string()
-          .optional()
+          .nullable()
           .describe('The internal tension driving this character'),
         strengths: z.array(z.string()),
         weaknesses: z.array(z.string()),
@@ -116,9 +116,9 @@ export const narrativeAnalysisSchema = z.object({
     characters: z.string().describe('Verbal rating of character work'),
     marketability: z.string().describe('Verbal rating of commercial or festival potential — e.g. High for festival circuit, Limited commercial appeal'),
     overall: z.string().describe('Concise overall verdict useful for creative decision-making'),
-  }).optional(),
-  overallScore: z.number().optional().describe('Overall quality score from 1-10'),
-  overallSummary: z.string().optional().describe('2-3 sentence overall assessment of the script'),
+  }).nullable(),
+  overallScore: z.number().nullable().describe('Overall quality score from 1-10'),
+  overallSummary: z.string().nullable().describe('2-3 sentence overall assessment of the script'),
 });
 
 export type NarrativeAnalysis = z.infer<typeof narrativeAnalysisSchema>;
