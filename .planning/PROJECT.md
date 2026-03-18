@@ -8,24 +8,44 @@ A personal filmmaking workflow web app that lets you select a project type (docu
 
 Upload your material, pick your project type, get a structured analysis back — one tool that replaces hours of manual review across scattered apps.
 
+## Current Milestone: v1.1 UI and Formatting
+
+**Goal:** Redesign the full app UI with dark/light theme toggle and replace flat report output with card-based analysis workspaces unique to each project type, plus a Library for saved analyses.
+
+**Target features:**
+- Light/dark theme toggle with orange/amber brand accents throughout
+- Card-based analysis workspace for all 5 project types (unique evaluation dimensions per type)
+- Narrative "Story Lab Workspace" with 8 evaluation dimension cards
+- Library page for browsing and managing saved analyses
+
 ## Requirements
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ User can select a project type before uploading material — v1.0
+- ✓ User can upload a transcript or script depending on project type — v1.0
+- ✓ App runs AI analysis tailored to the selected project type — v1.0
+- ✓ User receives a structured analysis report as output — v1.0
+- ✓ Documentary/corporate interview projects get interview mining — v1.0
+- ✓ Narrative film/TV projects get story structure analysis — v1.0
+- ✓ Narrative film projects get script coverage — v1.0
+- ✓ Short-form/branded projects get appropriate tailored analysis — v1.0
+- ✓ User can generate reformatted documents (treatments, outlines) — v1.0
+- ✓ User can generate production planning outputs (shot lists, schedules) — v1.0
 
 ### Active
 
-- [ ] User can select a project type before uploading material
-- [ ] User can upload a transcript or script depending on project type
-- [ ] App runs AI analysis tailored to the selected project type
-- [ ] User receives a structured analysis report as output
-- [ ] Documentary/corporate interview projects get interview mining (best quotes, themes, moments)
-- [ ] Narrative film/TV projects get story structure analysis (act breaks, pacing, turning points)
-- [ ] Narrative film projects get script coverage (character, conflict, dialogue, marketability)
-- [ ] Short-form/branded projects get appropriate tailored analysis
-- [ ] User can generate reformatted documents (treatments, outlines) from raw material
-- [ ] User can generate production planning outputs (shot lists, schedules) from scripts
+- [ ] User can toggle between light and dark theme
+- [ ] App uses consistent brand color system (orange/amber accents)
+- [ ] Narrative analysis displays as Story Lab Workspace with 8 evaluation dimension cards
+- [ ] Documentary analysis displays with interview-specific evaluation cards
+- [ ] Corporate interview analysis displays with messaging-specific evaluation cards
+- [ ] TV/Episodic analysis displays with episode/series evaluation cards
+- [ ] Short-form/branded analysis displays with pacing/messaging evaluation cards
+- [ ] User can view a list of saved analyses in the Library
+- [ ] User can open a saved analysis from the Library
+- [ ] User can delete a saved analysis from the Library
+- [ ] Analyses are automatically saved after completion
 
 ### Out of Scope
 
@@ -54,4 +74,4 @@ Upload your material, pick your project type, get a structured analysis back —
 | Personal tool (no multi-user) | Reduces scope significantly for v1 — can add later if needed | — Pending |
 
 ---
-*Last updated: 2026-03-16 after initialization*
+*Last updated: 2026-03-17 after milestone v1.1 start*
