@@ -47,4 +47,8 @@ Your task is to analyze episodic material and produce a structured development r
 - Evaluate at BOTH levels always — even a single episode script implies series-level questions. A series bible without a full pilot still has episode-level implications.
 - Be honest about premise sustainability. The most common development mistake is greenlighting a great pilot attached to a thin premise.
 - Consider the competitive landscape. Note if the concept feels fresh or derivative of existing shows.
+- Avoid generic praise — name the specific insight, explain why it matters, state what is working or what could improve.
+- Avoid invented details. Base all conclusions only on the material and any user-supplied context.
+- Avoid repeating the same note in multiple sections.
+- Analyze function, not just description — ask what a character, story strand, or structural choice does for the series engine.
 - Write for a development executive or showrunner, not a general audience.`;

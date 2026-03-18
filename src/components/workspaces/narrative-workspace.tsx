@@ -53,6 +53,13 @@ export function NarrativeWorkspace({ data, isStreaming }: NarrativeWorkspaceProp
         <StreamingStatusBar currentSection={detectCurrentSection(data)} />
       )}
 
+      {data?.storyAngle && (
+        <div className="border-l-4 border-primary/60 pl-4 py-1">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Story Angle</p>
+          <p className="text-sm italic">{data.storyAngle}</p>
+        </div>
+      )}
+
       <WorkspaceGrid>
         {/* Card 1: Logline & Premise */}
         <EvaluationCard
@@ -152,9 +159,12 @@ export function NarrativeWorkspace({ data, isStreaming }: NarrativeWorkspaceProp
               <div key={i} className="border-b border-border pb-3 last:border-0 last:pb-0">
                 <div className="flex items-center gap-2 mb-1">
                   <p className="text-sm font-medium">{char.name}</p>
-                  <Badge variant="outline" className="text-xs">{char.role}</Badge>
+                  <Badge variant="outline" className="text-xs">{char.roleFunction ?? char.role}</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground mb-2">{char.arcAssessment}</p>
+                {char.innerConflict && (
+                  <p className="text-xs text-muted-foreground italic mb-2 border-l-2 border-primary/30 pl-2">{char.innerConflict}</p>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <ul className="space-y-0.5">
                     {char.strengths.map((s, j) => (
@@ -364,6 +374,25 @@ export function NarrativeWorkspace({ data, isStreaming }: NarrativeWorkspaceProp
           </div>
         </EvaluationCard>
       </WorkspaceGrid>
+
+      {data?.verdict && (
+        <div className="border border-border rounded-lg p-4 space-y-3">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Verdict</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {(['concept', 'execution', 'dialogue', 'characters', 'marketability'] as const).map((key) =>
+              data.verdict?.[key] ? (
+                <div key={key}>
+                  <p className="text-xs text-muted-foreground capitalize mb-0.5">{key}</p>
+                  <p className="text-sm font-medium">{data.verdict[key]}</p>
+                </div>
+              ) : null
+            )}
+          </div>
+          {data.verdict.overall && (
+            <p className="text-sm text-muted-foreground pt-2 border-t border-border">{data.verdict.overall}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import type { NarrativeAnalysis } from '@/lib/ai/schemas/narrative';
 
 function createMockNarrativeAnalysis(): NarrativeAnalysis {
   return {
+    storyAngle: 'A story about the cost of loyalty when the system you serve no longer deserves it.',
     storyStructure: {
       beats: [
         {

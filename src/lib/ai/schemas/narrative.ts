@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
 export const narrativeAnalysisSchema = z.object({
+  storyAngle: z
+    .string()
+    .describe('What this story is really about underneath the plot — one precise, earned sentence'),
   storyStructure: z.object({
     beats: z.array(
       z.object({
@@ -23,7 +26,7 @@ export const narrativeAnalysisSchema = z.object({
     ),
     pacingAssessment: z
       .string()
-      .describe('Overall assessment of the scripts pacing and rhythm'),
+      .describe('Overall assessment of the scripts pacing and emotional momentum'),
     tensionArc: z
       .string()
       .describe('How tension builds, sustains, and releases across the script'),
@@ -39,9 +42,17 @@ export const narrativeAnalysisSchema = z.object({
       z.object({
         name: z.string().describe('Character name'),
         role: z.enum(['protagonist', 'antagonist', 'supporting', 'minor']),
+        roleFunction: z
+          .string()
+          .optional()
+          .describe('Dramatic function label — e.g. emotional anchor, truth catalyst, mirror character, destabilizer'),
         arcAssessment: z
           .string()
           .describe('Assessment of this characters arc and development'),
+        innerConflict: z
+          .string()
+          .optional()
+          .describe('The internal tension driving this character'),
         strengths: z.array(z.string()),
         weaknesses: z.array(z.string()),
       })
@@ -98,6 +109,14 @@ export const narrativeAnalysisSchema = z.object({
   developmentRecommendations: z
     .array(z.string())
     .describe('Priority-ordered actionable recommendations for the next draft — concrete, specific, and sequenced from most to least critical'),
+  verdict: z.object({
+    concept: z.string().describe('Verbal rating of the concept strength — e.g. Very Strong, Strong, Adequate, Needs Work'),
+    execution: z.string().describe('Verbal rating of script execution quality'),
+    dialogue: z.string().describe('Verbal rating of dialogue quality'),
+    characters: z.string().describe('Verbal rating of character work'),
+    marketability: z.string().describe('Verbal rating of commercial or festival potential — e.g. High for festival circuit, Limited commercial appeal'),
+    overall: z.string().describe('Concise overall verdict useful for creative decision-making'),
+  }).optional(),
   overallScore: z.number().optional().describe('Overall quality score from 1-10'),
   overallSummary: z.string().optional().describe('2-3 sentence overall assessment of the script'),
 });

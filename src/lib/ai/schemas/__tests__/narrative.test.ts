@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { narrativeAnalysisSchema } from '../narrative';
 
 const validAnalysis = {
+  storyAngle: 'A story about what it costs to protect a family secret when the truth is the only thing that could save it.',
   storyStructure: {
     beats: [
       {

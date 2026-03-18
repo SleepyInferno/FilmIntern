@@ -96,6 +96,7 @@ const corporateFixture: CorporateAnalysis = {
 };
 
 const narrativeStructureFixture: NarrativeAnalysis = {
+  storyAngle: 'A story about the price of obsession when the goal eclipses the person pursuing it.',
   storyStructure: {
     beats: [
       {
@@ -140,6 +141,12 @@ const narrativeStructureFixture: NarrativeAnalysis = {
     overallStrengths: ['Great dialogue'],
     overallWeaknesses: ['Pacing in Act 2'],
   },
+  themes: {
+    centralThemes: ['Survival', 'Identity'],
+    emotionalResonance: 'Lands its emotional beats well',
+    audienceImpact: 'Leaves viewers reflecting on resilience',
+  },
+  developmentRecommendations: ['Tighten the Act 2 midpoint', 'Clarify antagonist motivation'],
 };
 
 const tvEpisodicFixture: TvEpisodicAnalysis = {

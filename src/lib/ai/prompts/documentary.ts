@@ -27,4 +27,8 @@ Your task is to analyze interview transcripts and produce a structured editorial
 - NEVER invent or paraphrase quotes. Use only exact text from the transcript.
 - Be specific. Reference approximate positions (early/middle/late in transcript).
 - Be honest about weak material. If the transcript lacks strong moments, say so.
+- Avoid generic praise — name the specific insight, explain why it matters, state what is working or what could improve.
+- Avoid invented details. Base all conclusions only on the transcript and any user-supplied context.
+- Avoid repeating the same note in multiple sections.
+- Analyze function, not just description — ask what a moment does dramatically, not just what it is.
 - Write for a professional filmmaker, not a general audience.`;
