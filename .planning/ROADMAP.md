@@ -131,7 +131,14 @@ Plans:
   3. Corporate interview analysis renders with 6 messaging-specific cards (Soundbites, Key Messages, Spokesperson Assessment, Audience Alignment, Message Consistency, Recommendations)
   4. TV/Episodic analysis renders with 6 episode/series cards (Episode Arc, Series Structure, Character Development, Tone & Voice, Pilot Effectiveness, Franchise Potential)
   5. Short-form/branded analysis renders with 6 pacing/messaging cards (Hook Strength, Pacing, CTA Clarity, Brand Alignment, Emotional Impact, Audience Fit)
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Wave 0: Shared workspace components (EvaluationCard, WorkspaceHeader, WorkspaceGrid, etc.) + test stubs
+- [ ] 06-02-PLAN.md — Schema + prompt additions (overallScore, overallSummary, new card data fields)
+- [ ] 06-03-PLAN.md — NarrativeWorkspace (8 cards) + DocumentaryWorkspace (6 cards)
+- [ ] 06-04-PLAN.md — CorporateWorkspace (6 cards) + TvWorkspace (6 cards) + ShortFormWorkspace (6 cards)
+- [ ] 06-05-PLAN.md — Integration wiring (page.tsx + DocumentWorkspace) + human verification
 
 ### Phase 7: Library & Persistence
 **Goal**: Analyses are automatically saved after completion and user can browse, open, and delete saved analyses from a Library page
@@ -158,5 +165,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7
 | 3.1. Multi-Provider AI | 3/3 | Complete | 2026-03-17 |
 | 4. Export and Document Generation | 6/6 | Complete   | 2026-03-17 |
 | 5. UI Theme & Brand System | 2/2 | Complete   | 2026-03-18 |
-| 6. Card-Based Analysis Workspaces | 0/TBD | Not started | — |
+| 6. Card-Based Analysis Workspaces | 0/5 | Not started | — |
 | 7. Library & Persistence | 0/TBD | Not started | — |
