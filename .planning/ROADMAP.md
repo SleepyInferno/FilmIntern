@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Analysis Expansion** - All remaining project type analyses (corporate, narrative, TV, short-form) (completed 2026-03-17)
 - [x] **Phase 3.1: Multi-Provider AI Support** - Global settings for Anthropic, OpenAI, and Ollama provider selection (completed 2026-03-17)
 - [x] **Phase 4: Export and Document Generation** - Downloadable reports and treatment/outline generation (completed 2026-03-17)
-- [ ] **Phase 5: UI Theme & Brand System** - Dark/light theme toggle with orange/amber brand accents and persistent theme preference
+- [x] **Phase 5: UI Theme & Brand System** - Dark/light theme toggle with orange/amber brand accents and persistent theme preference (completed 2026-03-18)
 - [ ] **Phase 6: Card-Based Analysis Workspaces** - Redesign all 5 project type analysis views as card-based evaluation dimension workspaces
 - [ ] **Phase 7: Library & Persistence** - Auto-save analyses to IndexedDB and full Library page for browsing, opening, and deleting saved analyses
 
@@ -118,8 +118,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Theme infrastructure: next-themes, accent presets, CSS token update, toggle button, card elevation
-- [ ] 05-02-PLAN.md — Hardcoded color replacement across all components, accent picker in settings
+- [x] 05-01-PLAN.md — Theme infrastructure: next-themes, accent presets, CSS token update, toggle button, card elevation
+- [x] 05-02-PLAN.md — Hardcoded color replacement across all components, accent picker in settings
 
 ### Phase 6: Card-Based Analysis Workspaces
 **Goal**: All five project type analysis views are redesigned as card-based evaluation dimension workspaces with project-type-specific evaluation cards
@@ -157,6 +157,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7
 | 3. Analysis Expansion | 3/3 | Complete   | 2026-03-17 |
 | 3.1. Multi-Provider AI | 3/3 | Complete | 2026-03-17 |
 | 4. Export and Document Generation | 6/6 | Complete   | 2026-03-17 |
-| 5. UI Theme & Brand System | 1/2 | In Progress|  |
+| 5. UI Theme & Brand System | 2/2 | Complete   | 2026-03-18 |
 | 6. Card-Based Analysis Workspaces | 0/TBD | Not started | — |
 | 7. Library & Persistence | 0/TBD | Not started | — |
