@@ -39,7 +39,12 @@ Declared values (must be multiples of 4):
 | 2xl | 48px | Not used this phase |
 | 3xl | 64px | Not used this phase |
 
-Exceptions: none
+Exceptions:
+
+| Class | Resolved Value | Rationale |
+|-------|---------------|-----------|
+| `py-2.5` | 10px | Existing project list item vertical padding -- carried forward unchanged from Phase 6; not introduced this phase |
+| `gap-0.5` | 2px | Existing project list item row gap -- carried forward unchanged from Phase 6; not introduced this phase |
 
 ---
 
@@ -145,7 +150,7 @@ Note: Short-form project type does not exist in the codebase (`PROJECT_TYPES` re
 ### Project List (existing, unchanged)
 
 - Layout: vertical list inside `overflow-y-auto` container
-- Each item: `px-3 py-2.5`, flex column with `gap-0.5`
+- Each item: `px-3 py-2.5`, flex column with `gap-0.5` (see Spacing Scale exceptions)
 - First row: title (text-sm font-medium truncate) + delete button (opacity-0, group-hover:opacity-60)
 - Second row: type icon + type label + dot separator + time-ago (all text-xs text-muted-foreground)
 - Active project: `bg-accent` background
