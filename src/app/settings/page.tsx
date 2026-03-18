@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { ACCENT_PRESETS, type AccentColor, applyAccentColor, getStoredAccent, setStoredAccent } from '@/lib/theme';
+import { useTheme } from 'next-themes';
+import { Check } from 'lucide-react';
 
 interface AISettings {
   provider: 'anthropic' | 'openai' | 'ollama';
@@ -21,6 +24,12 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<AISettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const { theme } = useTheme();
+  const [accent, setAccent] = useState<AccentColor>('amber');
+
+  useEffect(() => {
+    setAccent(getStoredAccent());
+  }, []);
 
   useEffect(() => {
     fetch('/api/settings')
@@ -33,6 +42,12 @@ export default function SettingsPage() {
         setLoading(false);
       });
   }, []);
+
+  function handleAccentChange(color: AccentColor) {
+    setAccent(color);
+    setStoredAccent(color);
+    applyAccentColor(color, (theme === 'dark' ? 'dark' : 'light'));
+  }
 
   async function handleSave() {
     if (!settings) return;
@@ -270,6 +285,28 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <div className="mt-6">
+        <Card>
+          <CardContent className="p-6">
+            <h2 className="text-sm font-semibold mb-1">Accent Color</h2>
+            <p className="text-xs text-muted-foreground mb-4">Choose the accent color used across the app</p>
+            <div className="flex gap-2">
+              {(Object.keys(ACCENT_PRESETS) as AccentColor[]).map((color) => (
+                <button
+                  key={color}
+                  onClick={() => handleAccentChange(color)}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110 ring-offset-background ${accent === color ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                  style={{ backgroundColor: ACCENT_PRESETS[color].dark.primary }}
+                  aria-label={`${color} accent color`}
+                >
+                  {accent === color && <Check size={14} className="text-white" />}
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
