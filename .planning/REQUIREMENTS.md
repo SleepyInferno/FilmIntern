@@ -53,9 +53,9 @@
 
 - [x] **WORK-01**: Narrative analysis displays as "Story Lab Workspace" with 8 evaluation dimension cards (Logline & Premise, Story Structure, Character Arcs, Dialogue & Voice, Theme & Resonance, Pacing & Tension, Genre & Comparables, Development Recommendations)
 - [x] **WORK-02**: Documentary analysis displays with interview-specific evaluation cards (Key Quotes, Recurring Themes, Key Moments, Subject Profiles, Story Arc, Interview Gaps)
-- [ ] **WORK-03**: Corporate interview analysis displays with messaging-specific cards (Soundbites, Key Messages, Spokesperson Assessment, Audience Alignment, Message Consistency, Recommendations)
-- [ ] **WORK-04**: TV/Episodic analysis displays with episode/series evaluation cards (Episode Arc, Series Structure, Character Development, Tone & Voice, Pilot Effectiveness, Franchise Potential)
-- [ ] **WORK-05**: Short-form/branded analysis displays with pacing/messaging cards (Hook Strength, Pacing, CTA Clarity, Brand Alignment, Emotional Impact, Audience Fit)
+- [x] **WORK-03**: Corporate interview analysis displays with messaging-specific cards (Soundbites, Key Messages, Spokesperson Assessment, Audience Alignment, Message Consistency, Recommendations)
+- [x] **WORK-04**: TV/Episodic analysis displays with episode/series evaluation cards (Episode Arc, Series Structure, Character Development, Tone & Voice, Pilot Effectiveness, Franchise Potential)
+- [x] **WORK-05**: Short-form/branded analysis displays with pacing/messaging cards (Hook Strength, Pacing, CTA Clarity, Brand Alignment, Emotional Impact, Audience Fit)
 
 ### Library
 
@@ -134,9 +134,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | THEME-03 | Phase 5 | Complete |
 | WORK-01 | Phase 6 | Complete |
 | WORK-02 | Phase 6 | Complete |
-| WORK-03 | Phase 6 | Pending |
-| WORK-04 | Phase 6 | Pending |
-| WORK-05 | Phase 6 | Pending |
+| WORK-03 | Phase 6 | Complete |
+| WORK-04 | Phase 6 | Complete |
+| WORK-05 | Phase 6 | Complete |
 | LIB-01 | Phase 7 | Pending |
 | LIB-02 | Phase 7 | Pending |
 | LIB-03 | Phase 7 | Pending |

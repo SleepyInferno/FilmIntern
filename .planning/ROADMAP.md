@@ -165,5 +165,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7
 | 3.1. Multi-Provider AI | 3/3 | Complete | 2026-03-17 |
 | 4. Export and Document Generation | 6/6 | Complete   | 2026-03-17 |
 | 5. UI Theme & Brand System | 2/2 | Complete   | 2026-03-18 |
-| 6. Card-Based Analysis Workspaces | 3/5 | In Progress|  |
+| 6. Card-Based Analysis Workspaces | 4/5 | In Progress|  |
 | 7. Library & Persistence | 0/TBD | Not started | — |
