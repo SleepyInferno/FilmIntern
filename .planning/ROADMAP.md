@@ -35,7 +35,7 @@ Archive: `.planning/milestones/v1.0-ROADMAP.md`
 
 - [x] **Phase 10: Docker Build** - Multi-stage Dockerfile with standalone output, health check, and non-root user (completed 2026-03-19)
 - [x] **Phase 11: Local Dev Environment** - Docker Compose for one-command startup with hot reload and persistence (completed 2026-03-19)
-- [ ] **Phase 12: Production Deployment** - Caddy reverse proxy for HTTPS and domain routing
+- [x] **Phase 12: Production Deployment** - Caddy reverse proxy on port 7430 with streaming support (completed 2026-03-19)
 - [ ] **Phase 13: CI/CD Pipeline** - GitHub Actions to build, tag, and push images to GHCR
 
 ## Phase Details
@@ -79,10 +79,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. A provided Caddyfile configures automatic HTTPS and reverse proxies requests to the FilmIntern container
   2. Running an AI analysis through the Caddy proxy delivers streamed SSE responses without buffering or timeouts
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 12-01-PLAN.md — Caddyfile and docker-compose.prod.yml for Unraid production deployment with streaming support
+- [x] 12-01-PLAN.md — Caddyfile and docker-compose.prod.yml for Unraid production deployment with streaming support
 
 ### Phase 13: CI/CD Pipeline
 **Goal**: Every push to main automatically builds and publishes a versioned Docker image to GitHub Container Registry
@@ -120,5 +120,5 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13
 | 9. Harsh Critic Mode | v1.0 | 2/2 | Complete | 2026-03-19 |
 | 10. Docker Build | v2.0 | 2/2 | Complete | 2026-03-19 |
 | 11. Local Dev Environment | 2/2 | Complete    | 2026-03-19 | - |
-| 12. Production Deployment | v2.0 | 0/1 | Not started | - |
+| 12. Production Deployment | v2.0 | 1/1 | Complete | 2026-03-19 |
 | 13. CI/CD Pipeline | v2.0 | 0/? | Not started | - |

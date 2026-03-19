@@ -24,8 +24,8 @@
 
 ### Production
 
-- [ ] **PROD-01**: Caddyfile config provided for automatic HTTPS and domain routing
-- [ ] **PROD-02**: Streaming AI analysis (SSE) works correctly through the Caddy reverse proxy
+- [x] **PROD-01**: Caddyfile config provided for automatic HTTPS and domain routing
+- [x] **PROD-02**: Streaming AI analysis (SSE) works correctly through the Caddy reverse proxy
 
 ### CI/CD
 
@@ -64,8 +64,8 @@
 | DEV-03 | Phase 11 | Complete |
 | DEV-04 | Phase 11 | Complete |
 | DEV-05 | Phase 11 | Complete |
-| PROD-01 | Phase 12 | Pending |
-| PROD-02 | Phase 12 | Pending |
+| PROD-01 | Phase 12 | Complete |
+| PROD-02 | Phase 12 | Complete |
 | CI-01 | Phase 13 | Pending |
 | CI-02 | Phase 13 | Pending |
 | CI-03 | Phase 13 | Pending |
