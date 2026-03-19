@@ -21,7 +21,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NODE_ENV=production
-RUN npx next build --no-turbopack
+RUN TURBOPACK=0 npm run build
 
 # ============================================
 # Stage 3: Production runtime
