@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Export and Document Generation** - Downloadable reports and treatment/outline generation (completed 2026-03-17)
 - [x] **Phase 5: UI Theme & Brand System** - Dark/light theme toggle with orange/amber brand accents and persistent theme preference (completed 2026-03-18)
 - [ ] **Phase 6: Card-Based Analysis Workspaces** - Redesign all 5 project type analysis views as card-based evaluation dimension workspaces
-- [ ] **Phase 7: Library & Persistence** - Auto-save analyses to IndexedDB and full Library page for browsing, opening, and deleting saved analyses
+- [ ] **Phase 7: Library & Persistence** - Auto-save analyses to SQLite and sidebar type filter for browsing, opening, and deleting saved analyses
 
 ## Phase Details
 
@@ -141,16 +141,20 @@ Plans:
 - [ ] 06-05-PLAN.md — Integration wiring (page.tsx + DocumentWorkspace) + human verification
 
 ### Phase 7: Library & Persistence
-**Goal**: Analyses are automatically saved after completion and user can browse, open, and delete saved analyses from a Library page
+**Goal**: Analyses are automatically saved after completion and user can browse, filter, open, and delete saved analyses from the Projects sidebar
 **Depends on**: Phase 6
 **Requirements**: LIB-01, LIB-02, LIB-03, LIB-04
 **Success Criteria** (what must be TRUE):
-  1. Analysis is automatically saved to IndexedDB immediately after completion (no user action required)
-  2. Library page lists all saved analyses sorted by date, with project type visible
-  3. User can filter Library by project type
-  4. User can click a saved analysis in Library and view it in the full workspace
-  5. User can delete a saved analysis from the Library
-**Plans**: TBD
+  1. Analysis is automatically saved to SQLite immediately after completion (no user action required)
+  2. Projects sidebar lists all saved analyses sorted by date, with project type visible
+  3. User can filter sidebar by project type
+  4. User can click a saved analysis in sidebar and view it in the full workspace
+  5. User can delete a saved analysis from the sidebar
+**Plans**: 2 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — ProjectTypeFilter component + wire into ProjectsSidebar with client-side filtering
+- [ ] 07-02-PLAN.md — Auto-save verification tests + re-analysis overwrite hardening
 
 ## Progress
 
@@ -166,4 +170,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7
 | 4. Export and Document Generation | 6/6 | Complete   | 2026-03-17 |
 | 5. UI Theme & Brand System | 2/2 | Complete   | 2026-03-18 |
 | 6. Card-Based Analysis Workspaces | 4/5 | In Progress|  |
-| 7. Library & Persistence | 0/TBD | Not started | — |
+| 7. Library & Persistence | 0/2 | Not started | — |
