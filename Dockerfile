@@ -1,13 +1,13 @@
 # ============================================
 # Stage 1: Install dependencies
 # ============================================
-FROM node:22-alpine AS deps
+FROM node:22-bookworm-slim AS deps
 WORKDIR /app
 
-# glibc compat shims required for Node.js 22 on Alpine
-RUN apk add --no-cache libc6-compat
 # Install build tools for native addons (better-sqlite3)
-RUN apk add --no-cache python3 make g++
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends build-essential python3 && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy package files and install ALL dependencies (including devDependencies for build)
 COPY package.json package-lock.json ./
@@ -16,21 +16,30 @@ RUN npm ci --no-audit --no-fund
 # ============================================
 # Stage 2: Build the application
 # ============================================
-FROM node:22-alpine AS builder
+FROM node:22-bookworm-slim AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN apk add --no-cache libc6-compat
-
 ENV NODE_ENV=production
 RUN npm run build
+
+# Remove unnecessary better-sqlite3 files from standalone output to reduce image size:
+# - prebuilds/ contains pre-compiled binaries for all platforms (linux, darwin, win32)
+#   Only the build/Release/*.node file compiled during npm ci is needed at runtime
+# - src/ and deps/ contain C++ source code not needed at runtime
+RUN find .next/standalone/node_modules/better-sqlite3/prebuilds \
+      -mindepth 1 -delete 2>/dev/null || true && \
+    rm -rf .next/standalone/node_modules/better-sqlite3/src \
+           .next/standalone/node_modules/better-sqlite3/deps \
+           .next/standalone/node_modules/better-sqlite3/binding.gyp \
+           .next/standalone/node_modules/better-sqlite3/CHANGELOG.md 2>/dev/null || true
 
 # ============================================
 # Stage 3: Production runtime
 # ============================================
-FROM node:22-alpine AS runner
+FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -40,11 +49,13 @@ ENV DATABASE_PATH=/app/data/filmintern.db
 ENV SETTINGS_DIR=/app/data/.filmintern
 
 # Install curl for health check
-RUN apk add --no-cache curl
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
 
 # Create non-root user (DOCK-06)
-RUN addgroup -S -g 1001 nodejs && \
-    adduser -S -u 1001 -G nodejs nextjs
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 --ingroup nodejs nextjs
 
 # Create data directory owned by nextjs user
 RUN mkdir -p /app/data/.filmintern && chown -R nextjs:nodejs /app/data
