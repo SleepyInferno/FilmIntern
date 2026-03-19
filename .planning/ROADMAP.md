@@ -185,7 +185,11 @@ Plans:
   4. Critic output is displayed in a clearly labeled separate tab or section within the workspace
   5. Harsh Critic Mode works across all active project types (documentary, corporate, narrative, TV/episodic)
   6. When disabled, behavior is identical to current — no performance penalty
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — TDD backend: failing tests, system prompt, critic API route, DB migration, projects API update
+- [ ] 09-02-PLAN.md — Frontend: toggle UI, client critic streaming, workspace context, Industry Critic tab
 
 ## Progress
 
@@ -203,7 +207,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8 -> 
 | 6. Card-Based Analysis Workspaces | 4/5 | In Progress|  |
 | 7. Library & Persistence | 2/2 | Complete | 2026-03-19 |
 | 8. Provider Error Handling | 1/1 | Complete   | 2026-03-19 |
-| 9. Harsh Critic Analysis Mode | 0/TBD | Not started | — |
+| 9. Harsh Critic Analysis Mode | 0/2 | Not started | — |
 
 ---
 
