@@ -79,10 +79,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. A provided Caddyfile configures automatic HTTPS and reverse proxies requests to the FilmIntern container
   2. Running an AI analysis through the Caddy proxy delivers streamed SSE responses without buffering or timeouts
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 12-01: TBD
+- [ ] 12-01-PLAN.md — Caddyfile and docker-compose.prod.yml for Unraid production deployment with streaming support
 
 ### Phase 13: CI/CD Pipeline
 **Goal**: Every push to main automatically builds and publishes a versioned Docker image to GitHub Container Registry
@@ -120,5 +120,5 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13
 | 9. Harsh Critic Mode | v1.0 | 2/2 | Complete | 2026-03-19 |
 | 10. Docker Build | v2.0 | 2/2 | Complete | 2026-03-19 |
 | 11. Local Dev Environment | 2/2 | Complete    | 2026-03-19 | - |
-| 12. Production Deployment | v2.0 | 0/? | Not started | - |
+| 12. Production Deployment | v2.0 | 0/1 | Not started | - |
 | 13. CI/CD Pipeline | v2.0 | 0/? | Not started | - |
