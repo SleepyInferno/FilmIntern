@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Docker Containerization
 current_plan: —
-status: defining requirements
-stopped_at: —
+status: ready to plan phase 10
+stopped_at: roadmap created
 last_updated: "2026-03-19T00:00:00.000Z"
-last_activity: 2026-03-19 — Milestone v2.0 started
+last_activity: 2026-03-19 — Roadmap created for v2.0
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -22,47 +22,25 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** Upload your material, pick your project type, get a structured analysis back — one tool that replaces hours of manual review across scattered apps.
-**Current focus:** v2.0 Docker Containerization — defining requirements
+**Current focus:** v2.0 Docker Containerization — Phase 10: Docker Build (ready to plan)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 10 of 13 (Docker Build) — first phase of v2.0
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-19 — Milestone v2.0 started
+Status: Ready to plan
+Last activity: 2026-03-19 — Roadmap created for v2.0 (4 phases, 18 requirements)
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
-**Velocity:**
-- Total plans completed: 16
-- Average duration: 4.8 min
-- Total execution time: 1.41 hours
+**Velocity (from v1.0):**
+- Total plans completed: 29
+- Average duration: ~4.8 min
+- Total execution time: ~1.4 hours
 
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 1. Vertical Slice | 3/3 | 18 min | 6 min |
-| 2. File Format Support | 2/2 | 7 min | 3.5 min |
-| 3. Analysis Expansion | 3/3 | 13 min | 4.3 min |
-| 3.1. Multi-Provider AI | 3/3 | 12 min | 4 min |
-| 4. Export & Doc Gen | 6/6 | 33 min | 5.5 min |
-| 5. UI Theme & Brand | 2/2 | 11 min | 5.5 min |
-
-**Recent Trend:**
-- Last 5 plans: 04-02 (7 min), 04-03 (4 min), 04-04 (13 min), 05-01 (4 min), 05-02 (7 min)
-- Trend: stable
-
-*Updated after each plan completion*
-| Phase 06 P03 | 4 | 2 tasks | 4 files |
-| Phase 06 P04 | 5 | 2 tasks | 6 files |
-| Phase 07 P01 | 3 | 2 tasks | 3 files |
-| Phase 07 P02 | 5 | 2 tasks | 3 files |
-| Phase 08 P01 | 4 | 2 tasks | 5 files |
-| Phase 09 P01 | 6 | 2 tasks | 5 files |
-| Phase 09 P02 | 7 | 2 tasks | 4 files |
+*v2.0 metrics will be tracked starting with Phase 10*
 
 ## Accumulated Context
 
@@ -71,54 +49,9 @@ Progress: [██████████] 100%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- Roadmap: Vertical slice strategy -- documentary + plain text first to validate core analysis value before expanding formats and project types
-- Roadmap: Coarse granularity -- 4 phases compressing file formats and analysis expansion into focused delivery boundaries
-- 01-01: Excluded analysisSchema/systemPrompt from ProjectTypeConfig to avoid circular Zod imports
-- 01-01: Used base-ui Tooltip API (shadcn v4 default) instead of Radix asChild pattern
-- 01-02: Used alert() placeholder for Run Analysis button -- wired in Plan 03
-- 01-03: Used progressive JSON.parse for client-side streaming consumption rather than AI SDK React hooks
-- 01-03: Used vi.hoisted() for mock variable declarations to work with vitest mock hoisting
-- 02-01: Stub .pdf/.fdx/.docx cases throw "not yet implemented" -- enables extension validation before parsers exist
-- 02-01: Upload route uses text() for .txt and arrayBuffer() for binary formats
-- 02-02: Screenplay detection requires 2+ scene headings to classify as screenplay -- avoids false positives
-- 02-02: fast-xml-parser trims whitespace from text nodes -- multi-Text concatenation may lose inter-node spaces
-- 03-01: Used z.ZodObject<any> for analysisConfig type to accommodate different schema shapes across project types
-- 03-01: Short-form inputType prepended as [Input Type: X] prefix in user prompt rather than system prompt
-- 03-02: Used Record<string, unknown> for analysisData state to support all project types generically
-- 03-02: base-ui Tabs onValueChange signature takes (value, eventDetails) -- wrapped with lambda to match string callback
-- 03.1-03: Provider-specific providerOptions conditionally spread only when matching provider is active
-- 03.1-03: Model ID constructed via lookup map from settings.provider to provider:model string format
-- 04-01: Tiptap-compatible JSON as canonical document content format for editor and export compatibility
-- 04-01: Report normalizer registry keyed by AnalysisReportKind avoids documentary-specific branching
-- 04-02: Contenteditable div as editor shell rather than full Tiptap mount -- simpler for this phase
-- 04-02: Quote jump targets use data-quote-target attributes with sr-only visibility for deterministic jump
-- 04-02: DocumentWorkspace receives all state as props from page -- no internal fetching
-- 04-01: Narrative analysis produces two report kinds (structure and coverage) from the same schema
-- 04-01: Corporate soundbites mapped to quoteRefs with same Q-label pattern as documentary keyQuotes
-- 04-03: Hand-rolled Tiptap JSON to HTML walker instead of @tiptap/static-renderer for simpler server-side rendering
-- 04-03: Exposed buildDocxDocument for test inspection of document structure without Packer serialization
-- 04-04: Fixed Zod v4 z.record(z.unknown()) crash in jsdom by using z.record(z.string(), z.any())
-- 04-06: Used ArrayBuffer.slice() instead of Uint8Array for Response body -- Uint8Array<ArrayBufferLike> also rejected by DOM BodyInit types
-- 04-06: Narrowed heading tag to explicit 'h1'-'h6' union instead of keyof JSX.IntrinsicElements
-- 05-01: Used vi.stubGlobal for localStorage mocking in vitest jsdom environment
-- 05-01: Mounted state pattern for theme toggle to prevent hydration mismatch with next-themes
-- [Phase 06-03]: Subject Profiles and Story Arc cards use ready=true when data is present so fallback text renders inside EvaluationCard children instead of triggering the skeleton state
-- [Phase 06-04]: Optional workspace cards use ready=true so fallback text renders inside EvaluationCard children — consistent with Plan 06-03 Subject Profiles pattern
-- [Phase 07-01]: Native HTML checkboxes with label association for accessibility over custom styled components
-- [Phase 07-01]: Empty filter prevention resets to all types rather than allowing zero-selection state
-- [Phase 07]: Mocked useWorkspace instead of using real WorkspaceProvider to fix pre-existing test failures and enable controlled state injection
-- [Phase 08-01]: Health check validates merged settings (apiKey from loadSettings), not process.env directly
-- [Phase 08-01]: Ollama reachability check uses /api/tags endpoint with 3-second AbortSignal timeout
-- [Phase 08-01]: AI SDK error discrimination uses static isInstance methods rather than instanceof checks
-- [Phase 09-01]: maxDuration=120 for critic route (vs 60 for standard) due to prose-heavy 10-section output
-- [Phase 09-01]: Plain text streaming (no Output.object/Zod schema) since critic output is prose, not structured data
-- [Phase 09-01]: criticAnalysis stored as plain string (not JSON.stringify) since it is raw text
-- [Phase 09]: Toggle state kept as local useState (not persisted) to avoid accidental cost doubling
-- [Phase 09]: Critic failure is non-fatal -- standard analysis already saved before critic streaming starts
-
-### Roadmap Evolution
-
-- Phase 3.1 inserted after Phase 3: Multi-Provider AI Support (INSERTED) — global settings for Anthropic, OpenAI, and Ollama providers
+- Research: Use Debian bookworm-slim (not Alpine) due to better-sqlite3 native addon glibc dependency
+- Research: Caddy over Nginx for reverse proxy — automatic HTTPS with minimal config
+- Research: Zero new npm dependencies — only next.config.ts change and /api/health endpoint for app code
 
 ### Pending Todos
 
@@ -126,10 +59,12 @@ None yet.
 
 ### Blockers/Concerns
 
-None — v1.0 shipped and archived.
+- better-sqlite3 native binary tracing in standalone output needs verification during Phase 10
+- Host directory permissions for SQLite volume mount (uid 1001) need first-run documentation
+- Ollama host connectivity requires extra_hosts config on Linux Docker (works natively on Docker Desktop)
 
 ## Session Continuity
 
-Last session: 2026-03-19T14:58:01.460Z
-Stopped at: Completed 09-02-PLAN.md
+Last session: 2026-03-19
+Stopped at: Roadmap created for v2.0 Docker Containerization
 Resume file: None
