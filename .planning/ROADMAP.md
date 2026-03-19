@@ -171,3 +171,25 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7
 | 5. UI Theme & Brand System | 2/2 | Complete   | 2026-03-18 |
 | 6. Card-Based Analysis Workspaces | 4/5 | In Progress|  |
 | 7. Library & Persistence | 0/2 | Not started | — |
+
+---
+
+## Future Milestones
+
+### Milestone v2: Docker Containerization
+
+**Goal:** Package FilmIntern as a portable Docker container so it can be deployed anywhere without a local Node.js/npm setup.
+
+**Scope:**
+- Add `output: 'standalone'` to `next.config.ts`
+- Make SQLite DB path configurable via `DATA_DIR` env var (one-line change in `src/lib/db.ts`)
+- Write `Dockerfile` (multi-stage: builder → alpine runner with `better-sqlite3` native compile)
+- Write `docker-compose.yml` with volume mount for DB persistence and env var passthrough for AI API keys
+- Write `.dockerignore`
+
+**Key constraints:**
+- `better-sqlite3` requires native compilation — needs `python3 make g++` in both build and runtime stages
+- API keys (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, etc.) passed as env vars at runtime, never baked into image
+- DB volume mounted at `/data` so analyses persist across container restarts
+
+**Trigger:** Run `/gsd:new-milestone` after Phase 7 is complete and v1 is closed.
