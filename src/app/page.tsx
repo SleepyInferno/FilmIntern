@@ -195,7 +195,7 @@ export default function Home() {
         });
         setReportDocument(reportDoc);
         setActiveDocumentId(reportDoc.id);
-        // Auto-save analysis + report + source file
+        // LIB-01: Auto-save analysis + report + source material after streaming completes
         await saveAnalysis(projectId, { uploadData: uploadData!, analysisData: finalData, reportDocument: reportDoc });
       }
 
@@ -231,6 +231,7 @@ export default function Home() {
         setGeneratedDocuments(updated);
         setActiveDocumentId(doc.id);
 
+        // LIB-01: Auto-save generated documents to keep Library record current
         if (projectIdRef.current) {
           await saveGeneratedDocuments(projectIdRef.current, updated);
         }
