@@ -15,8 +15,8 @@ export const DEFAULT_SETTINGS: AISettings = {
   ollama: { model: 'llama3.1', baseURL: 'http://localhost:11434/api' },
 };
 
-const SETTINGS_DIR = path.join(process.cwd(), '.filmintern');
-const SETTINGS_PATH = path.join(SETTINGS_DIR, 'settings.json');
+export const SETTINGS_DIR_PATH = process.env.SETTINGS_DIR || path.join(process.cwd(), '.filmintern');
+const SETTINGS_PATH = path.join(SETTINGS_DIR_PATH, 'settings.json');
 
 export async function loadSettings(): Promise<AISettings> {
   try {
@@ -50,6 +50,6 @@ export async function loadSettings(): Promise<AISettings> {
 }
 
 export async function saveSettings(settings: AISettings): Promise<void> {
-  await mkdir(SETTINGS_DIR, { recursive: true });
+  await mkdir(SETTINGS_DIR_PATH, { recursive: true });
   await writeFile(SETTINGS_PATH, JSON.stringify(settings, null, 2), 'utf-8');
 }
