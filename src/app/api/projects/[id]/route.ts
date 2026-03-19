@@ -18,6 +18,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     ...(body.analysisData !== undefined && { analysisData: JSON.stringify(body.analysisData) }),
     ...(body.reportDocument !== undefined && { reportDocument: JSON.stringify(body.reportDocument) }),
     ...(body.generatedDocuments !== undefined && { generatedDocuments: JSON.stringify(body.generatedDocuments) }),
+    ...(body.criticAnalysis !== undefined && { criticAnalysis: body.criticAnalysis }),
   });
 
   if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });

@@ -25,6 +25,8 @@ function getDb(): Database.Database {
   `);
   // Migration: add uploadData column to existing databases
   try { _db.exec('ALTER TABLE projects ADD COLUMN uploadData TEXT'); } catch { /* already exists */ }
+  // Migration: add criticAnalysis column for harsh critic mode
+  try { _db.exec('ALTER TABLE projects ADD COLUMN criticAnalysis TEXT'); } catch { /* already exists */ }
   return _db;
 }
 
@@ -41,16 +43,17 @@ export interface ProjectRow {
   analysisData: string | null;
   reportDocument: string | null;
   generatedDocuments: string | null;
+  criticAnalysis: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
 export const db = {
-  listProjects(): Omit<ProjectRow, 'analysisData' | 'reportDocument' | 'generatedDocuments'>[] {
+  listProjects(): Omit<ProjectRow, 'analysisData' | 'reportDocument' | 'generatedDocuments' | 'criticAnalysis'>[] {
     const stmt = getDb().prepare(
       'SELECT id, title, projectType, fileName, createdAt, updatedAt FROM projects ORDER BY updatedAt DESC'
     );
-    return stmt.all() as Omit<ProjectRow, 'analysisData' | 'reportDocument' | 'generatedDocuments'>[];
+    return stmt.all() as Omit<ProjectRow, 'analysisData' | 'reportDocument' | 'generatedDocuments' | 'criticAnalysis'>[];
   },
 
   createProject(data: { id: string; title: string; projectType: string; fileName?: string | null }): ProjectRow {
@@ -67,7 +70,7 @@ export const db = {
     return (stmt.get(id) as ProjectRow) ?? null;
   },
 
-  updateProject(id: string, fields: Partial<Pick<ProjectRow, 'title' | 'uploadData' | 'analysisData' | 'reportDocument' | 'generatedDocuments'>>): ProjectRow | null {
+  updateProject(id: string, fields: Partial<Pick<ProjectRow, 'title' | 'uploadData' | 'analysisData' | 'reportDocument' | 'generatedDocuments' | 'criticAnalysis'>>): ProjectRow | null {
     const now = new Date().toISOString();
     const sets: string[] = ['updatedAt = ?'];
     const values: unknown[] = [now];
@@ -77,6 +80,7 @@ export const db = {
     if (fields.analysisData !== undefined) { sets.push('analysisData = ?'); values.push(fields.analysisData); }
     if (fields.reportDocument !== undefined) { sets.push('reportDocument = ?'); values.push(fields.reportDocument); }
     if (fields.generatedDocuments !== undefined) { sets.push('generatedDocuments = ?'); values.push(fields.generatedDocuments); }
+    if (fields.criticAnalysis !== undefined) { sets.push('criticAnalysis = ?'); values.push(fields.criticAnalysis); }
 
     values.push(id);
     getDb().prepare(`UPDATE projects SET ${sets.join(', ')} WHERE id = ?`).run(...values);
