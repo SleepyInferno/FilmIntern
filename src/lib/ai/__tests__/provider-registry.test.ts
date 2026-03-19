@@ -1,7 +1,7 @@
 /**
  * @vitest-environment node
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 
 const { mockCreateProviderRegistry, mockCreateAnthropic, mockCreateOpenAI, mockCreateOllama } = vi.hoisted(() => ({
   mockCreateProviderRegistry: vi.fn().mockReturnValue({ languageModel: vi.fn() }),
@@ -26,7 +26,8 @@ vi.mock('ollama-ai-provider-v2', () => ({
   createOllama: mockCreateOllama,
 }));
 
-import { buildRegistry } from '../provider-registry';
+import { buildRegistry, checkProviderHealth } from '../provider-registry';
+import type { AISettings } from '../settings';
 
 describe('provider-registry', () => {
   it('returns a registry with languageModel method', () => {
@@ -56,5 +57,80 @@ describe('provider-registry', () => {
     expect(mockCreateOllama).toHaveBeenCalledWith({
       baseURL: 'http://custom:1234/api',
     });
+  });
+});
+
+function makeSettings(overrides: Partial<AISettings> = {}): AISettings {
+  return {
+    provider: 'anthropic',
+    anthropic: { model: 'claude-sonnet-4-5', apiKey: 'sk-ant-xxx' },
+    openai: { model: 'gpt-4o', apiKey: 'sk-xxx' },
+    ollama: { model: 'llama3.1', baseURL: 'http://localhost:11434/api' },
+    ...overrides,
+  };
+}
+
+describe('checkProviderHealth', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('returns ok:false when Anthropic API key is empty', async () => {
+    const settings = makeSettings({
+      provider: 'anthropic',
+      anthropic: { model: 'claude-sonnet-4-5', apiKey: '' },
+    });
+    const result = await checkProviderHealth(settings);
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain('Anthropic API key not configured');
+  });
+
+  it('returns ok:true when Anthropic API key is present', async () => {
+    const settings = makeSettings({
+      provider: 'anthropic',
+      anthropic: { model: 'claude-sonnet-4-5', apiKey: 'sk-ant-xxx' },
+    });
+    const result = await checkProviderHealth(settings);
+    expect(result.ok).toBe(true);
+  });
+
+  it('returns ok:false when OpenAI API key is empty', async () => {
+    const settings = makeSettings({
+      provider: 'openai',
+      openai: { model: 'gpt-4o', apiKey: '' },
+    });
+    const result = await checkProviderHealth(settings);
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain('OpenAI API key not configured');
+  });
+
+  it('returns ok:true when OpenAI API key is present', async () => {
+    const settings = makeSettings({
+      provider: 'openai',
+      openai: { model: 'gpt-4o', apiKey: 'sk-xxx' },
+    });
+    const result = await checkProviderHealth(settings);
+    expect(result.ok).toBe(true);
+  });
+
+  it('returns ok:false when Ollama server is unreachable', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ECONNREFUSED')));
+    const settings = makeSettings({
+      provider: 'ollama',
+      ollama: { model: 'llama3.1', baseURL: 'http://localhost:11434/api' },
+    });
+    const result = await checkProviderHealth(settings);
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain('Cannot reach Ollama');
+  });
+
+  it('returns ok:true when Ollama server is reachable', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
+    const settings = makeSettings({
+      provider: 'ollama',
+      ollama: { model: 'llama3.1', baseURL: 'http://localhost:11434/api' },
+    });
+    const result = await checkProviderHealth(settings);
+    expect(result.ok).toBe(true);
   });
 });
