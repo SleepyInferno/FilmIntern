@@ -17,18 +17,18 @@ created: 2026-03-19
 
 | Property | Value |
 |----------|-------|
-| **Framework** | jest 29.x (via Next.js) |
-| **Config file** | `jest.config.js` or `package.json` jest field |
-| **Quick run command** | `npm test -- --testPathPattern="critic"` |
-| **Full suite command** | `npm test` |
+| **Framework** | vitest 3.x |
+| **Config file** | `vitest.config.ts` |
+| **Quick run command** | `npx vitest run src/app/api/analyze/critic/__tests__/route.test.ts --reporter=verbose` |
+| **Full suite command** | `npx vitest run --reporter=verbose` |
 | **Estimated runtime** | ~15 seconds |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Run `npm test -- --testPathPattern="critic"`
-- **After every plan wave:** Run `npm test`
+- **After every task commit:** Run `npx vitest run src/app/api/analyze/critic/__tests__/route.test.ts --reporter=verbose`
+- **After every plan wave:** Run `npx vitest run --reporter=verbose`
 - **Before `/gsd:verify-work`:** Full suite must be green
 - **Max feedback latency:** 15 seconds
 
