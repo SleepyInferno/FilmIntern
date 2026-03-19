@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_plan: 1 of 2
-status: in-progress
-stopped_at: Completed 09-01-PLAN.md
-last_updated: "2026-03-19T14:44:21.000Z"
+status: completed
+stopped_at: Completed 09-02-PLAN.md
+last_updated: "2026-03-19T14:58:01.463Z"
 last_activity: 2026-03-19 — Plan 09-01 complete (harsh critic backend)
 progress:
   total_phases: 10
-  completed_phases: 9
+  completed_phases: 10
   total_plans: 29
-  completed_plans: 28
-  percent: 100
+  completed_plans: 29
+  percent: 97
 ---
 
 # Project State
@@ -27,12 +27,12 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 ## Current Position
 
 Phase: 09-harsh-critic-analysis
-Current Plan: 1 of 2
-Previous: 08-01 complete
-Status: Plan 09-01 complete
-Last activity: 2026-03-19 — Plan 09-01 complete (harsh critic backend)
+Current Plan: 2 of 2
+Previous: 09-01 complete
+Status: Phase 09 complete
+Last activity: 2026-03-19 — Plan 09-02 complete (harsh critic frontend)
 
-Progress: [██████████] 97%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -63,6 +63,7 @@ Progress: [██████████] 97%
 | Phase 07 P02 | 5 | 2 tasks | 3 files |
 | Phase 08 P01 | 4 | 2 tasks | 5 files |
 | Phase 09 P01 | 6 | 2 tasks | 5 files |
+| Phase 09 P02 | 7 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,8 @@ Recent decisions affecting current work:
 - [Phase 09-01]: maxDuration=120 for critic route (vs 60 for standard) due to prose-heavy 10-section output
 - [Phase 09-01]: Plain text streaming (no Output.object/Zod schema) since critic output is prose, not structured data
 - [Phase 09-01]: criticAnalysis stored as plain string (not JSON.stringify) since it is raw text
+- [Phase 09]: Toggle state kept as local useState (not persisted) to avoid accidental cost doubling
+- [Phase 09]: Critic failure is non-fatal -- standard analysis already saved before critic streaming starts
 
 ### Roadmap Evolution
 
@@ -129,6 +132,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T14:44:21Z
-Stopped at: Completed 09-01-PLAN.md
+Last session: 2026-03-19T14:58:01.460Z
+Stopped at: Completed 09-02-PLAN.md
 Resume file: None
