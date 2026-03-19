@@ -1,0 +1,23 @@
+# Build artifacts (DOCK-03 required)
+node_modules/
+.next/
+.git/
+
+# Dev/planning files
+.planning/
+analysis_prompts/
+*.md
+
+# Secrets - never bake into image
+.env
+.env.local
+.env*.local
+
+# Local database files
+dev.db
+*.db-shm
+*.db-wal
+
+# IDE/editor
+.vscode/
+.idea/
