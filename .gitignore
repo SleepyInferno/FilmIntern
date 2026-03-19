@@ -47,3 +47,7 @@ next-env.d.ts
 /dev.db
 /dev.db-shm
 /dev.db-wal
+
+# dev environment
+!.env.example
+data/
