@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useCallback, useRef, Fragment } from 'react';
+import { useState, useCallback, useRef, Fragment, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
+import { HarshCriticDisplay } from '@/components/harsh-critic-display';
 import { getAvailableDocumentKinds } from '@/lib/documents/availability';
 import { NarrativeWorkspace } from '@/components/workspaces/narrative-workspace';
 import { DocumentaryWorkspace } from '@/components/workspaces/documentary-workspace';
@@ -33,6 +34,8 @@ interface DocumentWorkspaceProps {
   onExport: (format: ExportFormat, document: GeneratedDocument) => Promise<void> | void;
   analysisData?: Record<string, unknown> | null;
   workspaceProjectType?: string;
+  criticAnalysis?: string | null;
+  isCriticAnalyzing?: boolean;
 }
 
 function WorkspaceForType({ projectType, data, isStreaming }: {
@@ -194,10 +197,18 @@ export function DocumentWorkspace({
   onExport,
   analysisData,
   workspaceProjectType,
+  criticAnalysis,
+  isCriticAnalyzing,
 }: DocumentWorkspaceProps) {
   const [exportOpen, setExportOpen] = useState(false);
   const [generatingKind, setGeneratingKind] = useState<Exclude<DocumentKind, 'report'> | null>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isCriticAnalyzing) {
+      onActiveDocumentChange('__critic__');
+    }
+  }, [isCriticAnalyzing, onActiveDocumentChange]);
 
   const availableKinds = getAvailableDocumentKinds(projectType).filter(
     (k): k is Exclude<DocumentKind, 'report'> => k !== 'report'
@@ -322,6 +333,12 @@ export function DocumentWorkspace({
       >
         <TabsList>
           <TabsTrigger value={reportDocument.id}>Report</TabsTrigger>
+          {(criticAnalysis || isCriticAnalyzing) && (
+            <TabsTrigger value="__critic__">
+              {isCriticAnalyzing && <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />}
+              Industry Critic
+            </TabsTrigger>
+          )}
           {generatedDocuments.map((doc) => (
             <TabsTrigger key={doc.id} value={doc.id}>
               {doc.cover.typeLabel}
@@ -358,6 +375,15 @@ export function DocumentWorkspace({
             </Card>
           )}
         </TabsContent>
+
+        {(criticAnalysis || isCriticAnalyzing) && (
+          <TabsContent value="__critic__">
+            <HarshCriticDisplay
+              content={criticAnalysis ?? ''}
+              isStreaming={isCriticAnalyzing ?? false}
+            />
+          </TabsContent>
+        )}
 
         {generatedDocuments.map((doc) => (
           <TabsContent key={doc.id} value={doc.id}>
