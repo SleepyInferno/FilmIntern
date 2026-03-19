@@ -20,6 +20,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: UI Theme & Brand System** - Dark/light theme toggle with orange/amber brand accents and persistent theme preference (completed 2026-03-18)
 - [ ] **Phase 6: Card-Based Analysis Workspaces** - Redesign all 5 project type analysis views as card-based evaluation dimension workspaces
 - [ ] **Phase 7: Library & Persistence** - Auto-save analyses to SQLite and sidebar type filter for browsing, opening, and deleting saved analyses
+- [ ] **Phase 8: Provider Error Handling** - Graceful provider failures with health-check and meaningful error messages instead of 500s (closes MPAI-05)
+- [ ] **Phase 9: Harsh Critic Analysis Mode** - Optional industry-exec harsh critic lens added to any analysis alongside the standard results (CRIT-01)
 
 ## Phase Details
 
@@ -156,10 +158,36 @@ Plans:
 - [ ] 07-01-PLAN.md — ProjectTypeFilter component + wire into ProjectsSidebar with client-side filtering
 - [ ] 07-02-PLAN.md — Auto-save verification tests + re-analysis overwrite hardening
 
+### Phase 8: Provider Error Handling
+**Goal**: Provider failures return meaningful error messages instead of 500s; provider-registry includes a health-check mechanism
+**Depends on**: Phase 7
+**Requirements**: MPAI-05
+**Gap Closure:** Closes integration gap from v1.0 audit
+**Success Criteria** (what must be TRUE):
+  1. A misconfigured or unreachable provider returns a clear, user-readable error (not a 500)
+  2. `provider-registry.ts` exposes a health-check that validates provider config before the analysis call is made
+  3. The analyze route uses the health-check to surface config errors early
+  4. Existing provider switching behavior is unchanged for valid configurations
+**Plans**: TBD
+
+### Phase 9: Harsh Critic Analysis Mode
+**Goal**: User can enable a "Harsh Critic Mode" toggle that adds a second analytical lens — an industry executive voice that is brutal, direct, and constructively unsparing — displayed alongside the standard analysis
+**Depends on**: Phase 8
+**Requirements**: CRIT-01
+**Gap Closure:** New feature addition at milestone close
+**Success Criteria** (what must be TRUE):
+  1. A "Harsh Critic Mode" toggle is available on the analyze screen (off by default)
+  2. When enabled, the analysis API returns both the standard analysis and a harsh critic section
+  3. The critic persona is an industry executive: blunt, experienced, constructive but unsparing — no softening of real problems
+  4. Critic output is displayed in a clearly labeled separate tab or section within the workspace
+  5. Harsh Critic Mode works across all active project types (documentary, corporate, narrative, TV/episodic)
+  6. When disabled, behavior is identical to current — no performance penalty
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7
+Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -171,6 +199,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7
 | 5. UI Theme & Brand System | 2/2 | Complete   | 2026-03-18 |
 | 6. Card-Based Analysis Workspaces | 4/5 | In Progress|  |
 | 7. Library & Persistence | 0/2 | Not started | — |
+| 8. Provider Error Handling | 0/TBD | Not started | — |
+| 9. Harsh Critic Analysis Mode | 0/TBD | Not started | — |
 
 ---
 

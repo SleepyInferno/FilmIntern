@@ -33,7 +33,11 @@
 
 ### Analysis — Short-form & Branded
 
-- [x] **ANLYS-06**: Short-form/branded projects receive tailored analysis: pacing, messaging effectiveness, and CTA clarity
+- [ ] **ANLYS-06**: ~~Short-form/branded projects receive tailored analysis: pacing, messaging effectiveness, and CTA clarity~~ *(moved to Out of Scope — feature removed)*
+
+### Analysis — Harsh Critic Mode
+
+- [ ] **CRIT-01**: User can enable "Harsh Critic Mode" on any analysis; when enabled, a second analytical lens is added — an industry executive voice that is brutal, direct, and constructively unsparing — displayed alongside the standard analysis
 
 ### Outputs
 
@@ -55,11 +59,11 @@
 - [x] **WORK-02**: Documentary analysis displays with interview-specific evaluation cards (Key Quotes, Recurring Themes, Key Moments, Subject Profiles, Story Arc, Interview Gaps)
 - [x] **WORK-03**: Corporate interview analysis displays with messaging-specific cards (Soundbites, Key Messages, Spokesperson Assessment, Audience Alignment, Message Consistency, Recommendations)
 - [x] **WORK-04**: TV/Episodic analysis displays with episode/series evaluation cards (Episode Arc, Series Structure, Character Development, Tone & Voice, Pilot Effectiveness, Franchise Potential)
-- [x] **WORK-05**: Short-form/branded analysis displays with pacing/messaging cards (Hook Strength, Pacing, CTA Clarity, Brand Alignment, Emotional Impact, Audience Fit)
+- [ ] **WORK-05**: ~~Short-form/branded analysis displays with pacing/messaging cards (Hook Strength, Pacing, CTA Clarity, Brand Alignment, Emotional Impact, Audience Fit)~~ *(moved to Out of Scope — feature removed)*
 
 ### Library
 
-- [x] **LIB-01**: Analyses are automatically saved to IndexedDB after completion
+- [x] **LIB-01**: Analyses are automatically saved to SQLite after completion
 - [x] **LIB-02**: User can browse saved analyses in the Library page (sorted by date, filterable by project type)
 - [x] **LIB-03**: User can open a saved analysis from Library and view it in the workspace
 - [x] **LIB-04**: User can delete a saved analysis from the Library
@@ -96,6 +100,7 @@
 
 | Feature | Reason |
 |---------|--------|
+| Short-form/branded project type (ANLYS-06, WORK-05) | Removed in Phase 06 — not needed in this application |
 | Multi-user / collaboration | Personal tool — not needed |
 | Built-in transcription | Transcripts come pre-made; Descript/Otter handles this |
 | AI rewriting / script editing | Analysis tool, not an editor — scope trap |
@@ -125,7 +130,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ANLYS-03 | Phase 3 | Complete |
 | ANLYS-04 | Phase 3 | Complete |
 | ANLYS-05 | Phase 3 | Complete |
-| ANLYS-06 | Phase 3 | Complete |
+| ANLYS-06 | — | Out of Scope |
 | OUTP-01 | Phase 1 | Complete |
 | OUTP-02 | Phase 4 | Complete |
 | OUTP-03 | Phase 4 | Complete |
@@ -136,16 +141,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WORK-02 | Phase 6 | Complete |
 | WORK-03 | Phase 6 | Complete |
 | WORK-04 | Phase 6 | Complete |
-| WORK-05 | Phase 6 | Complete |
+| WORK-05 | — | Out of Scope |
 | LIB-01 | Phase 7 | Complete |
 | LIB-02 | Phase 7 | Complete |
 | LIB-03 | Phase 7 | Complete |
 | LIB-04 | Phase 7 | Complete |
+| MPAI-05 | Phase 8 | Pending |
+| CRIT-01 | Phase 9 | Pending |
 
 **Coverage:**
 - v1 requirements: 18 total — all Complete
-- v1.1 requirements: 12 total
-- Mapped to phases: 12
+- v1.1 requirements: 12 total (2 moved Out of Scope: ANLYS-06, WORK-05)
+- Gap closure phases: 2 (Phase 8: MPAI-05, Phase 9: CRIT-01)
 - Unmapped: 0 ✓
 
 ---
