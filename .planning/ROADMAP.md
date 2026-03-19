@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Export and Document Generation** - Downloadable reports and treatment/outline generation (completed 2026-03-17)
 - [x] **Phase 5: UI Theme & Brand System** - Dark/light theme toggle with orange/amber brand accents and persistent theme preference (completed 2026-03-18)
 - [ ] **Phase 6: Card-Based Analysis Workspaces** - Redesign all 5 project type analysis views as card-based evaluation dimension workspaces
-- [ ] **Phase 7: Library & Persistence** - Auto-save analyses to SQLite and sidebar type filter for browsing, opening, and deleting saved analyses
+- [x] **Phase 7: Library & Persistence** - Auto-save analyses to SQLite and sidebar type filter for browsing, opening, and deleting saved analyses (completed 2026-03-19)
 - [ ] **Phase 8: Provider Error Handling** - Graceful provider failures with health-check and meaningful error messages instead of 500s (closes MPAI-05)
 - [ ] **Phase 9: Harsh Critic Analysis Mode** - Optional industry-exec harsh critic lens added to any analysis alongside the standard results (CRIT-01)
 
@@ -155,8 +155,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — ProjectTypeFilter component + wire into ProjectsSidebar with client-side filtering
-- [ ] 07-02-PLAN.md — Auto-save verification tests + re-analysis overwrite hardening
+- [x] 07-01-PLAN.md — ProjectTypeFilter component + wire into ProjectsSidebar with client-side filtering
+- [x] 07-02-PLAN.md — Auto-save verification tests + re-analysis overwrite hardening
 
 ### Phase 8: Provider Error Handling
 **Goal**: Provider failures return meaningful error messages instead of 500s; provider-registry includes a health-check mechanism
@@ -198,7 +198,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8 -> 
 | 4. Export and Document Generation | 6/6 | Complete   | 2026-03-17 |
 | 5. UI Theme & Brand System | 2/2 | Complete   | 2026-03-18 |
 | 6. Card-Based Analysis Workspaces | 4/5 | In Progress|  |
-| 7. Library & Persistence | 0/2 | Not started | — |
+| 7. Library & Persistence | 2/2 | Complete | 2026-03-19 |
 | 8. Provider Error Handling | 0/TBD | Not started | — |
 | 9. Harsh Critic Analysis Mode | 0/TBD | Not started | — |
 
