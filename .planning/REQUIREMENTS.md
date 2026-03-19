@@ -16,10 +16,10 @@
 
 ### Local Dev
 
-- [ ] **DEV-01**: Developer can start the app with `docker compose up` (no Node.js install required)
-- [ ] **DEV-02**: Dev Compose uses bind-mounted source for hot module reload
-- [ ] **DEV-03**: SQLite database persists across container restarts via volume mount (./data:/app/data)
-- [ ] **DEV-04**: AI provider API keys set via .env file populate the settings UI as defaults
+- [x] **DEV-01**: Developer can start the app with `docker compose up` (no Node.js install required)
+- [x] **DEV-02**: Dev Compose uses bind-mounted source for hot module reload
+- [x] **DEV-03**: SQLite database persists across container restarts via volume mount (./data:/app/data)
+- [x] **DEV-04**: AI provider API keys set via .env file populate the settings UI as defaults
 - [x] **DEV-05**: Ollama running on the host is reachable from inside the container
 
 ### Production
@@ -59,10 +59,10 @@
 | DOCK-04 | Phase 10 | Complete |
 | DOCK-05 | Phase 10 | Complete |
 | DOCK-06 | Phase 10 | Complete |
-| DEV-01 | Phase 11 | Pending |
-| DEV-02 | Phase 11 | Pending |
-| DEV-03 | Phase 11 | Pending |
-| DEV-04 | Phase 11 | Pending |
+| DEV-01 | Phase 11 | Complete |
+| DEV-02 | Phase 11 | Complete |
+| DEV-03 | Phase 11 | Complete |
+| DEV-04 | Phase 11 | Complete |
 | DEV-05 | Phase 11 | Complete |
 | PROD-01 | Phase 12 | Pending |
 | PROD-02 | Phase 12 | Pending |
