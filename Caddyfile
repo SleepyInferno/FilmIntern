@@ -1,0 +1,9 @@
+# Production reverse proxy for FilmIntern
+# Listens on port 7430 (HTTP only, LAN access)
+# To enable HTTPS later: replace ":7430" with your domain name
+
+:7430 {
+	reverse_proxy app:3000 {
+		flush_interval -1
+	}
+}

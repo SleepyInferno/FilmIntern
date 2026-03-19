@@ -1,0 +1,41 @@
+# Production deployment for Unraid Docker Compose Manager
+# Prerequisites:
+#   1. Authenticate to GHCR (private repo):
+#      echo "YOUR_GITHUB_PAT" | docker login ghcr.io -u sleepyinferno --password-stdin
+#      (PAT needs read:packages scope)
+#   2. Create and own the data directory:
+#      mkdir -p /mnt/user/appdata/filmintern && chown -R 1001:1001 /mnt/user/appdata/filmintern
+
+services:
+  app:
+    image: ghcr.io/sleepyinferno/filmintern:latest
+    volumes:
+      - /mnt/user/appdata/filmintern:/app/data
+    environment:
+      - DATABASE_PATH=/app/data/filmintern.db
+      - SETTINGS_DIR=/app/data/.filmintern
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    networks:
+      - internal
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "7430:7430"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - internal
+
+volumes:
+  caddy_data:
+
+networks:
+  internal:
