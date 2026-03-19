@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Docker Containerization
-status: planning
-stopped_at: Phase 10 context gathered
-last_updated: "2026-03-19T18:43:18.617Z"
-last_activity: 2026-03-19 — Roadmap created for v2.0 (4 phases, 18 requirements)
+status: executing
+stopped_at: Completed 10-01-PLAN.md
+last_updated: "2026-03-19T19:10:00.184Z"
+last_activity: 2026-03-19 — Completed 10-01 App Code Prep (standalone output, env vars, health endpoint)
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 2
+  completed_plans: 1
+  percent: 50
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** Upload your material, pick your project type, get a structured analysis back — one tool that replaces hours of manual review across scattered apps.
-**Current focus:** v2.0 Docker Containerization — Phase 10: Docker Build (ready to plan)
+**Current focus:** v2.0 Docker Containerization — Phase 10: Docker Build (plan 01 complete, plan 02 next)
 
 ## Current Position
 
 Phase: 10 of 13 (Docker Build) — first phase of v2.0
-Plan: —
-Status: Ready to plan
-Last activity: 2026-03-19 — Roadmap created for v2.0 (4 phases, 18 requirements)
+Plan: 1 of 2 complete
+Status: Executing
+Last activity: 2026-03-19 — Completed 10-01 App Code Prep
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -51,6 +51,9 @@ Recent decisions affecting current work:
 - Research: Use Debian bookworm-slim (not Alpine) due to better-sqlite3 native addon glibc dependency
 - Research: Caddy over Nginx for reverse proxy — automatic HTTPS with minimal config
 - Research: Zero new npm dependencies — only next.config.ts change and /api/health endpoint for app code
+- 10-01: APP_VERSION as simple constant (not package.json read) due to standalone mode fragility
+- 10-01: Dynamic import of db in health endpoint to avoid module-level DB init
+- 10-01: force-dynamic export to prevent Next.js caching health responses at build time
 
 ### Pending Todos
 
@@ -64,6 +67,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T18:43:18.614Z
-Stopped at: Phase 10 context gathered
-Resume file: .planning/phases/10-docker-build/10-CONTEXT.md
+Last session: 2026-03-19T19:09:22Z
+Stopped at: Completed 10-01-PLAN.md
+Resume file: .planning/phases/10-docker-build/10-01-SUMMARY.md
