@@ -59,10 +59,10 @@
 
 ### Library
 
-- [ ] **LIB-01**: Analyses are automatically saved to IndexedDB after completion
+- [x] **LIB-01**: Analyses are automatically saved to IndexedDB after completion
 - [x] **LIB-02**: User can browse saved analyses in the Library page (sorted by date, filterable by project type)
-- [ ] **LIB-03**: User can open a saved analysis from Library and view it in the workspace
-- [ ] **LIB-04**: User can delete a saved analysis from the Library
+- [x] **LIB-03**: User can open a saved analysis from Library and view it in the workspace
+- [x] **LIB-04**: User can delete a saved analysis from the Library
 
 ## Future Requirements
 
@@ -137,10 +137,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WORK-03 | Phase 6 | Complete |
 | WORK-04 | Phase 6 | Complete |
 | WORK-05 | Phase 6 | Complete |
-| LIB-01 | Phase 7 | Pending |
+| LIB-01 | Phase 7 | Complete |
 | LIB-02 | Phase 7 | Complete |
-| LIB-03 | Phase 7 | Pending |
-| LIB-04 | Phase 7 | Pending |
+| LIB-03 | Phase 7 | Complete |
+| LIB-04 | Phase 7 | Complete |
 
 **Coverage:**
 - v1 requirements: 18 total — all Complete
