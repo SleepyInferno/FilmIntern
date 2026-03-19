@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Docker Containerization
 status: completed
-stopped_at: Completed 10-02-PLAN.md (Phase 10 complete)
-last_updated: "2026-03-19T21:39:15.594Z"
+stopped_at: Completed 11-02-PLAN.md
+last_updated: "2026-03-19T22:19:32.702Z"
 last_activity: 2026-03-19 — Completed 10-02 Docker Infrastructure
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
   percent: 100
 ---
 
@@ -43,6 +43,7 @@ Progress: [██████████] 100%
 |-------|------|----------|-------|-------|
 | 10 | 01 | 2min | 2 | 7 |
 | 10 | 02 | 12min | 2 | 2 |
+| Phase 11 P02 | 1min | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -60,6 +61,7 @@ Recent decisions affecting current work:
 - 10-02: bookworm-slim over Alpine — SWC/Turbopack and better-sqlite3 both require glibc (Alpine musl causes SIGILL)
 - 10-02: 440MB image size accepted — 300MB target unrealistic given 220MB base image
 - 10-02: Three-stage Dockerfile (deps/builder/runner) with better-sqlite3 prebuild trimming
+- [Phase 11]: Saved settings.json baseURL takes precedence over OLLAMA_BASE_URL env var (consistent with existing API key pattern)
 
 ### Pending Todos
 
@@ -73,6 +75,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T21:36:00Z
-Stopped at: Completed 10-02-PLAN.md (Phase 10 complete)
-Resume file: .planning/phases/10-docker-build/10-02-SUMMARY.md
+Last session: 2026-03-19T22:19:32.700Z
+Stopped at: Completed 11-02-PLAN.md
+Resume file: None
