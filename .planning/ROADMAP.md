@@ -66,11 +66,11 @@ Plans:
   3. Creating an analysis, stopping the container, and restarting it shows the analysis still in the library (SQLite persists via volume)
   4. Setting API keys in .env file populates the settings UI with those values as defaults on first load
   5. Selecting Ollama as the AI provider from inside the container successfully reaches Ollama running on the host
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 11-01: TBD
-- [ ] 11-02: TBD
+- [ ] 11-01-PLAN.md — Docker dev infrastructure: Dockerfile.dev, docker-compose.yml, .env.example, .gitignore updates
+- [ ] 11-02-PLAN.md — OLLAMA_BASE_URL env var support in settings.ts with TDD tests
 
 ### Phase 12: Production Deployment
 **Goal**: A self-hosted production deployment with automatic HTTPS via Caddy reverse proxy
@@ -118,7 +118,7 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13
 | 7. Library & Persistence | v1.0 | 2/2 | Complete | 2026-03-19 |
 | 8. Provider Error Handling | v1.0 | 1/1 | Complete | 2026-03-19 |
 | 9. Harsh Critic Mode | v1.0 | 2/2 | Complete | 2026-03-19 |
-| 10. Docker Build | 2/2 | Complete    | 2026-03-19 | - |
-| 11. Local Dev Environment | v2.0 | 0/? | Not started | - |
+| 10. Docker Build | v2.0 | 2/2 | Complete | 2026-03-19 |
+| 11. Local Dev Environment | v2.0 | 0/2 | Planned | - |
 | 12. Production Deployment | v2.0 | 0/? | Not started | - |
 | 13. CI/CD Pipeline | v2.0 | 0/? | Not started | - |
