@@ -7,12 +7,12 @@
 
 ### Docker Build
 
-- [ ] **DOCK-01**: App builds successfully via multi-stage Dockerfile using node:22-bookworm-slim base
+- [x] **DOCK-01**: App builds successfully via multi-stage Dockerfile using node:22-bookworm-slim base
 - [x] **DOCK-02**: next.config.ts configured with `output: 'standalone'` producing a minimal production image
-- [ ] **DOCK-03**: .dockerignore excludes node_modules, .next, .git from build context
+- [x] **DOCK-03**: .dockerignore excludes node_modules, .next, .git from build context
 - [x] **DOCK-04**: SQLite file path is configurable via DATABASE_PATH env var (not hardcoded to cwd)
 - [x] **DOCK-05**: App exposes /api/health returning 200 JSON, HEALTHCHECK directive in Dockerfile
-- [ ] **DOCK-06**: Container runs as non-root 'nextjs' user (uid 1001)
+- [x] **DOCK-06**: Container runs as non-root 'nextjs' user (uid 1001)
 
 ### Local Dev
 
@@ -53,12 +53,12 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DOCK-01 | Phase 10 | Pending |
+| DOCK-01 | Phase 10 | Complete |
 | DOCK-02 | Phase 10 | Complete |
-| DOCK-03 | Phase 10 | Pending |
+| DOCK-03 | Phase 10 | Complete |
 | DOCK-04 | Phase 10 | Complete |
 | DOCK-05 | Phase 10 | Complete |
-| DOCK-06 | Phase 10 | Pending |
+| DOCK-06 | Phase 10 | Complete |
 | DEV-01 | Phase 11 | Pending |
 | DEV-02 | Phase 11 | Pending |
 | DEV-03 | Phase 11 | Pending |

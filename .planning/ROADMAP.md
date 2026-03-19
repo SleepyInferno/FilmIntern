@@ -33,7 +33,7 @@ Archive: `.planning/milestones/v1.0-ROADMAP.md`
 - Integer phases (10, 11, 12, 13): Planned milestone work
 - Decimal phases (e.g., 10.1): Urgent insertions if needed
 
-- [ ] **Phase 10: Docker Build** - Multi-stage Dockerfile with standalone output, health check, and non-root user
+- [x] **Phase 10: Docker Build** - Multi-stage Dockerfile with standalone output, health check, and non-root user (completed 2026-03-19)
 - [ ] **Phase 11: Local Dev Environment** - Docker Compose for one-command startup with hot reload and persistence
 - [ ] **Phase 12: Production Deployment** - Caddy reverse proxy for HTTPS and domain routing
 - [ ] **Phase 13: CI/CD Pipeline** - GitHub Actions to build, tag, and push images to GHCR
@@ -50,11 +50,11 @@ Archive: `.planning/milestones/v1.0-ROADMAP.md`
   3. Hitting /api/health returns 200 JSON and Docker HEALTHCHECK reports the container as healthy
   4. The container runs as non-root user (uid 1001), and SQLite writes to a configurable DATABASE_PATH location
   5. Build context excludes node_modules, .next, and .git (verified by build speed and context size)
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 10-01-PLAN.md — App code changes: standalone config, configurable paths, health endpoint, unit tests
-- [ ] 10-02-PLAN.md — Docker infrastructure: .dockerignore and multi-stage Dockerfile with smoke verification
+- [x] 10-01-PLAN.md — App code changes: standalone config, configurable paths, health endpoint, unit tests
+- [x] 10-02-PLAN.md — Docker infrastructure: .dockerignore and multi-stage Dockerfile with smoke verification
 
 ### Phase 11: Local Dev Environment
 **Goal**: A developer can clone the repo and run the full app with `docker compose up` -- no Node.js installation required
@@ -118,7 +118,7 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13
 | 7. Library & Persistence | v1.0 | 2/2 | Complete | 2026-03-19 |
 | 8. Provider Error Handling | v1.0 | 1/1 | Complete | 2026-03-19 |
 | 9. Harsh Critic Mode | v1.0 | 2/2 | Complete | 2026-03-19 |
-| 10. Docker Build | 1/2 | In Progress|  | - |
+| 10. Docker Build | 2/2 | Complete   | 2026-03-19 | - |
 | 11. Local Dev Environment | v2.0 | 0/? | Not started | - |
 | 12. Production Deployment | v2.0 | 0/? | Not started | - |
 | 13. CI/CD Pipeline | v2.0 | 0/? | Not started | - |
