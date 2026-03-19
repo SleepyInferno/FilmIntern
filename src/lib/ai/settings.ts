@@ -35,7 +35,11 @@ export async function loadSettings(): Promise<AISettings> {
         ...parsed.openai,
         apiKey: parsed.openai?.apiKey || process.env.OPENAI_API_KEY || '',
       },
-      ollama: { ...DEFAULT_SETTINGS.ollama, ...parsed.ollama },
+      ollama: {
+        ...DEFAULT_SETTINGS.ollama,
+        ...parsed.ollama,
+        baseURL: parsed.ollama?.baseURL || process.env.OLLAMA_BASE_URL || DEFAULT_SETTINGS.ollama.baseURL,
+      },
     };
   } catch (err: unknown) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
@@ -43,6 +47,7 @@ export async function loadSettings(): Promise<AISettings> {
         ...DEFAULT_SETTINGS,
         anthropic: { ...DEFAULT_SETTINGS.anthropic, apiKey: process.env.ANTHROPIC_API_KEY || '' },
         openai: { ...DEFAULT_SETTINGS.openai, apiKey: process.env.OPENAI_API_KEY || '' },
+        ollama: { ...DEFAULT_SETTINGS.ollama, baseURL: process.env.OLLAMA_BASE_URL || DEFAULT_SETTINGS.ollama.baseURL },
       };
     }
     throw err;
