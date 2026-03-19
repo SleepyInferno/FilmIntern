@@ -3,12 +3,16 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockStreamText, mockOutputObject, mockLoadSettings, mockLanguageModel, mockBuildRegistry } = vi.hoisted(() => ({
+const { mockStreamText, mockOutputObject, mockLoadSettings, mockLanguageModel, mockBuildRegistry, mockCheckProviderHealth, mockAPICallError, mockLoadAPIKeyError, mockNoSuchModelError } = vi.hoisted(() => ({
   mockStreamText: vi.fn(),
   mockOutputObject: vi.fn().mockReturnValue('mocked-output'),
   mockLoadSettings: vi.fn(),
   mockLanguageModel: vi.fn().mockReturnValue('mock-model'),
   mockBuildRegistry: vi.fn(),
+  mockCheckProviderHealth: vi.fn().mockResolvedValue({ ok: true }),
+  mockAPICallError: { isInstance: vi.fn().mockReturnValue(false) },
+  mockLoadAPIKeyError: { isInstance: vi.fn().mockReturnValue(false) },
+  mockNoSuchModelError: { isInstance: vi.fn().mockReturnValue(false) },
 }));
 
 // Initialize mockBuildRegistry to return an object with languageModel
@@ -17,6 +21,9 @@ mockBuildRegistry.mockReturnValue({ languageModel: mockLanguageModel });
 vi.mock('ai', () => ({
   streamText: mockStreamText,
   Output: { object: mockOutputObject },
+  APICallError: mockAPICallError,
+  LoadAPIKeyError: mockLoadAPIKeyError,
+  NoSuchModelError: mockNoSuchModelError,
 }));
 
 vi.mock('@/lib/ai/settings', () => ({
@@ -25,6 +32,7 @@ vi.mock('@/lib/ai/settings', () => ({
 
 vi.mock('@/lib/ai/provider-registry', () => ({
   buildRegistry: mockBuildRegistry,
+  checkProviderHealth: mockCheckProviderHealth,
 }));
 
 vi.mock('zod', () => ({
@@ -90,6 +98,10 @@ describe('POST /api/analyze', () => {
     mockStreamText.mockReturnValue({
       toTextStreamResponse: vi.fn().mockReturnValue(new Response('{}')),
     });
+    mockCheckProviderHealth.mockResolvedValue({ ok: true });
+    mockAPICallError.isInstance.mockReturnValue(false);
+    mockLoadAPIKeyError.isInstance.mockReturnValue(false);
+    mockNoSuchModelError.isInstance.mockReturnValue(false);
   });
 
   it('calls streamText with documentaryAnalysisSchema for documentary projectType', async () => {
@@ -241,5 +253,77 @@ describe('POST /api/analyze', () => {
     expect(res.status).toBe(400);
     const text = await res.text();
     expect(text).toContain('No text provided');
+  });
+
+  describe('error handling', () => {
+    it('returns 503 when health check fails', async () => {
+      mockCheckProviderHealth.mockResolvedValue({ ok: false, error: 'Anthropic API key not configured' });
+      const req = makeRequest({ text: 'sample', projectType: 'documentary' });
+      const res = await POST(req);
+
+      expect(res.status).toBe(503);
+      const body = await res.json();
+      expect(body.error).toContain('Anthropic API key not configured');
+      expect(mockStreamText).not.toHaveBeenCalled();
+    });
+
+    it('returns 401 when LoadAPIKeyError thrown', async () => {
+      mockStreamText.mockImplementation(() => { throw new Error('key'); });
+      mockLoadAPIKeyError.isInstance.mockReturnValue(true);
+      const req = makeRequest({ text: 'sample', projectType: 'documentary' });
+      const res = await POST(req);
+
+      expect(res.status).toBe(401);
+      const body = await res.json();
+      expect(body.error).toContain('API key');
+      expect(body.error).toContain('anthropic');
+    });
+
+    it('returns 401 when APICallError with statusCode 401', async () => {
+      const err = new Error('Unauthorized');
+      (err as unknown as Record<string, unknown>).statusCode = 401;
+      mockStreamText.mockImplementation(() => { throw err; });
+      mockAPICallError.isInstance.mockReturnValue(true);
+      const req = makeRequest({ text: 'sample', projectType: 'documentary' });
+      const res = await POST(req);
+
+      expect(res.status).toBe(401);
+      const body = await res.json();
+      expect(body.error).toContain('Invalid API key');
+    });
+
+    it('returns 502 when APICallError with other statusCode', async () => {
+      const err = new Error('Server error');
+      (err as unknown as Record<string, unknown>).statusCode = 500;
+      mockStreamText.mockImplementation(() => { throw err; });
+      mockAPICallError.isInstance.mockReturnValue(true);
+      const req = makeRequest({ text: 'sample', projectType: 'documentary' });
+      const res = await POST(req);
+
+      expect(res.status).toBe(502);
+      const body = await res.json();
+      expect(body.error).toContain('anthropic');
+    });
+
+    it('returns 400 when NoSuchModelError thrown', async () => {
+      mockStreamText.mockImplementation(() => { throw new Error('model not found'); });
+      mockNoSuchModelError.isInstance.mockReturnValue(true);
+      const req = makeRequest({ text: 'sample', projectType: 'documentary' });
+      const res = await POST(req);
+
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toContain('not found');
+    });
+
+    it('returns 500 for unknown errors', async () => {
+      mockStreamText.mockImplementation(() => { throw new Error('something weird'); });
+      const req = makeRequest({ text: 'sample', projectType: 'documentary' });
+      const res = await POST(req);
+
+      expect(res.status).toBe(500);
+      const body = await res.json();
+      expect(body.error).toBe('Analysis failed. Check provider settings and try again.');
+    });
   });
 });
