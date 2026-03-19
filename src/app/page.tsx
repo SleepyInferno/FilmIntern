@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { FileDropzone } from '@/components/file-dropzone';
 import { ContentPreview } from '@/components/content-preview';
 import { DocumentWorkspace } from '@/components/document-workspace';
@@ -72,8 +72,12 @@ export default function Home() {
     activeDocumentId, setActiveDocumentId,
     title, setTitle, writtenBy,
     isNewProjectMode, setIsNewProjectMode,
+    criticAnalysis, setCriticAnalysis,
+    isCriticAnalyzing, setIsCriticAnalyzing,
     saveAnalysis, saveGeneratedDocuments,
   } = useWorkspace();
+
+  const [harshCriticEnabled, setHarshCriticEnabled] = useState(false);
 
   const projectIdRef = useRef<string | null>(currentProjectId);
   projectIdRef.current = currentProjectId;
@@ -101,6 +105,7 @@ export default function Home() {
     setGeneratedDocuments([]);
     setActiveDocumentId('');
     setCurrentProjectId(null);
+    setCriticAnalysis(null);
   }
 
   async function handleFileUploaded(data: typeof uploadData) {
@@ -201,6 +206,45 @@ export default function Home() {
       }
 
       setIsAnalyzing(false);
+
+      // Harsh Critic Mode: sequential second pass after standard analysis
+      if (harshCriticEnabled && finalData) {
+        setIsCriticAnalyzing(true);
+        setCriticAnalysis('');
+        try {
+          const criticResponse = await fetch('/api/analyze/critic', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: uploadData.text, projectType }),
+          });
+
+          if (criticResponse.ok) {
+            const reader = criticResponse.body?.getReader();
+            const decoder = new TextDecoder();
+            let criticText = '';
+
+            while (reader) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              criticText += decoder.decode(value, { stream: true });
+              setCriticAnalysis(criticText);
+            }
+
+            // Save critic result to DB (plain text, not JSON-stringified)
+            if (projectId) {
+              await fetch(`/api/projects/${projectId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ criticAnalysis: criticText }),
+              });
+            }
+          }
+        } catch {
+          // Critic failure is non-fatal — standard analysis already saved
+        } finally {
+          setIsCriticAnalyzing(false);
+        }
+      }
     } catch {
       setAnalysisError('Analysis could not be completed. Check your connection and try again.');
       setIsAnalyzing(false);
@@ -293,6 +337,7 @@ export default function Home() {
     setUploadData(null);
     setAnalysisError(null);
     setIsNewProjectMode(false);
+    setCriticAnalysis(null);
   }
 
   return (
@@ -375,6 +420,16 @@ export default function Home() {
           {uploadData && (
             <>
               <ContentPreview text={uploadData.text} metadata={uploadData.metadata} />
+              <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={harshCriticEnabled}
+                  onChange={(e) => setHarshCriticEnabled(e.target.checked)}
+                  className="rounded border-input accent-orange-500"
+                />
+                <span className="font-medium">Industry Critic Mode</span>
+                <span className="text-xs text-muted-foreground">Adds a harsh, constructive second analysis</span>
+              </label>
               <Button size="lg" onClick={handleAnalyze} disabled={isAnalyzing}>
                 {isAnalyzing ? (
                   <>
@@ -436,6 +491,8 @@ export default function Home() {
             onExport={handleExport}
             analysisData={analysisData}
             workspaceProjectType={projectType}
+            criticAnalysis={criticAnalysis}
+            isCriticAnalyzing={isCriticAnalyzing}
           />
         </>
       )}

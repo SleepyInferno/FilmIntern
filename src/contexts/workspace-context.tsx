@@ -41,6 +41,8 @@ interface WorkspaceState {
   title: string;
   writtenBy: string;
   isNewProjectMode: boolean;
+  criticAnalysis: string | null;
+  isCriticAnalyzing: boolean;
 }
 
 interface WorkspaceActions {
@@ -57,6 +59,8 @@ interface WorkspaceActions {
   setTitle: Dispatch<SetStateAction<string>>;
   setWrittenBy: Dispatch<SetStateAction<string>>;
   setIsNewProjectMode: Dispatch<SetStateAction<boolean>>;
+  setCriticAnalysis: Dispatch<SetStateAction<string | null>>;
+  setIsCriticAnalyzing: Dispatch<SetStateAction<boolean>>;
   resetWorkspace: () => void;
   loadProject: (id: string) => Promise<void>;
   saveAnalysis: (projectId: string, data: {
@@ -83,6 +87,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [title, setTitle] = useState('');
   const [writtenBy, setWrittenBy] = useState('FilmIntern');
   const [isNewProjectMode, setIsNewProjectMode] = useState(false);
+  const [criticAnalysis, setCriticAnalysis] = useState<string | null>(null);
+  const [isCriticAnalyzing, setIsCriticAnalyzing] = useState(false);
 
   const resetWorkspace = useCallback(() => {
     setCurrentProjectId(null);
@@ -95,6 +101,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setActiveDocumentId('');
     setTitle('');
     setIsNewProjectMode(false);
+    setCriticAnalysis(null);
+    setIsCriticAnalyzing(false);
   }, []);
 
   const loadProject = useCallback(async (id: string) => {
@@ -114,6 +122,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setAnalysisError(null);
     setIsAnalyzing(false);
     setIsNewProjectMode(false);
+    setCriticAnalysis(project.criticAnalysis ?? null);
+    setIsCriticAnalyzing(false);
   }, []);
 
   const saveAnalysis = useCallback(async (
@@ -150,6 +160,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       title,
       writtenBy,
       isNewProjectMode,
+      criticAnalysis,
+      isCriticAnalyzing,
       setCurrentProjectId,
       setProjectType,
       setInputType,
@@ -163,6 +175,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       setTitle,
       setWrittenBy,
       setIsNewProjectMode,
+      setCriticAnalysis,
+      setIsCriticAnalyzing,
       resetWorkspace,
       loadProject,
       saveAnalysis,
@@ -182,6 +196,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       title,
       writtenBy,
       isNewProjectMode,
+      criticAnalysis,
+      isCriticAnalyzing,
       resetWorkspace,
       loadProject,
       saveAnalysis,
