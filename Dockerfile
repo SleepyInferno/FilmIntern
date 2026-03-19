@@ -4,6 +4,8 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 
+# glibc compat shims required for Node.js 22 on Alpine
+RUN apk add --no-cache libc6-compat
 # Install build tools for native addons (better-sqlite3)
 RUN apk add --no-cache python3 make g++
 
@@ -20,8 +22,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+RUN apk add --no-cache libc6-compat
+
 ENV NODE_ENV=production
-RUN TURBOPACK=0 npm run build
+RUN npm run build
 
 # ============================================
 # Stage 3: Production runtime
