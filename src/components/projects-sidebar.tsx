@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Plus, Trash2, Film, Video, Briefcase, Tv, FolderOpen, Loader2 } from 'lucide-react';
 import { useWorkspace, type ProjectListItem } from '@/contexts/workspace-context';
 import { cn } from '@/lib/utils';
+import { ProjectTypeFilter, ALL_TYPES } from '@/components/project-type-filter';
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
   narrative: <Film size={13} />,
@@ -38,6 +39,7 @@ export function ProjectsSidebar() {
     currentProjectId, loadProject, resetWorkspace, setIsNewProjectMode,
     isNewProjectMode, analysisData, reportDocument, title, projectType, uploadData,
   } = useWorkspace();
+  const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set(ALL_TYPES));
   const router = useRouter();
   const pathname = usePathname();
   const prevProjectIdRef = useRef<string | null>(null);
@@ -108,7 +110,30 @@ export function ProjectsSidebar() {
     if (pathname !== '/') router.push('/');
   }
 
+  function handleToggleAll() {
+    setActiveTypes(new Set(ALL_TYPES));
+  }
+
+  function handleToggleType(type: string) {
+    setActiveTypes(prev => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      // Prevent empty filter -- reset to all if nothing selected
+      if (next.size === 0) return new Set(ALL_TYPES);
+      return next;
+    });
+  }
+
+  const filteredProjects = useMemo(
+    () => activeTypes.size === ALL_TYPES.length
+      ? projects
+      : projects.filter(p => activeTypes.has(p.projectType)),
+    [projects, activeTypes]
+  );
+
   const hasProjects = projects.length > 0;
+  const hasFilteredProjects = filteredProjects.length > 0;
 
   return (
     <aside className="w-56 shrink-0 border-r border-border flex flex-col h-full bg-background">
@@ -129,6 +154,12 @@ export function ProjectsSidebar() {
         </button>
       </div>
 
+      <ProjectTypeFilter
+        activeTypes={activeTypes}
+        onToggleType={handleToggleType}
+        onToggleAll={handleToggleAll}
+      />
+
       <div className="flex-1 overflow-y-auto py-1">
         {/* Pending new project indicator */}
         {isNewProjectMode && (
@@ -143,8 +174,13 @@ export function ProjectsSidebar() {
             <FolderOpen size={28} className="text-muted-foreground/40" />
             <p className="text-xs text-muted-foreground">No projects yet.<br />Click <strong>+</strong> to get started.</p>
           </div>
+        ) : hasProjects && !hasFilteredProjects && !isNewProjectMode ? (
+          <div className="flex flex-col items-center justify-center gap-2 py-10 px-4 text-center">
+            <FolderOpen size={28} className="text-muted-foreground/40" />
+            <p className="text-xs text-muted-foreground">No matching projects.</p>
+          </div>
         ) : (
-          projects.map((project) => (
+          filteredProjects.map((project) => (
             <div
               key={project.id}
               role="button"
