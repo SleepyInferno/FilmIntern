@@ -146,7 +146,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LIB-02 | Phase 7 | Complete |
 | LIB-03 | Phase 7 | Complete |
 | LIB-04 | Phase 7 | Complete |
-| MPAI-05 | Phase 8 | Pending |
+| MPAI-05 | Phase 8 | Complete |
 | CRIT-01 | Phase 9 | Pending |
 
 **Coverage:**
