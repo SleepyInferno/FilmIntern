@@ -168,7 +168,10 @@ Plans:
   2. `provider-registry.ts` exposes a health-check that validates provider config before the analysis call is made
   3. The analyze route uses the health-check to surface config errors early
   4. Existing provider switching behavior is unchanged for valid configurations
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 08-01-PLAN.md — Health-check function, analyze route error handling, client error display
 
 ### Phase 9: Harsh Critic Analysis Mode
 **Goal**: User can enable a "Harsh Critic Mode" toggle that adds a second analytical lens — an industry executive voice that is brutal, direct, and constructively unsparing — displayed alongside the standard analysis
@@ -199,7 +202,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8 -> 
 | 5. UI Theme & Brand System | 2/2 | Complete   | 2026-03-18 |
 | 6. Card-Based Analysis Workspaces | 4/5 | In Progress|  |
 | 7. Library & Persistence | 2/2 | Complete | 2026-03-19 |
-| 8. Provider Error Handling | 0/TBD | Not started | — |
+| 8. Provider Error Handling | 0/1 | Not started | — |
 | 9. Harsh Critic Analysis Mode | 0/TBD | Not started | — |
 
 ---
