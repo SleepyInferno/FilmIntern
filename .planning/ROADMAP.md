@@ -1,232 +1,59 @@
 # Roadmap: FilmIntern
 
-## Overview
+## Milestones
 
-FilmIntern delivers a personal filmmaking analysis tool through four phases: first a complete vertical slice proving the core value loop (upload transcript, select documentary, get analysis), then file format support for screenplays, then analysis expansion across all five project types, and finally export and document generation. Each phase delivers a usable capability increment. The vertical slice strategy front-loads risk validation (does the analysis actually help?) before investing in format parsing and additional project types.
+- ✅ **v1.0 MVP** — Phases 1–9 (shipped 2026-03-19)
+- 📋 **v2.0 Docker Containerization** — Phases 10+ (planned)
 
 ## Phases
 
-**Phase Numbering:**
-- Integer phases (1, 2, 3): Planned milestone work
-- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+<details>
+<summary>✅ v1.0 MVP (Phases 1–9) — SHIPPED 2026-03-19</summary>
 
-Decimal phases appear between their surrounding integers in numeric order.
+- [x] Phase 1: Vertical Slice (3/3 plans) — completed 2026-03-17
+- [x] Phase 2: File Format Support (2/2 plans) — completed 2026-03-17
+- [x] Phase 3: Analysis Expansion (3/3 plans) — completed 2026-03-17
+- [x] Phase 3.1: Multi-Provider AI Support (3/3 plans) — completed 2026-03-17 (INSERTED)
+- [x] Phase 4: Export and Document Generation (6/6 plans) — completed 2026-03-17
+- [x] Phase 5: UI Theme & Brand System (2/2 plans) — completed 2026-03-18
+- [x] Phase 6: Card-Based Analysis Workspaces (5/5 plans) — completed 2026-03-19
+- [x] Phase 7: Library & Persistence (2/2 plans) — completed 2026-03-19
+- [x] Phase 8: Provider Error Handling (1/1 plan) — completed 2026-03-19
+- [x] Phase 9: Harsh Critic Analysis Mode (2/2 plans) — completed 2026-03-19
 
-- [x] **Phase 1: Vertical Slice** - Complete end-to-end pipeline for documentary project type with plain text upload (completed 2026-03-17)
-- [x] **Phase 2: File Format Support** - PDF, Final Draft, and DOCX parsing with structure preservation (completed 2026-03-17)
-- [x] **Phase 3: Analysis Expansion** - All remaining project type analyses (corporate, narrative, TV, short-form) (completed 2026-03-17)
-- [x] **Phase 3.1: Multi-Provider AI Support** - Global settings for Anthropic, OpenAI, and Ollama provider selection (completed 2026-03-17)
-- [x] **Phase 4: Export and Document Generation** - Downloadable reports and treatment/outline generation (completed 2026-03-17)
-- [x] **Phase 5: UI Theme & Brand System** - Dark/light theme toggle with orange/amber brand accents and persistent theme preference (completed 2026-03-18)
-- [ ] **Phase 6: Card-Based Analysis Workspaces** - Redesign all 5 project type analysis views as card-based evaluation dimension workspaces
-- [x] **Phase 7: Library & Persistence** - Auto-save analyses to SQLite and sidebar type filter for browsing, opening, and deleting saved analyses (completed 2026-03-19)
-- [x] **Phase 8: Provider Error Handling** - Graceful provider failures with health-check and meaningful error messages instead of 500s (closes MPAI-05) (completed 2026-03-19)
-- [ ] **Phase 9: Harsh Critic Analysis Mode** - Optional industry-exec harsh critic lens added to any analysis alongside the standard results (CRIT-01)
+Archive: `.planning/milestones/v1.0-ROADMAP.md`
 
-## Phase Details
+</details>
 
-### Phase 1: Vertical Slice
-**Goal**: User can upload a plain text transcript, select "documentary" as project type, and receive a structured interview mining analysis displayed on screen
-**Depends on**: Nothing (first phase)
-**Requirements**: CORE-01, CORE-02, CORE-03, CORE-04, CORE-05, PARSE-01, ANLYS-01, OUTP-01
-**Success Criteria** (what must be TRUE):
-  1. User can select "documentary" from a list of project types before uploading
-  2. User can upload a plain text file via drag-and-drop or file picker and see a parsed content preview
-  3. User can trigger analysis and receive a structured documentary report with extracted quotes, recurring themes, and key moments
-  4. Analysis report displays on screen in a professional, scannable format (not raw chatbot text)
-  5. The full loop (select type, upload, preview, analyze, view report) works end-to-end without errors on a real transcript
-**Plans**: 3 plans
-
-Plans:
-- [x] 01-01-PLAN.md - Scaffold Next.js project, foundation types/schemas/parser, app shell layout
-- [x] 01-02-PLAN.md - Upload flow with drag-and-drop dropzone, server-side parsing, content preview
-- [x] 01-03-PLAN.md - Streaming analysis pipeline with Claude and structured report display
-
-### Phase 2: File Format Support
-**Goal**: User can upload PDF screenplays, Final Draft (.fdx) files, and Word documents with structural formatting preserved for downstream analysis
-**Depends on**: Phase 1
-**Requirements**: PARSE-02, PARSE-03, PARSE-04
-**Success Criteria** (what must be TRUE):
-  1. User can upload a PDF screenplay and see scene headings, character names, and dialogue correctly identified in the parsed preview
-  2. User can upload a Final Draft (.fdx) file and see its structure (scenes, characters, dialogue) preserved in the parsed preview
-  3. User can upload a .docx file and see its content correctly parsed in the preview
-  4. File type validation rejects unsupported formats with a clear error message
-**Plans**: 2 plans
-
-Plans:
-- [x] 02-01-PLAN.md - Infrastructure: install deps, async registry with Buffer support, upload route binary handling, dropzone/project-type MIME expansion, Wave 0 test stubs
-- [x] 02-02-PLAN.md - Parsers: PDF with screenplay detection, FDX XML parsing, DOCX extraction, registry wiring
-
-### Phase 3: Analysis Expansion
-**Goal**: All five project types produce tailored, high-quality analysis using project-type-specific analytical frameworks
-**Depends on**: Phase 2
-**Requirements**: ANLYS-02, ANLYS-03, ANLYS-04, ANLYS-05, ANLYS-06
-**Success Criteria** (what must be TRUE):
-  1. Corporate interview projects produce key messaging analysis with usable soundbites, quote extraction, and messaging themes
-  2. Narrative film projects produce both story structure analysis (act breaks, turning points, pacing) and script coverage (character, conflict, dialogue, marketability)
-  3. TV/episodic projects produce episode arc and series structure analysis
-  4. Short-form/branded projects produce pacing, messaging effectiveness, and CTA clarity analysis
-  5. Each project type's analysis reads as domain-appropriate professional feedback, not generic AI summary
-**Plans**: 3 plans
-
-Plans:
-- [x] 03-01-PLAN.md — Schemas, prompts, and API route routing for all 4 new project types
-- [x] 03-02-PLAN.md — Report components (Narrative/TV tabbed, Corporate/Short-form single-section) and page refactoring
-- [x] 03-03-PLAN.md — Human verification of all 5 project types end-to-end
-
-### Phase 03.1: Multi-Provider AI Support (INSERTED)
-
-**Goal:** User can select AI provider (Anthropic, OpenAI, or Ollama) from a global settings page and the analysis pipeline uses that provider dynamically
-**Requirements**: MPAI-01, MPAI-02, MPAI-03, MPAI-04, MPAI-05
-**Depends on:** Phase 3
-**Success Criteria** (what must be TRUE):
-  1. User can navigate to a Settings page from the sidebar and select an AI provider
-  2. User can configure provider-specific settings (model name, Ollama base URL)
-  3. Analysis route uses the selected provider instead of hardcoded Anthropic
-  4. Missing or invalid provider configuration shows clear error messages
-  5. Default behavior (Anthropic claude-sonnet-4-5) works unchanged when no settings configured
-**Plans:** 3/3 plans complete
-
-Plans:
-- [x] 03.1-01-PLAN.md — Install deps, settings persistence (types/read/write), provider registry, settings API route
-- [x] 03.1-02-PLAN.md — Settings page UI with provider selection form, sidebar navigation wiring
-- [x] 03.1-03-PLAN.md — Integrate analyze route with provider registry, update tests, human verification
-
-### Phase 4: Export and Document Generation
-**Goal**: User can download analysis reports and generate derivative documents (treatments, outlines) from uploaded material
-**Depends on**: Phase 3
-**Requirements**: OUTP-02, OUTP-03
-**Success Criteria** (what must be TRUE):
-  1. User can download any analysis report as a formatted PDF or DOCX document
-  2. User can generate a treatment or narrative outline from uploaded material and view it on screen
-  3. Downloaded documents are professionally formatted with appropriate headings, sections, and typography
-**Plans**: 4 plans
-
-Plans:
-- [ ] 04-01-PLAN.md - Establish shared document contracts, project-type availability rules, and generic analysis-report normalization
-- [ ] 04-02-PLAN.md - Build derivative document generation route plus tabbed in-app editing workspace
-- [ ] 04-03-PLAN.md - Implement shared export contracts, layout/renderers, and PDF/DOCX exporter libraries
-- [ ] 04-04-PLAN.md - Expose export API routes and wire active-tab download handling
-
-### Phase 5: UI Theme & Brand System
-**Goal**: User can toggle between light and dark theme, and the app uses orange/amber brand accent colors consistently throughout both themes
-**Depends on**: Phase 4
-**Requirements**: THEME-01, THEME-02, THEME-03
-**Success Criteria** (what must be TRUE):
-  1. User can click a theme toggle and switch between light and dark mode
-  2. Orange/amber brand accent colors appear consistently on buttons, highlights, and interactive elements in both themes
-  3. Theme preference persists after page refresh (stored in localStorage)
-  4. All existing pages (home, settings, dashboard, exports, shot-lists, image-prompts) respect the active theme
-**Plans**: 2 plans
-
-Plans:
-- [x] 05-01-PLAN.md — Theme infrastructure: next-themes, accent presets, CSS token update, toggle button, card elevation
-- [x] 05-02-PLAN.md — Hardcoded color replacement across all components, accent picker in settings
-
-### Phase 6: Card-Based Analysis Workspaces
-**Goal**: All five project type analysis views are redesigned as card-based evaluation dimension workspaces with project-type-specific evaluation cards
-**Depends on**: Phase 5
-**Requirements**: WORK-01, WORK-02, WORK-03, WORK-04, WORK-05
-**Success Criteria** (what must be TRUE):
-  1. Narrative analysis renders as "Story Lab Workspace" with 8 evaluation dimension cards (Logline & Premise, Story Structure, Character Arcs, Dialogue & Voice, Theme & Resonance, Pacing & Tension, Genre & Comparables, Development Recommendations)
-  2. Documentary analysis renders with 6 interview-specific cards (Key Quotes, Recurring Themes, Key Moments, Subject Profiles, Story Arc, Interview Gaps)
-  3. Corporate interview analysis renders with 6 messaging-specific cards (Soundbites, Key Messages, Spokesperson Assessment, Audience Alignment, Message Consistency, Recommendations)
-  4. TV/Episodic analysis renders with 6 episode/series cards (Episode Arc, Series Structure, Character Development, Tone & Voice, Pilot Effectiveness, Franchise Potential)
-  5. Short-form/branded analysis renders with 6 pacing/messaging cards (Hook Strength, Pacing, CTA Clarity, Brand Alignment, Emotional Impact, Audience Fit)
-**Plans**: 5 plans
-
-Plans:
-- [ ] 06-01-PLAN.md — Wave 0: Shared workspace components (EvaluationCard, WorkspaceHeader, WorkspaceGrid, etc.) + test stubs
-- [ ] 06-02-PLAN.md — Schema + prompt additions (overallScore, overallSummary, new card data fields)
-- [ ] 06-03-PLAN.md — NarrativeWorkspace (8 cards) + DocumentaryWorkspace (6 cards)
-- [ ] 06-04-PLAN.md — CorporateWorkspace (6 cards) + TvWorkspace (6 cards) + ShortFormWorkspace (6 cards)
-- [ ] 06-05-PLAN.md — Integration wiring (page.tsx + DocumentWorkspace) + human verification
-
-### Phase 7: Library & Persistence
-**Goal**: Analyses are automatically saved after completion and user can browse, filter, open, and delete saved analyses from the Projects sidebar
-**Depends on**: Phase 6
-**Requirements**: LIB-01, LIB-02, LIB-03, LIB-04
-**Success Criteria** (what must be TRUE):
-  1. Analysis is automatically saved to SQLite immediately after completion (no user action required)
-  2. Projects sidebar lists all saved analyses sorted by date, with project type visible
-  3. User can filter sidebar by project type
-  4. User can click a saved analysis in sidebar and view it in the full workspace
-  5. User can delete a saved analysis from the sidebar
-**Plans**: 2 plans
-
-Plans:
-- [x] 07-01-PLAN.md — ProjectTypeFilter component + wire into ProjectsSidebar with client-side filtering
-- [x] 07-02-PLAN.md — Auto-save verification tests + re-analysis overwrite hardening
-
-### Phase 8: Provider Error Handling
-**Goal**: Provider failures return meaningful error messages instead of 500s; provider-registry includes a health-check mechanism
-**Depends on**: Phase 7
-**Requirements**: MPAI-05
-**Gap Closure:** Closes integration gap from v1.0 audit
-**Success Criteria** (what must be TRUE):
-  1. A misconfigured or unreachable provider returns a clear, user-readable error (not a 500)
-  2. `provider-registry.ts` exposes a health-check that validates provider config before the analysis call is made
-  3. The analyze route uses the health-check to surface config errors early
-  4. Existing provider switching behavior is unchanged for valid configurations
-**Plans**: 1 plan
-
-Plans:
-- [ ] 08-01-PLAN.md — Health-check function, analyze route error handling, client error display
-
-### Phase 9: Harsh Critic Analysis Mode
-**Goal**: User can enable a "Harsh Critic Mode" toggle that adds a second analytical lens — an industry executive voice that is brutal, direct, and constructively unsparing — displayed alongside the standard analysis
-**Depends on**: Phase 8
-**Requirements**: CRIT-01
-**Gap Closure:** New feature addition at milestone close
-**Success Criteria** (what must be TRUE):
-  1. A "Harsh Critic Mode" toggle is available on the analyze screen (off by default)
-  2. When enabled, the analysis API returns both the standard analysis and a harsh critic section
-  3. The critic persona is an industry executive: blunt, experienced, constructive but unsparing — no softening of real problems
-  4. Critic output is displayed in a clearly labeled separate tab or section within the workspace
-  5. Harsh Critic Mode works across all active project types (documentary, corporate, narrative, TV/episodic)
-  6. When disabled, behavior is identical to current — no performance penalty
-**Plans**: 2 plans
-
-Plans:
-- [ ] 09-01-PLAN.md — TDD backend: failing tests, system prompt, critic API route, DB migration, projects API update
-- [ ] 09-02-PLAN.md — Frontend: toggle UI, client critic streaming, workspace context, Industry Critic tab
-
-## Progress
-
-**Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
-
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Vertical Slice | 3/3 | Complete   | 2026-03-17 |
-| 2. File Format Support | 2/2 | Complete    | 2026-03-17 |
-| 3. Analysis Expansion | 3/3 | Complete   | 2026-03-17 |
-| 3.1. Multi-Provider AI | 3/3 | Complete | 2026-03-17 |
-| 4. Export and Document Generation | 6/6 | Complete   | 2026-03-17 |
-| 5. UI Theme & Brand System | 2/2 | Complete   | 2026-03-18 |
-| 6. Card-Based Analysis Workspaces | 4/5 | In Progress|  |
-| 7. Library & Persistence | 2/2 | Complete | 2026-03-19 |
-| 8. Provider Error Handling | 1/1 | Complete   | 2026-03-19 |
-| 9. Harsh Critic Analysis Mode | 0/2 | Not started | — |
-
----
-
-## Future Milestones
-
-### Milestone v2: Docker Containerization
+### 📋 v2.0 Docker Containerization (Planned)
 
 **Goal:** Package FilmIntern as a portable Docker container so it can be deployed anywhere without a local Node.js/npm setup.
 
 **Scope:**
 - Add `output: 'standalone'` to `next.config.ts`
-- Make SQLite DB path configurable via `DATA_DIR` env var (one-line change in `src/lib/db.ts`)
+- Make SQLite DB path configurable via `DATA_DIR` env var
 - Write `Dockerfile` (multi-stage: builder → alpine runner with `better-sqlite3` native compile)
 - Write `docker-compose.yml` with volume mount for DB persistence and env var passthrough for AI API keys
 - Write `.dockerignore`
 
 **Key constraints:**
 - `better-sqlite3` requires native compilation — needs `python3 make g++` in both build and runtime stages
-- API keys (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, etc.) passed as env vars at runtime, never baked into image
+- API keys passed as env vars at runtime, never baked into image
 - DB volume mounted at `/data` so analyses persist across container restarts
 
-**Trigger:** Run `/gsd:new-milestone` after Phase 7 is complete and v1 is closed.
+**Trigger:** Run `/gsd:new-milestone` to start planning.
+
+## Progress
+
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1. Vertical Slice | v1.0 | 3/3 | Complete | 2026-03-17 |
+| 2. File Format Support | v1.0 | 2/2 | Complete | 2026-03-17 |
+| 3. Analysis Expansion | v1.0 | 3/3 | Complete | 2026-03-17 |
+| 3.1. Multi-Provider AI | v1.0 | 3/3 | Complete | 2026-03-17 |
+| 4. Export & Doc Gen | v1.0 | 6/6 | Complete | 2026-03-17 |
+| 5. UI Theme & Brand | v1.0 | 2/2 | Complete | 2026-03-18 |
+| 6. Card-Based Workspaces | v1.0 | 5/5 | Complete | 2026-03-19 |
+| 7. Library & Persistence | v1.0 | 2/2 | Complete | 2026-03-19 |
+| 8. Provider Error Handling | v1.0 | 1/1 | Complete | 2026-03-19 |
+| 9. Harsh Critic Mode | v1.0 | 2/2 | Complete | 2026-03-19 |
