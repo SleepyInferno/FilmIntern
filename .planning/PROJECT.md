@@ -43,9 +43,28 @@ Upload your material, pick your project type, get a structured analysis back —
 - ✓ User can delete a saved analysis from Library — v1.0
 - ✓ User can enable Harsh Critic Mode for an industry executive analysis lens alongside standard analysis — v1.0
 
+## Current Milestone: v2.0 Docker Containerization
+
+**Goal:** Package the app for one-command local dev startup and reliable self-hosted deployment.
+
+**Target features:**
+- Docker Compose for local development (no Node install required)
+- Multi-stage production Dockerfile for self-hosted deployment
+- SQLite volume mount for persistent analysis library across rebuilds
+- Env var AI key fallback (env populates defaults, UI can still override)
+- Health check HTTP endpoint for Docker health monitoring
+- Reverse proxy config (Nginx/Caddy) for HTTPS and domain routing
+- GitHub Actions CI workflow to build and push image on push
+
 ### Active
 
-*(empty — planning v2.0 requirements)*
+- [ ] Developer can start the app with `docker compose up` (no Node install needed)
+- [ ] Production image built via multi-stage Dockerfile (minimal runtime image)
+- [ ] SQLite database persists across container rebuilds via volume mount
+- [ ] AI provider API keys can be set via environment variables as defaults
+- [ ] App exposes a health check endpoint Docker can ping to verify liveness
+- [ ] Reverse proxy config provided for HTTPS/domain routing in front of the container
+- [ ] GitHub Actions workflow builds and pushes the Docker image on push to main
 
 ### Out of Scope
 
@@ -92,4 +111,4 @@ Known tech debt: orphaned short-form components safe to delete, harshCriticEnabl
 | Decimal phase numbering (3.1, etc.) | Clear insertion semantics for urgent/inserted work | ✓ Good — unambiguous phase ordering |
 
 ---
-*Last updated: 2026-03-19 after v1.0 milestone*
+*Last updated: 2026-03-19 after v2.0 milestone start*
