@@ -160,7 +160,8 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        setAnalysisError('Analysis could not be completed. Check your connection and try again.');
+        const body = await response.json().catch(() => null);
+        setAnalysisError(body?.error || 'Analysis could not be completed. Check your connection and try again.');
         setIsAnalyzing(false);
         return;
       }
