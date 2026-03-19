@@ -37,7 +37,7 @@
 
 ### Analysis — Harsh Critic Mode
 
-- [ ] **CRIT-01**: User can enable "Harsh Critic Mode" on any analysis; when enabled, a second analytical lens is added — an industry executive voice that is brutal, direct, and constructively unsparing — displayed alongside the standard analysis
+- [x] **CRIT-01**: User can enable "Harsh Critic Mode" on any analysis; when enabled, a second analytical lens is added — an industry executive voice that is brutal, direct, and constructively unsparing — displayed alongside the standard analysis
 
 ### Outputs
 
@@ -147,7 +147,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LIB-03 | Phase 7 | Complete |
 | LIB-04 | Phase 7 | Complete |
 | MPAI-05 | Phase 8 | Complete |
-| CRIT-01 | Phase 9 | Pending |
+| CRIT-01 | Phase 9 | Complete |
 
 **Coverage:**
 - v1 requirements: 18 total — all Complete
