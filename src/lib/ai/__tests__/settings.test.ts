@@ -80,6 +80,49 @@ describe('settings', () => {
     });
   });
 
+  describe('OLLAMA_BASE_URL env var', () => {
+    beforeEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it('uses OLLAMA_BASE_URL env var when no settings file exists', async () => {
+      vi.stubEnv('OLLAMA_BASE_URL', 'http://host.docker.internal:11434/api');
+      const err = new Error('ENOENT') as NodeJS.ErrnoException;
+      err.code = 'ENOENT';
+      mockReadFile.mockRejectedValue(err);
+
+      const settings = await loadSettings();
+      expect(settings.ollama.baseURL).toBe('http://host.docker.internal:11434/api');
+    });
+
+    it('uses OLLAMA_BASE_URL env var when settings file has no explicit baseURL', async () => {
+      vi.stubEnv('OLLAMA_BASE_URL', 'http://host.docker.internal:11434/api');
+      mockReadFile.mockResolvedValue(JSON.stringify({ provider: 'ollama' }));
+
+      const settings = await loadSettings();
+      expect(settings.ollama.baseURL).toBe('http://host.docker.internal:11434/api');
+    });
+
+    it('uses default baseURL when OLLAMA_BASE_URL env var is not set', async () => {
+      const err = new Error('ENOENT') as NodeJS.ErrnoException;
+      err.code = 'ENOENT';
+      mockReadFile.mockRejectedValue(err);
+
+      const settings = await loadSettings();
+      expect(settings.ollama.baseURL).toBe('http://localhost:11434/api');
+    });
+
+    it('saved settings take precedence over OLLAMA_BASE_URL env var', async () => {
+      vi.stubEnv('OLLAMA_BASE_URL', 'http://host.docker.internal:11434/api');
+      mockReadFile.mockResolvedValue(
+        JSON.stringify({ ollama: { baseURL: 'http://custom:11434/api', model: 'llama3.1' } })
+      );
+
+      const settings = await loadSettings();
+      expect(settings.ollama.baseURL).toBe('http://custom:11434/api');
+    });
+  });
+
   describe('saveSettings', () => {
     it('creates directory and writes JSON to disk', async () => {
       mockMkdir.mockResolvedValue(undefined);
