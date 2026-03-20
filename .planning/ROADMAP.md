@@ -36,7 +36,7 @@ Archive: `.planning/milestones/v1.0-ROADMAP.md`
 - [x] **Phase 10: Docker Build** - Multi-stage Dockerfile with standalone output, health check, and non-root user (completed 2026-03-19)
 - [x] **Phase 11: Local Dev Environment** - Docker Compose for one-command startup with hot reload and persistence (completed 2026-03-19)
 - [x] **Phase 12: Production Deployment** - Caddy reverse proxy on port 7430 with streaming support (completed 2026-03-19)
-- [ ] **Phase 13: CI/CD Pipeline** - GitHub Actions to build, tag, and push images to GHCR
+- [x] **Phase 13: CI/CD Pipeline** - GitHub Actions to build, tag, and push images to GHCR (completed 2026-03-20)
 
 ## Phase Details
 
@@ -94,7 +94,7 @@ Plans:
   3. Each published image is tagged with both the git SHA and 'latest' for version tracking and rollback
   4. The image targets linux/amd64 and runs correctly on both Docker Desktop (Windows/Mac) and Unraid
   5. An Unraid deployment guide exists with setup instructions for pulling and running the GHCR image
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 13-01-PLAN.md — GitHub Actions workflow for Docker build and GHCR push with BuildKit caching
@@ -121,4 +121,4 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13
 | 10. Docker Build | v2.0 | 2/2 | Complete | 2026-03-19 |
 | 11. Local Dev Environment | v2.0 | 2/2 | Complete | 2026-03-19 |
 | 12. Production Deployment | v2.0 | 1/1 | Complete | 2026-03-19 |
-| 13. CI/CD Pipeline | 1/2 | In Progress|  | - |
+| 13. CI/CD Pipeline | 2/2 | Complete   | 2026-03-20 | - |

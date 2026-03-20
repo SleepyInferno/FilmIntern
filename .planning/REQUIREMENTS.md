@@ -33,7 +33,7 @@
 - [x] **CI-02**: CI build uses BuildKit layer caching for fast subsequent builds
 - [x] **CI-03**: Image tagged with git SHA and 'latest' for version tracking and rollback
 - [x] **CI-04**: Image targets linux/amd64 (compatible with Windows Docker Desktop and Unraid x86-64)
-- [ ] **CI-05**: Unraid deployment guide provided (template XML or setup instructions for Community Applications)
+- [x] **CI-05**: Unraid deployment guide provided (template XML or setup instructions for Community Applications)
 
 ## Future Requirements
 
@@ -70,7 +70,7 @@
 | CI-02 | Phase 13 | Complete |
 | CI-03 | Phase 13 | Complete |
 | CI-04 | Phase 13 | Complete |
-| CI-05 | Phase 13 | Pending |
+| CI-05 | Phase 13 | Complete |
 
 **Coverage:**
 - v2.0 requirements: 18 total
