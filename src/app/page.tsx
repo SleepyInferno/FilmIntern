@@ -203,6 +203,10 @@ export default function Home() {
         setActiveDocumentId(reportDoc.id);
         // LIB-01: Auto-save analysis + report + source material after streaming completes
         await saveAnalysis(projectId, { uploadData: uploadData!, analysisData: finalData, reportDocument: reportDoc });
+      } else if (accumulated.trim().length === 0) {
+        setAnalysisError('Analysis returned no data. Check your API key and model in Settings, then try again.');
+      } else {
+        setAnalysisError('Analysis response was malformed. Check your model selection in Settings and try again.');
       }
 
       setIsAnalyzing(false);
