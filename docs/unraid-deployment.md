@@ -131,7 +131,7 @@ curl http://localhost:7430/api/health
 Expected output:
 
 ```json
-{"status":"ok","version":"...","database":"connected"}
+{"status":"ok","version":"0.1.0","db":"connected"}
 ```
 
 Access the UI in your browser at `http://YOUR_UNRAID_IP:7430`.

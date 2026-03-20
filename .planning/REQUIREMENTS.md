@@ -24,7 +24,7 @@
 
 ### Production
 
-- [x] **PROD-01**: Caddyfile config provided for automatic HTTPS and domain routing
+- [x] **PROD-01**: Caddyfile config provided for HTTP reverse proxy on port 7430 (LAN access; HTTPS deferred)
 - [x] **PROD-02**: Streaming AI analysis (SSE) works correctly through the Caddy reverse proxy
 
 ### CI/CD
@@ -79,4 +79,4 @@
 
 ---
 *Requirements defined: 2026-03-19*
-*Last updated: 2026-03-19 after roadmap creation*
+*Last updated: 2026-03-20 — PROD-01 description corrected from "automatic HTTPS" to HTTP-only per CONTEXT.md locked decision*

@@ -37,6 +37,7 @@ Archive: `.planning/milestones/v1.0-ROADMAP.md`
 - [x] **Phase 11: Local Dev Environment** - Docker Compose for one-command startup with hot reload and persistence (completed 2026-03-19)
 - [x] **Phase 12: Production Deployment** - Caddy reverse proxy on port 7430 with streaming support (completed 2026-03-19)
 - [x] **Phase 13: CI/CD Pipeline** - GitHub Actions to build, tag, and push images to GHCR (completed 2026-03-20)
+- [ ] **Phase 14: Documentation Cleanup** - Fix documentation inconsistencies surfaced by milestone audit
 
 ## Phase Details
 
@@ -73,11 +74,11 @@ Plans:
 - [ ] 11-02-PLAN.md — OLLAMA_BASE_URL env var support in settings.ts with TDD tests
 
 ### Phase 12: Production Deployment
-**Goal**: A self-hosted production deployment with automatic HTTPS via Caddy reverse proxy
+**Goal**: A self-hosted production deployment via Caddy reverse proxy on port 7430 (HTTP, LAN access; HTTPS deferred)
 **Depends on**: Phase 10
 **Requirements**: PROD-01, PROD-02
 **Success Criteria** (what must be TRUE):
-  1. A provided Caddyfile configures automatic HTTPS and reverse proxies requests to the FilmIntern container
+  1. A provided Caddyfile configures an HTTP reverse proxy on port 7430 and routes requests to the FilmIntern container
   2. Running an AI analysis through the Caddy proxy delivers streamed SSE responses without buffering or timeouts
 **Plans:** 1/1 plans complete
 
@@ -97,14 +98,26 @@ Plans:
 **Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 13-01-PLAN.md — GitHub Actions workflow for Docker build and GHCR push with BuildKit caching
-- [ ] 13-02-PLAN.md — Unraid deployment guide with GHCR auth, setup, update, and rollback instructions
+- [x] 13-01-PLAN.md — GitHub Actions workflow for Docker build and GHCR push with BuildKit caching
+- [x] 13-02-PLAN.md — Unraid deployment guide with GHCR auth, setup, update, and rollback instructions
+
+### Phase 14: Documentation Cleanup
+**Goal**: Resolve documentation inconsistencies surfaced by v2.0 milestone audit — align written docs with actual implementation, fix API response examples, and publish a comprehensive README
+**Depends on**: Phases 10-13 (audit results)
+**Requirements**: PROD-01 (description correction)
+**Success Criteria** (what must be TRUE):
+  1. REQUIREMENTS.md and ROADMAP.md describe PROD-01 as HTTP reverse proxy (not "automatic HTTPS")
+  2. docs/unraid-deployment.md health check example matches actual API response (`"db"` not `"database"`)
+  3. README.md is a complete project overview covering features, dev setup, production deployment, and configuration
+**Plans:** 0/1 plans complete
+
+Plans:
+- [ ] 14-01-PLAN.md — Fix doc inconsistencies and write comprehensive README
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 10 -> 11 -> 12 -> 13
-(Phases 12 and 13 both depend only on Phase 10, not on each other.)
+Phases execute in numeric order: 10 -> 11 -> 12 -> 13 -> 14
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -121,4 +134,5 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13
 | 10. Docker Build | v2.0 | 2/2 | Complete | 2026-03-19 |
 | 11. Local Dev Environment | v2.0 | 2/2 | Complete | 2026-03-19 |
 | 12. Production Deployment | v2.0 | 1/1 | Complete | 2026-03-19 |
-| 13. CI/CD Pipeline | 2/2 | Complete    | 2026-03-20 | - |
+| 13. CI/CD Pipeline | v2.0 | 2/2 | Complete | 2026-03-20 |
+| 14. Documentation Cleanup | v2.0 | 0/1 | In Progress | — |
