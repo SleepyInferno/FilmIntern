@@ -29,10 +29,10 @@
 
 ### CI/CD
 
-- [ ] **CI-01**: GitHub Actions workflow builds and pushes image to GHCR on push to main
-- [ ] **CI-02**: CI build uses BuildKit layer caching for fast subsequent builds
-- [ ] **CI-03**: Image tagged with git SHA and 'latest' for version tracking and rollback
-- [ ] **CI-04**: Image targets linux/amd64 (compatible with Windows Docker Desktop and Unraid x86-64)
+- [x] **CI-01**: GitHub Actions workflow builds and pushes image to GHCR on push to main
+- [x] **CI-02**: CI build uses BuildKit layer caching for fast subsequent builds
+- [x] **CI-03**: Image tagged with git SHA and 'latest' for version tracking and rollback
+- [x] **CI-04**: Image targets linux/amd64 (compatible with Windows Docker Desktop and Unraid x86-64)
 - [ ] **CI-05**: Unraid deployment guide provided (template XML or setup instructions for Community Applications)
 
 ## Future Requirements
@@ -66,10 +66,10 @@
 | DEV-05 | Phase 11 | Complete |
 | PROD-01 | Phase 12 | Complete |
 | PROD-02 | Phase 12 | Complete |
-| CI-01 | Phase 13 | Pending |
-| CI-02 | Phase 13 | Pending |
-| CI-03 | Phase 13 | Pending |
-| CI-04 | Phase 13 | Pending |
+| CI-01 | Phase 13 | Complete |
+| CI-02 | Phase 13 | Complete |
+| CI-03 | Phase 13 | Complete |
+| CI-04 | Phase 13 | Complete |
 | CI-05 | Phase 13 | Pending |
 
 **Coverage:**
