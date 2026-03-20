@@ -62,6 +62,7 @@ services:
     environment:
       - DATABASE_PATH=/app/data/filmintern.db
       - SETTINGS_DIR=/app/data/.filmintern
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434/api
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
@@ -180,7 +181,7 @@ To resume tracking the latest build, change the image tag back to `:latest` and 
 | `unauthorized` on pull | GHCR auth expired or missing | Re-run `docker login ghcr.io` with a fresh PAT |
 | `permission denied` on data dir | Wrong ownership | `chown -R 1001:1001 /mnt/user/appdata/filmintern` |
 | Health check fails | App still starting | Wait 40s after container start, check logs with `docker compose logs app` |
-| Ollama not reachable | Missing host networking | Verify `extra_hosts` in compose file includes `host.docker.internal:host-gateway` |
+| Ollama not reachable | Missing host networking or URL | Verify `extra_hosts` includes `host.docker.internal:host-gateway` and `OLLAMA_BASE_URL` is set in environment |
 | Port 7430 in use | Another service on that port | Change the port mapping in `docker-compose.prod.yml` under `caddy.ports` and in the `Caddyfile` |
 
 ## Configuration
@@ -189,5 +190,6 @@ To resume tracking the latest build, change the image tag back to `:latest` and 
 |---------------------|---------|-------------|
 | `DATABASE_PATH` | `/app/data/filmintern.db` | SQLite database file location |
 | `SETTINGS_DIR` | `/app/data/.filmintern` | Application settings directory |
+| `OLLAMA_BASE_URL` | `http://host.docker.internal:11434/api` | Ollama API endpoint (pre-configured for host access) |
 
 AI provider API keys (OpenAI, Anthropic, etc.) can be configured through the Settings UI after first launch. No environment variables needed for API keys.

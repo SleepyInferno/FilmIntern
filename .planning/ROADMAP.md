@@ -37,7 +37,7 @@ Archive: `.planning/milestones/v1.0-ROADMAP.md`
 - [x] **Phase 11: Local Dev Environment** - Docker Compose for one-command startup with hot reload and persistence (completed 2026-03-19)
 - [x] **Phase 12: Production Deployment** - Caddy reverse proxy on port 7430 with streaming support (completed 2026-03-19)
 - [x] **Phase 13: CI/CD Pipeline** - GitHub Actions to build, tag, and push images to GHCR (completed 2026-03-20)
-- [ ] **Phase 14: Documentation Cleanup** - Fix documentation inconsistencies surfaced by milestone audit
+- [x] **Phase 14: Documentation Cleanup** - Fix documentation inconsistencies surfaced by milestone audit (completed 2026-03-19)
 
 ## Phase Details
 
@@ -109,10 +109,10 @@ Plans:
   1. REQUIREMENTS.md and ROADMAP.md describe PROD-01 as HTTP reverse proxy (not "automatic HTTPS")
   2. docs/unraid-deployment.md health check example matches actual API response (`"db"` not `"database"`)
   3. README.md is a complete project overview covering features, dev setup, production deployment, and configuration
-**Plans:** 0/1 plans complete
+**Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 14-01-PLAN.md — Fix doc inconsistencies and write comprehensive README
+- [x] 14-01-PLAN.md — Fix doc inconsistencies, write comprehensive README, add OLLAMA_BASE_URL to prod compose
 
 ## Progress
 
@@ -135,4 +135,4 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13 -> 14
 | 11. Local Dev Environment | v2.0 | 2/2 | Complete | 2026-03-19 |
 | 12. Production Deployment | v2.0 | 1/1 | Complete | 2026-03-19 |
 | 13. CI/CD Pipeline | v2.0 | 2/2 | Complete | 2026-03-20 |
-| 14. Documentation Cleanup | v2.0 | 0/1 | In Progress | — |
+| 14. Documentation Cleanup | v2.0 | 1/1 | Complete | 2026-03-19 |
