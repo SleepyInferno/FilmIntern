@@ -1,8 +1,8 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-20T15:47:37.951Z",
+  "timestamp": "2026-03-20T21:23:29.802Z",
   "phase": null,
-  "phase_name": "ad-hoc bug fix",
+  "phase_name": "ad-hoc bug fix — Unraid silent stream failure",
   "phase_dir": null,
   "plan": null,
   "task": null,
@@ -19,7 +19,7 @@
       "id": 2,
       "name": "Fix page.tsx: show error when stream returns no valid JSON",
       "status": "done",
-      "commit": null
+      "commit": "921a8b5"
     },
     {
       "id": 3,
@@ -32,48 +32,64 @@
       "name": "Revert default model back to gpt-5.4 (was incorrectly changed to gpt-4o)",
       "status": "done",
       "commit": null
+    },
+    {
+      "id": 5,
+      "name": "Commit and push page.tsx fix to GitHub (921a8b5)",
+      "status": "done",
+      "commit": "921a8b5"
+    },
+    {
+      "id": 6,
+      "name": "User rebuilt Docker image on Unraid — error message now surfaces correctly",
+      "status": "done",
+      "commit": null
     }
   ],
   "remaining_tasks": [
     {
-      "id": 5,
-      "name": "Commit the page.tsx fix",
+      "id": 7,
+      "name": "Get Unraid container logs after clicking Run Analysis to identify actual root cause",
       "status": "not_started"
     },
     {
-      "id": 6,
-      "name": "Rebuild Docker image and redeploy to Unraid to test fix",
+      "id": 8,
+      "name": "Fix the underlying cause once identified from logs",
       "status": "not_started"
     }
   ],
-  "blockers": [],
+  "blockers": [
+    {
+      "description": "Root cause of empty stream on Unraid still unknown — error message surfaces but underlying API failure not yet diagnosed",
+      "type": "human_action",
+      "workaround": "Need Unraid container logs to identify the actual error"
+    }
+  ],
   "human_actions_pending": [
     {
-      "action": "Rebuild Docker image and push to Unraid, then re-test analysis button",
-      "context": "The fix is in src/app/page.tsx but has not been committed or deployed yet. The bug was silent stream failure — OpenAI errors mid-stream were swallowed with no user feedback.",
+      "action": "Run: docker logs <container-name> --tail 50 on Unraid after clicking Run Analysis, share the output",
+      "context": "The onError callback in /api/analyze/route.ts logs the real error server-side as 'Analysis streaming error: ...'. Logs will show the actual failure — bad key, unsupported model, timeout, etc.",
       "blocking": true
     },
     {
       "action": "Verify /app/data is mapped to a persistent volume in Unraid container config",
-      "context": "Settings file lives at /app/data/.filmintern/settings.json — without a persistent volume mount the API key won't survive container restarts",
+      "context": "Settings (API key, model) live at /app/data/.filmintern/settings.json — without persistent volume the key resets on restart",
       "blocking": false
     }
   ],
   "decisions": [
     {
       "decision": "Keep gpt-5.4 as the default model",
-      "rationale": "Verified via OpenAI API that gpt-5.4 is a valid model (model ID confirmed). Was not the root cause of the bug.",
+      "rationale": "Verified via OpenAI API that gpt-5.4 is a valid model. Not the root cause.",
       "phase": "ad-hoc"
     },
     {
       "decision": "Show error when stream completes with no valid JSON",
-      "rationale": "When OpenAI rejects a request (bad key, rate limit, etc.), streamText returns 200 OK immediately then the stream ends empty. The onError callback only logs server-side. Client had no way to know. Fix adds else-if branches after the finalData check.",
+      "rationale": "OpenAI errors mid-stream produce HTTP 200 then empty stream. Client had no feedback. Fix: detect empty accumulated string and show actionable error message.",
       "phase": "ad-hoc"
     }
   ],
-  "uncommitted_files": [
-    "src/app/page.tsx"
-  ],
-  "next_action": "Commit src/app/page.tsx with message 'fix: show error when analysis stream returns no data' then rebuild Docker image",
-  "context_notes": "The Unraid user reported 'analysis button does nothing'. Root cause: OpenAI API errors fire in the onError streaming callback (server-side console only) but the HTTP response is already 200 OK. Client gets empty stream, JSON parse silently fails, finalData stays null, button resets with no error. The fix detects this case and calls setAnalysisError with a helpful message."
+  "uncommitted_files": [],
+  "next_action": "Ask user to share Unraid container logs (docker logs <container> --tail 50) after attempting Run Analysis — look for 'Analysis streaming error:' line to get actual error",
+  "context_notes": "The fix is deployed and working (error message now shows instead of silent failure). But we have not found the root cause yet. Three suspects: (1) API key not persisted due to missing /app/data volume mount on Unraid, (2) gpt-5.4 does not support Output.object structured output mode, (3) Caddy or networking timeout on long requests. Container logs will identify it immediately."
 }
