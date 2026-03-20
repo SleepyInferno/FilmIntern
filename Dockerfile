@@ -36,6 +36,9 @@ RUN find .next/standalone/node_modules/better-sqlite3/prebuilds \
            .next/standalone/node_modules/better-sqlite3/binding.gyp \
            .next/standalone/node_modules/better-sqlite3/CHANGELOG.md 2>/dev/null || true
 
+# Copy @napi-rs/canvas (Linux build) into standalone output for PDF parsing support
+RUN cp -r node_modules/@napi-rs .next/standalone/node_modules/ 2>/dev/null || true
+
 # ============================================
 # Stage 3: Production runtime
 # ============================================
