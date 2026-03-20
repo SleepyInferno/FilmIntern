@@ -94,11 +94,11 @@ Plans:
   3. Each published image is tagged with both the git SHA and 'latest' for version tracking and rollback
   4. The image targets linux/amd64 and runs correctly on both Docker Desktop (Windows/Mac) and Unraid
   5. An Unraid deployment guide exists with setup instructions for pulling and running the GHCR image
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 13-01: TBD
-- [ ] 13-02: TBD
+- [ ] 13-01-PLAN.md — GitHub Actions workflow for Docker build and GHCR push with BuildKit caching
+- [ ] 13-02-PLAN.md — Unraid deployment guide with GHCR auth, setup, update, and rollback instructions
 
 ## Progress
 
@@ -119,6 +119,6 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13
 | 8. Provider Error Handling | v1.0 | 1/1 | Complete | 2026-03-19 |
 | 9. Harsh Critic Mode | v1.0 | 2/2 | Complete | 2026-03-19 |
 | 10. Docker Build | v2.0 | 2/2 | Complete | 2026-03-19 |
-| 11. Local Dev Environment | 2/2 | Complete    | 2026-03-19 | - |
-| 12. Production Deployment | v2.0 | Complete    | 2026-03-19 | 2026-03-19 |
-| 13. CI/CD Pipeline | v2.0 | 0/? | Not started | - |
+| 11. Local Dev Environment | v2.0 | 2/2 | Complete | 2026-03-19 |
+| 12. Production Deployment | v2.0 | 1/1 | Complete | 2026-03-19 |
+| 13. CI/CD Pipeline | v2.0 | 0/2 | Not started | - |
