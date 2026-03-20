@@ -1,5 +1,14 @@
 # Milestones
 
+## v2.0 Docker Containerization (Shipped: 2026-03-20)
+
+**Phases completed:** 5 phases, 8 plans, 0 tasks
+
+**Key accomplishments:**
+- (none recorded)
+
+---
+
 ## v1.0 MVP (Shipped: 2026-03-19)
 
 **Phases completed:** 10 phases, 29 plans, 0 tasks

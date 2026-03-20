@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A personal filmmaking workflow web app that lets you select a project type (documentary, narrative film, TV/episodic, or corporate interview), upload a transcript or screenplay, and receive a structured AI analysis report tailored to that project type. Supports PDF, Final Draft (.fdx), DOCX, and plain text. Includes PDF/DOCX export, derivative document generation (treatments, outlines), a persistent library of saved analyses, multi-provider AI (Anthropic/OpenAI/Ollama), dark/light theme, card-based evaluation workspaces, and an optional Harsh Critic Mode for industry-executive-style brutal feedback. Built to replace a scattered multi-tool workflow and serve as a second set of eyes on your own work.
+A personal filmmaking workflow web app that lets you select a project type (documentary, narrative film, TV/episodic, or corporate interview), upload a transcript or screenplay, and receive a structured AI analysis report tailored to that project type. Supports PDF, Final Draft (.fdx), DOCX, and plain text. Includes PDF/DOCX export, derivative document generation (treatments, outlines), a persistent library of saved analyses, multi-provider AI (Anthropic/OpenAI/Ollama), dark/light theme, card-based evaluation workspaces, and an optional Harsh Critic Mode for industry-executive-style brutal feedback. Runs fully containerized — one-command dev startup via Docker Compose, production deployment to Unraid via Caddy reverse proxy, with automated image publishing to GHCR. Built to replace a scattered multi-tool workflow and serve as a second set of eyes on your own work.
 
 ## Core Value
 
@@ -42,29 +42,17 @@ Upload your material, pick your project type, get a structured analysis back —
 - ✓ User can open a saved analysis from Library — v1.0
 - ✓ User can delete a saved analysis from Library — v1.0
 - ✓ User can enable Harsh Critic Mode for an industry executive analysis lens alongside standard analysis — v1.0
-
-## Current Milestone: v2.0 Docker Containerization
-
-**Goal:** Package the app for one-command local dev startup and reliable self-hosted deployment.
-
-**Target features:**
-- Docker Compose for local development (no Node install required)
-- Multi-stage production Dockerfile for self-hosted deployment
-- SQLite volume mount for persistent analysis library across rebuilds
-- Env var AI key fallback (env populates defaults, UI can still override)
-- Health check HTTP endpoint for Docker health monitoring
-- Reverse proxy config (Nginx/Caddy) for HTTPS and domain routing
-- GitHub Actions CI workflow to build and push image on push
+- ✓ Developer can start the app with `docker compose up` (no Node install needed) — v2.0
+- ✓ Production image built via multi-stage Dockerfile (node:22-bookworm-slim, ~440MB) — v2.0
+- ✓ SQLite database persists across container rebuilds via volume mount (./data:/app/data) — v2.0
+- ✓ AI provider API keys and Ollama URL can be set via environment variables as defaults — v2.0
+- ✓ App exposes /api/health endpoint; Docker HEALTHCHECK probes it for container liveness — v2.0
+- ✓ Caddy reverse proxy configured on port 7430 (HTTP, LAN access; HTTPS deferred) — v2.0
+- ✓ GitHub Actions workflow builds and pushes Docker image to GHCR on push to main — v2.0
 
 ### Active
 
-- [ ] Developer can start the app with `docker compose up` (no Node install needed)
-- [ ] Production image built via multi-stage Dockerfile (minimal runtime image)
-- [ ] SQLite database persists across container rebuilds via volume mount
-- [ ] AI provider API keys can be set via environment variables as defaults
-- [ ] App exposes a health check endpoint Docker can ping to verify liveness
-- [ ] Reverse proxy config provided for HTTPS/domain routing in front of the container
-- [ ] GitHub Actions workflow builds and pushes the Docker image on push to main
+*(None — planning v3.0 Unraid Deployment milestone)*
 
 ### Out of Scope
 
@@ -77,13 +65,17 @@ Upload your material, pick your project type, get a structured analysis back —
 - OAuth / user accounts — single user, no auth needed
 - Built-in transcription — transcripts come pre-made
 - AI rewriting / script editing — analysis tool, not an editor
+- Multi-platform Docker image (arm64) — native addon cross-compilation is slow/fragile; linux/amd64 covers all targets
+- Kubernetes / Helm charts — single-container Compose is sufficient for personal use
+- HTTPS/TLS in reverse proxy — LAN-only deployment; Caddyfile swap is a one-line change when needed
 
 ## Context
 
-Shipped v1.0 with ~14,750 LOC TypeScript (Next.js 15, Tailwind CSS, shadcn/ui, better-sqlite3, AI SDK 6).
-Tech stack: Next.js App Router, Anthropic/OpenAI/Ollama via AI SDK 6, SQLite via better-sqlite3, PDF (pdf-parse), FDX (fast-xml-parser), DOCX (mammoth), docx + jsPDF for export, next-themes for dark/light mode.
+Shipped v2.0 with ~22,000 LOC TypeScript (added ~7,250 LOC in containerization milestone).
+Tech stack: Next.js 15 App Router, Anthropic/OpenAI/Ollama via AI SDK 6, SQLite via better-sqlite3, Docker + Docker Compose, Caddy reverse proxy, GitHub Actions CI/CD, GHCR image registry.
+Deployment: Unraid NAS via docker-compose.prod.yml + Caddyfile on port 7430. Dev: docker-compose.yml on localhost:3000.
 Primary user: single filmmaker using as personal workflow tool.
-Known tech debt: orphaned short-form components safe to delete, harshCriticEnabled local state resets on project load (visual only — data persists correctly), 6 pre-existing test failures in settings/narrative fixtures.
+Known tech debt: orphaned short-form components safe to delete, harshCriticEnabled local state resets on project load (visual only — data persists correctly), 6 pre-existing test failures in settings/narrative fixtures. All v2.0 Nyquist VALIDATION.md files incomplete (infrastructure-heavy, runtime verification needed).
 
 ## Constraints
 
@@ -91,6 +83,7 @@ Known tech debt: orphaned short-form components safe to delete, harshCriticEnabl
 - **File types**: Handles transcript text files and screenplay/script formats (PDF, FDX, plain text, DOCX)
 - **AI integration**: Analysis quality depends on prompt design per project type — this is core IP of the tool
 - **Local-first**: SQLite on-disk, no cloud backend
+- **Deployment target**: Unraid NAS, LAN access only — no public domain or HTTPS required
 
 ## Key Decisions
 
@@ -109,6 +102,12 @@ Known tech debt: orphaned short-form components safe to delete, harshCriticEnabl
 | Critic failure is non-fatal | Standard analysis already saved before critic streaming starts | ✓ Good — resilient UX |
 | Short-form/branded removed in Phase 6 | Project type not needed in this application | ✓ Good — reduces scope, simplifies workspace grid |
 | Decimal phase numbering (3.1, etc.) | Clear insertion semantics for urgent/inserted work | ✓ Good — unambiguous phase ordering |
+| node:22-bookworm-slim base (not Alpine) | better-sqlite3 and SWC/Turbopack require glibc; Alpine musl causes SIGILL | ✓ Good — ~440MB image, all features functional |
+| Three-stage Dockerfile (deps/builder/runner) | Minimal runtime image — no devDependencies, no build cache in runner | ✓ Good — clean separation, standalone output works |
+| HTTP-only Caddy on port 7430 | LAN-only deployment — no domain means automatic HTTPS adds complexity with no benefit | ✓ Good — simple config, streaming works without gzip |
+| No gzip compression in Caddy | Caddy issue #6293: gzip buffers SSE responses, breaking streaming AI output | ✓ Good — flush_interval -1 + no gzip = streaming works |
+| GITHUB_TOKEN for GHCR (no PAT) | Same-repo pushes work with built-in token; no secret management needed | ✓ Good — zero-friction CI setup |
+| GHA cache mode=max | Caches all intermediate layers (deps + builder stages) for fast subsequent CI builds | ✓ Good — significant build time reduction after first run |
 
 ---
-*Last updated: 2026-03-19 after v2.0 milestone start*
+*Last updated: 2026-03-20 after v2.0 milestone*
