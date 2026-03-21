@@ -1,186 +1,180 @@
 # Project Research Summary
 
-**Project:** FilmIntern v1.1 — UI and Formatting Milestone
-**Domain:** Filmmaking AI analysis app — theme system, card-based workspaces, local persistence
-**Researched:** 2026-03-17
+**Project:** FilmIntern v3.0 — AI Rewrite Suggestions, Tracked Changes UI, FDX Export
+**Domain:** AI-driven script improvement workflow for an existing filmmaking analysis tool
+**Researched:** 2026-03-21
 **Confidence:** HIGH
 
 ## Executive Summary
 
-FilmIntern v1.1 is a focused UI and persistence upgrade to an existing Next.js filmmaking analysis application. The app already has a complete v1.0 foundation: five project types with dedicated AI schemas, report components, a streaming analysis pipeline, and a Tiptap-based document workspace. What it lacks is a theme system (currently hardcoded dark-only), a coherent workspace identity per project type (cards exist but are generic sections, not evaluation dimensions), and any form of persistence (analyses disappear on page refresh). The v1.1 milestone closes all three gaps without touching the AI pipeline or adding any server-side infrastructure.
+FilmIntern v3.0 extends an already-working analysis pipeline with a complete "suggest and review" loop: the app analyses a script, the AI generates targeted rewrite suggestions grounded in the analysis findings, the user reviews those suggestions in a tracked-changes UI, and the revised script exports in multiple formats including FDX (Final Draft). The core competitive differentiator is that suggestions are automatically derived from the structured analysis output, with explicit rationale linking each suggestion to the specific weakness it addresses — no existing tool in the market (Scriptmatix, Arc Studio, Final Draft) combines structured analysis and targeted rewriting in a single tracked-changes flow.
 
-The recommended approach follows a strict dependency order driven by the codebase's current state: theme system first (zero risk, purely additive, visual foundation everything else depends on), card workspace redesign second (follows the pattern already proven by the existing `NarrativeReport` component), and IndexedDB persistence third (the most architecturally novel feature, correctly isolated as a dedicated `LibraryContext` rather than an extension of `WorkspaceContext`). The entire milestone is client-side. Three packages are added: `next-themes`, `dexie`, and `dexie-react-hooks`. No new API routes. No server changes. No AI schema changes.
+The recommended approach is minimal dependency addition (one new package: `diff-match-patch-es`), maximum reuse of the existing stack (AI SDK 6, fast-xml-parser XMLBuilder, Playwright, docx library), and strict adherence to the architectural patterns already established in the codebase (JSON blob storage, progressive JSON streaming, tab-based workspace). The four Tiptap packages currently in package.json should be removed — they are unused and the tracked-changes use case is review-only accept/reject, not free-form editing, making a lightweight custom component the correct and much leaner solution. The implementation follows a clean four-phase build order where each phase delivers a usable, independently validatable increment.
 
-The primary risk is the hardcoded-color surface area: 11 files use raw Tailwind color values (`bg-stone-900`, `text-stone-50`, `bg-white`, `hover:bg-gray-100`, `text-green-500`, `text-red-400`, etc.) that were chosen for dark mode only. These must be replaced with semantic tokens before the theme toggle ships — building cards before fixing colors means the debt compounds across 5 workspace components instead of being resolved once. The secondary risk is storage: using localStorage for analysis data would silently fail after roughly 20-30 full screenplay analyses due to the 5MB quota. Dexie/IndexedDB is the correct choice and must be used from day one; retrofitting is expensive and loses already-stored data.
+The primary technical risks are concentrated in two areas: FDX write-back fidelity (the existing parser discards structural metadata that export requires) and suggestion merge correctness (character offset drift corrupts multi-suggestion merges). Both risks are well-understood and have clear mitigation strategies identified in research. The FDX infrastructure must be built first as it is a prerequisite for the export phase, and the suggestion data model must use exact text-span anchoring rather than character offsets from the very beginning — retrofitting this later is expensive.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The existing stack (Next.js, React 19, Tailwind CSS v4, shadcn + @base-ui/react, TypeScript, Zod) requires only three new packages for the entire v1.1 milestone. `next-themes` is the de facto standard for dark/light toggling in Next.js — it handles SSR hydration flash prevention via a blocking `<script>` tag injected into `<head>`, localStorage persistence of user preference, system preference detection, and `class`-based toggling that Tailwind v4 requires. No alternative is worth considering for Next.js theming.
-
-For persistence, `dexie` (IndexedDB wrapper) with `dexie-react-hooks` is the correct choice over localStorage, idb-keyval, or a server database. Structured analysis JSON for a full screenplay can easily be 50-200KB per entry; localStorage's 5MB limit fails after 20-30 saves. Dexie provides queryable, typed, versioned IndexedDB storage with `useLiveQuery()` for reactive Library updates. Card layouts require zero new packages — the existing shadcn Cards, Tailwind grid, CVA, and lucide-react cover all visual needs.
+The existing stack handles everything except diff computation. The project already has fast-xml-parser (for FDX read and write), AI SDK 6 with `generateObject` and Zod for structured output, Playwright for PDF export, and the docx library for Word export. The only new dependency is `diff-match-patch-es` (~15KB minified), an ESM-native TypeScript rewrite of Google's diff-match-patch by Anthony Fu. It is the correct choice over the unmaintained original `diff-match-patch` (not ESM, no TypeScript types) and `@sanity/diff-match-patch` (heavier Sanity ecosystem dependency). `fast-xml-parser` XMLBuilder is already installed — no new XML library is needed. AI suggestion generation uses `generateObject` with `output: 'array'` mode and a Zod schema, following the same pattern proven by the existing analysis route.
 
 **Core technologies:**
-- `next-themes ^0.4.6`: Dark/light/system theme toggling — prevents FOUC, handles SSR, manages localStorage automatically; zero alternatives worth considering
-- `dexie ^4.0.11`: IndexedDB wrapper for saved analyses — queryable, typed, versioned, no server required; handles analysis payloads that exceed localStorage's limit
-- `dexie-react-hooks ^4.2.0`: `useLiveQuery()` hook — reactive Library list component auto-updates when IndexedDB changes, works across tabs
-- Existing shadcn Cards + Tailwind CSS grid: Card workspace layouts — no new UI library needed; responsive 2-column grid via `grid-cols-1 md:grid-cols-2`
-- CSS custom properties (`--brand`, `--brand-foreground`, `--brand-muted`): Orange/amber brand accent system in both `:root` and `.dark` scopes
+- `diff-match-patch-es` ^0.1.x: character-level diff and patch — only new dependency, ESM-first, tree-shakable, ~15KB
+- `fast-xml-parser` XMLBuilder (already installed): FDX XML generation — write half of the library already used for FDX reading
+- AI SDK 6 `generateObject` (already installed): structured array output for suggestions — same proven batched pattern
+- Zod (already installed): suggestion schema definition — already used for all analysis schemas
+- Playwright + docx (already installed): revised script PDF and DOCX export — same infrastructure, new screenplay-formatted templates
+- Custom React components with diff-match-patch-es: tracked-changes UI — replaces unused Tiptap packages
 
-**Do not add:** zustand/jotai (Dexie IS the storage layer, not state management middleware), framer-motion (tw-animate-css already handles card animations), react-grid-layout (card positions are fixed, not user-configurable), @radix-ui primitives (project uses @base-ui/react successor), any server database.
+**Remove:** `@tiptap/pm`, `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/static-renderer` — 4 packages, 0 imports anywhere in the codebase, ~150KB+ bundle weight.
 
 ### Expected Features
 
-See `.planning/research/FEATURES.md` for full feature tables and per-project-type evaluation dimension mappings.
+The feature set divides cleanly into a v3.0 core (table stakes required for the workflow to feel complete), v3.0 polish (differentiators that leverage the structured analysis uniquely), and deferred work.
 
-**Must have (table stakes for v1.1):**
-- Dark/light theme toggle with system preference detection and localStorage persistence — every modern creative tool supports this; current hardcoded dark is a v1 shortcut
-- Orange/amber brand accent color system — currently used ad hoc (`amber-500` in NarrativeReport); must be systematic via CSS variables that adapt to both themes
-- Card-based evaluation dimension workspaces for all 5 project types — the core v1.1 deliverable; named workspace identities give each type a distinct professional identity
-- Auto-save analyses to IndexedDB after analysis completes — Library is useless without saved content; no explicit "Save" button required
-- Library page: browse, open, and delete saved analyses — PROJECT.md requirement; `/dashboard` route (existing stub) becomes the Library
+**Must have (table stakes) — v3.0 core:**
+- Block-level suggestion generation linked to specific analysis findings — the entire value proposition
+- Accept/reject per suggestion with persisted SQLite state — users will not accept an all-or-nothing flow
+- Inline visual diff per suggestion (word-level, green/red) — without this, users cannot evaluate what changed
+- Merged/revised script preview reflecting current accept/reject decisions
+- Multi-format export of revised script: PDF, DOCX, plain text — reuses existing infrastructure
+- FDX export of revised script — Final Draft round-trip, highest-complexity export format
+- Suggestion rationale display linking back to the originating analysis finding
+- Support across all 4 project types (narrative, TV/episodic, documentary, corporate) — different block definitions and analysis schema fields per type
+- SQLite persistence of suggestion state — user can close the browser and return to their review session
 
-**Should have (differentiators, add within v1.1 if time permits):**
-- Named workspace identities: "Story Lab Workspace", "Interview Mining Workspace", "Messaging Workspace", "Episode Lab", "Content Pulse"
-- Card grid layout (2-column on wide screens) — makes evaluation dimensions scannable as a dashboard, not a linear scroll
-- Library project-type filtering and search — high usability value, low implementation cost; client-side only
-- Library card previews with title, date, type badge, and overview snippet
-- Workspace header component showing project title, type badge, analysis date, and source filename
+**Should have (competitive) — v3.0 polish:**
+- Analysis dimension filtering (show only dialogue suggestions, only pacing suggestions)
+- Suggestion priority ratings (critical / recommended / optional) — sorted in UI
+- Batch accept/reject by dimension ("accept all dialogue improvements")
+- Regenerate single suggestion with user guidance
 
-**Defer (v2+):**
-- Analysis comparison view (side-by-side) — new layout paradigm, unclear UX for different project types
-- Cloud backup/sync — requires backend, auth, and storage infrastructure
-- Drag-and-drop card reordering — evaluation dimensions have a logical order; user-configurable order is premature
-- Collaborative annotations — multi-user is explicitly out of scope; export PDF/DOCX to share
-- Tagging/folder organization in Library — flat list with search/filter is sufficient until 50+ analyses exist
+**Defer (v3.1+):**
+- Harsh Critic integration for suggestions
+- Side-by-side full script diff view
 
-**No AI schema changes needed for any project type.** The existing Zod schemas already produce all data required for every evaluation dimension card across all 5 workspace types. This is a strong finding: v1.1 is entirely a UI and infrastructure milestone.
+**Explicit anti-features (never build):**
+- Full auto-rewrite — produces generic voice-flattened output, undermines writer control
+- Real-time inline editing while reviewing — scope expansion into a full screenplay editor, out of scope per PROJECT.md
+- Version tree / branching — combinatorial UX complexity for zero single-user benefit
 
 ### Architecture Approach
 
-The v1.1 architecture adds three parallel layers to the existing system without modifying the core analysis pipeline. A `ThemeProvider` layer (next-themes) wraps the existing `Providers` component. A card workspace rendering layer (`AnalysisWorkspace` dispatcher plus 5 per-type workspace components) creates a parallel on-screen rendering path alongside the existing Tiptap normalizer path. A `LibraryContext` layer (Dexie-backed CRUD) is an independent context separate from `WorkspaceContext`.
+V3.0 additions layer directly onto the existing architecture without breaking its patterns. The app's current model is: upload → parse → store JSON blob on projects table → analyze → store analysis JSON blob → display in card-based workspace → export analysis report. V3.0 adds a user-triggered fifth step: generate suggestions (after analysis) → store suggestions JSON blob → display in new "Script Review" tab → merge accepted suggestions → export revised script. Every new component mirrors an existing counterpart, following four established patterns: JSON blob storage (not a new relational table), progressive JSON streaming (same pattern as analysis route), tab-based workspace integration, and server-side DB reads by project ID (not client-sends-script-text).
 
-The key architectural insight: card workspaces render directly from typed analysis data (the pattern `NarrativeReport` already uses), while the Tiptap/normalizer path is retained for PDF/DOCX export and generated documents. Neither path is removed; they serve different purposes. The normalizer layer is NOT a refactor target for this milestone.
+The two most critical architectural decisions established by research: (1) suggestions must reference text spans by exact quoted text, not character offsets — LLMs cannot produce reliable offsets in long documents, and string search with `indexOf` is deterministic; (2) the suggestion state model must use a single source of truth (array of `SuggestionWithStatus` objects) from which the document preview is always computed via `useMemo`, never stored as separate mutable state.
 
 **Major components:**
-1. `ThemeProvider` (next-themes) + `ThemeToggle` — manages dark/light/system state; persists choice; prevents hydration flash; wraps app via `providers.tsx`
-2. `AnalysisWorkspace` dispatcher + workspace registry — maps project type string to correct workspace component; follows the existing `reportNormalizers` registry pattern already in the codebase
-3. Per-type workspace components (5 total, 4 new) — render evaluation dimension cards directly from typed analysis schemas; extracted shared sub-components (`CategoryLabel`, `EffectivenessBadge`, `StrengthWeaknessGrid`, `SectionSkeleton`) avoid duplication
-4. `LibraryContext` + `db.ts` (Dexie) — CRUD operations on `SavedAnalysis` records in IndexedDB; completely separate from `WorkspaceContext`; SSR-safe via `useEffect` initialization guard
-5. `LibraryPage` at `/dashboard` — replaces existing route stub; grid of saved analyses with type filtering, search, open, and delete with confirmation
-6. Modified `DocumentWorkspace` — report tab removed (report now in `AnalysisWorkspace`); generated docs tabs and export functionality unchanged
+1. `POST /api/suggestions/generate` — reads project from DB by ID, builds type-specific prompt injecting analysis weakness strings as the instruction list, streams structured suggestion array via `generateObject`
+2. `SuggestionReviewPanel` + `SuggestionCard` — "Script Review" tab in DocumentWorkspace; inline word-level diff, accept/reject per suggestion, dimension filtering, persisted state
+3. `lib/suggestions/merge.ts` — applies accepted suggestions to original text using reverse-order string replacement; produces `revisedText`
+4. `POST /api/export/script` — exports `revisedText` as PDF (Playwright), DOCX (docx library), FDX (XMLBuilder with preserved tree from Phase 1), or TXT
+5. `lib/suggestions/types.ts` — Suggestion Zod schema and TypeScript types shared across all suggestion code
+6. `lib/suggestions/prompt.ts` — per-project-type prompt engineering; analysis weakness fields are the literal instruction list
+7. DB migration — adds `suggestions TEXT`, `revisedText TEXT`, and `fdxTree TEXT` columns to projects table
 
 ### Critical Pitfalls
 
-1. **Theme flash of unstyled content (FOUC) on hydration** — Use `next-themes` with `suppressHydrationWarning` on `<html>`. The blocking `<script>` next-themes injects sets the theme class before browser paint, eliminating the flash. Never attempt a manual theme toggle in Next.js without this library.
+1. **FDX parser destroys round-trip data** — The existing `fdx-parser.ts` strips all paragraph type attributes and structural metadata. FDX export requires a separate parse layer with `preserveOrder: true, ignoreAttributes: false` that retains the full XML tree. Store the preserved tree in a dedicated `fdxTree` column. Never reconstruct FDX from plain text — all element types, formatting, and metadata will be lost. Must be built in Phase 1 before any export work begins.
 
-2. **Hardcoded colors breaking in light mode** — 11 files (confirmed via codebase grep) use raw Tailwind color values chosen for dark mode only. All must be replaced with semantic tokens (`bg-background`, `bg-card`, `bg-muted`, `text-foreground`, `text-muted-foreground`) during Phase 1, before any card work begins. This is a prerequisite, not an afterthought.
+2. **Generic suggestions not grounded in analysis** — If the prompt treats analysis results as background context, the LLM produces generic screenwriting advice rather than targeted fixes. The prompt must inject actual weakness strings from the analysis schema fields (`structuralWeaknesses`, `dialogueQuality.weaknesses`, character `weaknesses`, `developmentRecommendations`) as the literal instruction list. Each generated suggestion must reference which specific finding it addresses.
 
-3. **localStorage quota exceeded for large analysis data** — localStorage's 5MB limit is hit after approximately 20-30 full screenplay analyses (50-200KB each). Use Dexie/IndexedDB from day one. Reserve localStorage only for small preferences (theme choice). Data lost to quota overflow is unrecoverable.
+3. **Offset drift corrupts multi-suggestion merges** — Character-offset-based merges break when multiple suggestions are applied because each replacement shifts subsequent offsets. Use text-span anchoring: the AI quotes the exact original text verbatim, and the merge engine uses `String.indexOf()` to locate and replace it. Apply accepted suggestions in reverse document order. This must be designed in Phase 1 — retrofitting later requires rewriting the merge engine.
 
-4. **Breaking non-narrative project types during card redesign** — `NarrativeReport` already works; the other 4 types have different schemas and receive less testing attention. Test all 5 project types after every card component change. Keep old report components working until new workspace components are verified for every type.
+4. **Token cost explosion from per-issue calls** — Separate LLM calls per weakness finding with the full script in context multiply to 500K–600K input tokens for a typical screenplay, costing $3–5 per suggestion run. Batch all findings into a single `generateObject` call with structured array output. Reduces input tokens ~17x (from ~600K to ~35K for a 120-page script).
 
-5. **`WorkspaceContext` becoming a god object** — Currently 22 values (11 state fields + 11 setters). Theme gets `next-themes` own context. Library persistence gets a dedicated `LibraryContext`. `WorkspaceContext` gains at most 2-3 fields (`sourceFileName`, `loadFromSaved` action) and stays focused on the current analysis session.
-
-6. **Persisting analysis data without schema versioning** — AI schemas will evolve. Every stored `SavedAnalysis` record must include `schemaVersion: number` from day one. Load with Zod `safeParse()` and migrate old records rather than crashing. Retrofitting versioning after data exists is medium-cost; having no recovery path when old analyses fail to render is high-cost.
+5. **Tracked-changes state explosion** — Building accept/reject, preview, and undo incrementally without designing the state model upfront produces desync bugs. The state must be a single array of suggestions with status fields. Document preview is always derived (`useMemo` over accepted suggestions applied to original text), never stored as separate state. Undo is then trivial (flip status).
 
 ## Implications for Roadmap
 
-All research converges on a three-phase structure. The dependency graph is deterministic: theme has no dependencies and is safe to build first; card workspaces depend on theme for correct rendering in both modes; persistence depends on the workspace layer being in place so that "open saved analysis" renders correctly.
+Based on combined research, the build order is forced by dependencies: FDX infrastructure and data model decisions must come first (architectural decisions with high retrofit cost), UI depends on the data model, merge depends on UI state, export depends on merge. Each phase delivers a validatable increment.
 
-### Phase 1: Theme System and Color Audit
+### Phase 1: Data Foundation + FDX Infrastructure
+**Rationale:** Two architectural decisions with the highest retrofit cost if wrong — the suggestion data model (text-span vs. character offsets) and the FDX preservation layer — must be locked in before any UI or generation code is built. Phase 1 can be validated entirely via API calls without a UI.
+**Delivers:** Working `POST /api/suggestions/generate` endpoint, `fdxTree` preservation layer, DB migration (`suggestions`, `revisedText`, `fdxTree` columns), Suggestion Zod schema and types, merge algorithm (`lib/suggestions/merge.ts`), per-project-type prompt engineering
+**Addresses:** Block segmentation logic, analysis-to-prompt mapping for all 4 project types, SQLite schema extension, token-batching strategy
+**Avoids:** Offset drift corruption (Pitfall 3 — text-span anchoring from the start), FDX round-trip data loss (Pitfall 1 — preservation layer before any export), token cost explosion (Pitfall 6 — single batched call)
 
-**Rationale:** Zero dependencies on other v1.1 features. Purely additive. Establishes the visual foundation (CSS variables, semantic token usage) that card workspaces and Library must be built on top of. Fixing the 11 hardcoded-color files once during Phase 1 costs far less than debugging color issues across 5 workspace components in Phase 2.
+### Phase 2: Suggestion Review UI
+**Rationale:** Depends on Phase 1 data model and generation endpoint. This is the core UX of the feature. Accept/reject state must be established before merge can operate.
+**Delivers:** "Script Review" tab in DocumentWorkspace with SuggestionCard components, inline word-level diff display, accept/reject per suggestion, dimension filtering, summary bar, full persistence across page refresh
+**Uses:** `diff-match-patch-es` for diff rendering, existing Tailwind + shadcn styling patterns, existing workspace tab infrastructure (`Tabs`/`TabsList`/`TabsTrigger`/`TabsContent`)
+**Implements:** `SuggestionReviewPanel`, `SuggestionCard`, `SuggestionSummaryBar`, `SuggestionFilters`, workspace-context additions, auto-save suggestions to DB (debounced PUT)
+**Avoids:** Tracked-changes state explosion (Pitfall 5 — single-source-of-truth state model designed before any component is written)
 
-**Delivers:** Dark/light/system theme toggle; orange/amber brand accent CSS variable system (`--brand`, `--brand-foreground`, `--brand-muted` in both `:root` and `.dark`); all 11 hardcoded-color files updated to semantic tokens; `ThemeToggle` button in `AppTopNav`; smooth theme crossfade on `<body>`; `dark:prose-invert` on TiptapContentRenderer.
+### Phase 3: Merge + Revised Text
+**Rationale:** Depends on Phase 2 for accept/reject state. Relatively small scope — the merge algorithm was already designed and tested conceptually in Phase 1. This phase wires the "Apply Changes" button to the merge function and persists the result.
+**Delivers:** "Apply N Accepted Changes" button, `revisedText` computed and stored in DB, merge preview panel that derives from suggestion status in real-time
+**Uses:** `lib/suggestions/merge.ts` from Phase 1, `revisedText` state in workspace context
 
-**Addresses:** Dark/light theme toggle (P1), theme persistence (P1), brand accent system (P1).
-
-**Avoids:** FOUC (Pitfall 1) via next-themes blocking script; hardcoded colors breaking light mode (Pitfall 2) by auditing all 11 files; context god object for theme state (Pitfall 5) by using next-themes' own context.
-
-**Research flags:** None needed. next-themes + shadcn + Tailwind v4 integration is official, documented, and widely used. Standard implementation.
-
-### Phase 2: Card-Based Analysis Workspaces
-
-**Rationale:** The pattern is proven by the existing `NarrativeReport`. All 5 AI schemas already produce all data needed for every evaluation dimension card — no schema work required. This phase is UI restructuring: extract shared sub-components, refactor `NarrativeReport` into a workspace, build the remaining 4 workspace components, wire up the `AnalysisWorkspace` dispatcher. Theme must be complete first so cards render correctly in both light and dark modes.
-
-**Delivers:** `AnalysisWorkspace` dispatcher and workspace registry; `NarrativeWorkspace` (refactored from existing `NarrativeReport`, 8 dimension cards); `DocumentaryWorkspace`, `CorporateWorkspace`, `TvEpisodicWorkspace`, `ShortFormWorkspace` (4 new); shared workspace sub-components in `workspaces/shared.tsx`; workspace header component with project metadata; 2-column grid layout on wide screens; named workspace identities per project type.
-
-**Uses:** Existing shadcn Cards + Tailwind CSS grid (no new packages). All 5 existing AI schemas. `EffectivenessBadge`, `CategoryLabel`, `StrengthWeaknessGrid` patterns extracted from `NarrativeReport`.
-
-**Implements:** `AnalysisWorkspace` + workspace registry (parallel rendering path to Tiptap normalizers; normalizers retained for export).
-
-**Avoids:** Breaking non-narrative types (Pitfall 4) by testing all 5 types after every change and keeping old components as fallbacks until verified; rendering cards via Tiptap normalizers (anti-pattern identified in ARCHITECTURE.md).
-
-**Research flags:** None needed. Pattern is proven in existing codebase. Well-documented shadcn Card + CVA approach.
-
-### Phase 3: Library Persistence
-
-**Rationale:** The most architecturally novel feature. Requires Dexie/IndexedDB infrastructure, a new `LibraryContext`, modifications to `WorkspaceContext` for `loadFromSaved`, and a new Library page. Must be built last because opening a saved analysis must display in the card-based workspace format, which requires Phase 2 to be complete. Storage schema versioning must be baked in from the start of this phase.
-
-**Delivers:** Dexie database setup (`db.ts`, `schema.ts` with `schemaVersion`); `LibraryContext` with save/load/delete/list operations; auto-save after analysis completion with "Saved" toast indicator; Library page at `/dashboard` with project-type filtering, search, and card previews; open saved analysis (hydrates `WorkspaceContext`, navigates to workspace); delete with confirmation dialog; SSR guard (`isReady` pattern) for IndexedDB access.
-
-**Uses:** `dexie ^4.0.11`, `dexie-react-hooks ^4.2.0` (2 new packages). Zod `safeParse()` for load-time validation (already in stack at v4.3.6).
-
-**Implements:** `LibraryContext` (separate from `WorkspaceContext`); `SavedAnalysis` schema with versioning; SSR-safe Dexie initialization pattern.
-
-**Avoids:** localStorage quota (Pitfall 3) by using IndexedDB from day one; schema versioning gap (Pitfall 6) by building it in immediately; context god object (Pitfall 5) by keeping library state in its own context; Library list performance trap by storing a lightweight index (title, date, projectType, id) separately from full analysis payloads.
-
-**Research flags:** Mild flag for Dexie SSR integration with Next.js App Router. The pattern is well-understood but the client/server boundary requires that all Dexie access be behind `useEffect` or within `'use client'` components. Recommend validating the `LibraryProvider` `isReady` guard pattern with a small implementation spike before building the full Library page. Also verify the complete list of `WorkspaceContext` fields that `loadFromSaved` must restore to avoid partial hydration bugs.
+### Phase 4: Script Export
+**Rationale:** Depends on Phase 3 for `revisedText`. The four export formats are independent of each other and can be shipped incrementally. FDX is last within this phase because it has the most edge cases and depends on the `fdxTree` infrastructure from Phase 1.
+**Delivers:** `POST /api/export/script` route; revised script exportable as TXT (trivial), PDF (Playwright + screenplay CSS), DOCX (docx library + screenplay paragraph styles), FDX (XMLBuilder with preserved tree + paragraph-level replacement)
+**Uses:** Playwright (existing), docx library (existing), fast-xml-parser XMLBuilder (existing)
+**Avoids:** FDX Text node edge cases (Pitfall 4 — test with real FDX files; MVP collapses multi-Text paragraphs to single Text with documented limitation)
 
 ### Phase Ordering Rationale
 
-- Theme must be first because all color values cascade downstream. Fixing semantic tokens once during Phase 1 (11 files) costs 3x less than debugging color issues after building across 5 workspace components in Phase 2.
-- Card workspaces must be second because the `AnalysisWorkspace` rendering layer must exist before "open saved analysis" can work. Opening a saved analysis without a card workspace to render it into is a dead end.
-- Library must be last because it is the only feature with new infrastructure dependency (Dexie) and its primary user-facing value — opening a saved analysis in its correct workspace — requires Phases 1 and 2 to be stable.
-- The entire milestone is client-side. No deployment coordination, no migration risk beyond IndexedDB schema versioning, no backend changes.
+- Phase 1 before everything because the suggestion schema and FDX layer are high-cost to change once downstream code is built against them
+- Phase 2 before Phase 3 because accept/reject state is required input to the merge algorithm
+- Phase 3 before Phase 4 because all export formats need `revisedText`
+- Within Phase 4: TXT first (trivial), then PDF, then DOCX, then FDX (most complex, most edge cases)
+- Tiptap removal happens at the start of Phase 2 before any new components are added (clean slate)
 
 ### Research Flags
 
 Phases likely needing deeper research during planning:
-- **Phase 3 (Library Persistence):** Dexie SSR guard pattern in Next.js App Router — recommend an implementation spike before building the full Library page. Also enumerate the complete set of `WorkspaceContext` fields that `loadFromSaved` must restore before building the open-from-Library flow.
+- **Phase 1 (prompt engineering):** Documentary and corporate analysis schema weakness fields need explicit mapping to suggestion prompts. Narrative is well-documented in the codebase (`scriptCoverage.dialogueQuality.weaknesses`, etc.) but the other 3 types need validation against their actual Zod schemas.
+- **Phase 1 (FDX preservation):** Complex FDX files with dual dialogue, multi-Text paragraphs, and revision marks may surface edge cases beyond what the sample files show. Test with real user FDX files early.
+- **Phase 4 (FDX export verification):** Requires access to a Final Draft installation to verify round-trip correctness. Cannot be validated by code alone.
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1 (Theme System):** next-themes + shadcn + Tailwind v4 is official, documented, and widely used. Zero novel decisions.
-- **Phase 2 (Card Workspaces):** Pattern is proven by `NarrativeReport`. Extending to 4 more types follows the same approach. No unknown territory.
+Phases with standard patterns (can skip research-phase):
+- **Phase 2:** Custom React diff components using diff-match-patch-es follow well-documented patterns.
+- **Phase 3:** Merge algorithm is fully specified in ARCHITECTURE.md — straightforward implementation.
+- **Phase 4 (non-FDX formats):** PDF and DOCX export follow the exact same pattern as the existing analysis report export. New work is only the screenplay-formatted HTML/DOCX templates.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All packages verified at specific versions (next-themes 0.4.6, dexie 4.0.11, dexie-react-hooks 4.2.0). Mature, widely used libraries with no known compatibility issues with Next.js 16 / React 19. |
-| Features | HIGH | Grounded in direct codebase analysis and PROJECT.md requirements. Key finding — no AI schema changes needed — is verifiable against the 5 existing Zod schemas. Competitor feature analysis is lower confidence (training data may be stale) but does not affect v1.1 scope. |
-| Architecture | HIGH | Two of three features follow patterns already in the codebase (NarrativeReport for card workspaces, reportNormalizers registry for dispatch). Library/Dexie architecture is well-established with one known integration complexity (SSR guard pattern). |
-| Pitfalls | HIGH | Five of six pitfalls are grounded in direct codebase inspection with confirmed file names and line numbers. One (localStorage quota) is based on the Web Storage API specification. All recovery strategies are well-understood and mechanical. |
+| Stack | HIGH | One new dependency; all others already installed and proven in the live codebase. Tiptap removal confirmed safe (0 imports in any source file). diff-match-patch-es verified via official Anthony Fu repo and npm. |
+| Features | MEDIUM-HIGH | Table stakes and MVP scope are clear and well-supported by competitor analysis. Per-project-type suggestion shapes (especially documentary/corporate) are based on schema analysis, not user validation — needs validation during Phase 1 prompt engineering. |
+| Architecture | HIGH | Derived directly from codebase reading of confirmed patterns. Text-span anchoring, JSON blob storage, tab integration, server-side DB reads — all follow established project conventions. Data model decisions are well-reasoned with clear tradeoff documentation. |
+| Pitfalls | HIGH (codebase-verified) / MEDIUM (FDX edge cases) | Core pitfalls (offset drift, FDX round-trip loss, token cost, state explosion) are confirmed from direct codebase analysis. FDX write-back edge cases (multi-Text paragraphs, dual dialogue) are MEDIUM — documented from format specs and sample files but require real-file testing to fully validate. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **IndexedDB availability in private browsing:** Some browsers restrict IndexedDB in private/incognito mode. The Library feature must degrade gracefully (show a "storage unavailable" notice) rather than crash. A try/catch wrapper around Dexie initialization is needed; the exact implementation pattern should be decided during Phase 3 planning.
-
-- **`loadFromSaved` field completeness:** `WorkspaceContext` currently holds 11 state fields. The complete list of fields that must be restored when opening a saved analysis needs to be enumerated and verified during Phase 3. Missing a field (e.g., `generatedDocuments`, `reportDocument`) would silently leave the workspace in a partial state with no obvious error.
-
-- **Library list index vs. full payload split:** Storing a lightweight index (title, date, type, id) separately from full analysis data is the correct approach for Library list performance at scale. The exact field split should be decided during Phase 3 planning, not deferred to implementation time.
-
-- **`dark:prose-invert` on TiptapContentRenderer:** The contentEditable div in `document-workspace.tsx` uses the `prose` Tailwind typography class which has theme-unaware colors by default. Adding `dark:prose-invert` is a Phase 1 fix that must be included in the color audit checklist alongside the 11 hardcoded-color files.
+- **Documentary and corporate suggestion prompts:** Narrative schema fields are well-mapped, but `editorialNotes.missingPerspectives`, `editorialNotes.suggestedStructure`, and corporate messaging fields need explicit extraction logic. If only narrative is built first, document it as a known limitation with a clear roadmap for the other types.
+- **FDX multi-Text paragraph handling:** The MVP collapses multi-formatted paragraphs (bold, italic inline) to a single Text node when a suggestion modifies them. This is an acceptable v3.0 limitation but must be surfaced in the UI ("FDX export: inline formatting within rewritten passages is normalized to plain text").
+- **Context window limits for long scripts:** Scripts over 80 pages combined with analysis data may approach model context limits. The prompt should inject only the top-N weakness findings by severity rather than the full analysis output. This tradeoff needs validation during Phase 1 API implementation.
+- **Suggestion count calibration:** The 10–15 suggestion target is based on UX reasoning and token cost analysis, not user testing. The right number may need adjustment after first real use.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Direct codebase analysis: `layout.tsx` (hardcoded `className="dark"`, line 24), `workspace-context.tsx` (11 state fields + 11 setters), `document-workspace.tsx` (hardcoded `bg-white` line 267, `hover:bg-gray-100` lines 269/275), `narrative-report.tsx` (hardcoded `text-green-500`, `text-red-400`, `bg-amber-500/20`), `app-sidebar.tsx` (hardcoded `text-stone-50`, `bg-white/5`, `text-stone-400`), all 5 AI schemas, `report-normalization.ts`
-- [next-themes GitHub](https://github.com/pacocoursey/next-themes) — v0.4.6 API reference, SSR flash prevention approach
-- [shadcn/ui dark mode docs](https://ui.shadcn.com/docs/dark-mode/next) — official Next.js + next-themes integration pattern
-- [Dexie.js documentation](https://dexie.org/docs/dexie-react-hooks/useLiveQuery()) — v4.0.11 API, useLiveQuery hooks reference
-- PROJECT.md v1.1 milestone requirements
+- Codebase direct analysis: `src/lib/parsers/fdx-parser.ts`, `src/lib/db.ts`, `src/app/api/analyze/route.ts`, `src/contexts/workspace-context.tsx`, `src/components/document-workspace.tsx`, `src/lib/ai/schemas/narrative.ts`
+- [diff-match-patch-es GitHub (antfu)](https://github.com/antfu/diff-match-patch-es) — ESM rewrite, active maintenance confirmed
+- [fast-xml-parser XMLBuilder docs](https://naturalintelligence.github.io/fast-xml-parser/) — official docs confirming XMLBuilder API, 52M+ weekly downloads
+- [AI SDK generateObject docs](https://ai-sdk.dev/docs/reference/ai-sdk-core/generate-object) — array output mode confirmed
+- [Tiptap Tracked Changes pricing](https://tiptap.dev/pricing) — paid add-on confirmed, validates custom component decision
 
 ### Secondary (MEDIUM confidence)
-- [Dark Mode in Next.js 15 + Tailwind v4](https://www.sujalvanjare.com/blog/dark-mode-nextjs15-tailwind-v4) — Tailwind v4 `@custom-variant` configuration confirmation
-- [Tailwind v4 + next-themes integration](https://medium.com/@kevstrosky/theme-colors-with-tailwind-css-v4-0-and-next-themes-dark-light-custom-mode-36dca1e20419) — CSS-first dark mode config walkthrough
-- [Next.js + IndexedDB architecture reference](https://oluwadaprof.medium.com/building-an-offline-first-pwa-notes-app-with-next-js-indexeddb-and-supabase-f861aa3a06f9) — client-side persistence patterns in App Router
-- [npm-compare: idb vs dexie vs localforage](https://npm-compare.com/dexie,idb,localforage) — library comparison for storage decision
+- [FDX format sample (rsdoiel/fdx)](https://github.com/rsdoiel/fdx/blob/main/testdata/sample-01.fdx) — XML structure reference for export implementation
+- [FDX format documentation (Just Solve)](http://justsolve.archiveteam.org/wiki/Final_Draft) — format overview
+- [Arc Studio revision management](https://help.arcstudiopro.com/guides/draft-revision-management) — tracked changes UI pattern reference (green/red per-author diffs)
+- [VS Code Copilot review code edits](https://code.visualstudio.com/docs/copilot/chat/review-code-edits) — per-hunk accept/reject UX pattern reference
+- [jsdiff npm](https://github.com/kpdecker/jsdiff) — 40M+ weekly downloads, validated for word-level diff use case
+- [Scriptmatix AI workflow](https://scriptmatix.com/ai-screenwriting-hacks/) — competitor analysis confirming analysis-to-suggestion gap in market
+- [Token cost optimization (10Clouds)](https://10clouds.com/blog/a-i/mastering-ai-token-optimization-proven-strategies-to-cut-ai-cost/) — batching strategy validation
+- [LLM edit-list pattern (Waleed Kadous)](https://waleedk.medium.com/the-edit-trick-efficient-llm-annotation-of-documents-d078429faf37) — edit-list vs. full rewrite tradeoff
+
+### Tertiary (LOW confidence)
+- [screenplay-tools FDX writer](https://github.com/wildwinter/screenplay-tools) — evaluated and rejected (not widely adopted, not battle-tested)
+- [tiptap-diff-suggestions community extension](https://github.com/bsachinthana/tiptap-diff-suggestions) — evaluated and rejected (7 commits, 22 stars, too immature)
 
 ---
-*Research completed: 2026-03-17*
+*Research completed: 2026-03-21*
 *Ready for roadmap: yes*

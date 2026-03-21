@@ -1,442 +1,444 @@
 # Architecture Patterns
 
-**Domain:** Filmmaking analysis app -- UI theming, card-based workspaces, local persistence
-**Researched:** 2026-03-17
-**Milestone:** v1.1 UI and Formatting
+**Domain:** Script improvement / tracked-changes feature for existing FilmIntern app
+**Researched:** 2026-03-21
+**Milestone:** v3.0 Script Improvement
+**Confidence:** HIGH
 
-## Current Architecture Snapshot
+## Current Architecture Summary
 
-The app is a Next.js 15 (app router) single-page workflow. Key structural facts:
-
-- **Layout:** `layout.tsx` wraps everything in `<Providers>` (WorkspaceProvider + TooltipProvider). The `<html>` tag is hardcoded to `className="dark"`.
-- **State:** All workspace state lives in `WorkspaceContext` (React context with `useState` calls). No persistence -- refreshing the page loses everything.
-- **Navigation:** `AppTopNav` provides horizontal nav (Projects, Dashboard, Shot Lists, Image Prompts, Exports, Settings). Routes exist as stubs.
-- **Analysis flow:** `page.tsx` (Home) owns the full workflow: select project type via `ProjectTypeTabs`, upload file, run analysis via `/api/analyze`, build report document, render in `DocumentWorkspace`.
-- **Report rendering:** Two parallel rendering paths exist:
-  1. `NarrativeReport` -- purpose-built card-based component with 8 evaluation dimension cards (already exists for narrative type only)
-  2. `DocumentWorkspace` + `TiptapContentRenderer` -- generic Tiptap JSON renderer used for all project types' report documents and generated documents
-- **Normalization registry:** `reportNormalizers` maps `AnalysisReportKind` to normalizer functions that convert typed analysis data into Tiptap JSON. Each project type has its own normalizer.
-- **CSS:** Tailwind CSS v4 with CSS custom properties for light/dark themes already defined in `globals.css` (both `:root` and `.dark` blocks exist). The app just never toggles off `.dark`.
-
-## Recommended Architecture for v1.1
-
-### Overview
-
-Three features, three layers:
+The existing app follows a straightforward pattern:
 
 ```
-Theme System         Card Workspaces              Library Persistence
-     |                     |                             |
-  globals.css        per-type workspace           IndexedDB via Dexie
-  next-themes        components that consume       +
-  ThemeProvider       existing analysis schemas    LibraryContext
-     |                     |                             |
-  layout.tsx -----> Providers.tsx <------------- providers.tsx
+Upload (File -> Parser -> ParseResult{text, metadata})
+  -> Store in DB as `uploadData` JSON (includes raw `text`)
+  -> Analyze (streamText with Output.object -> structured analysis JSON)
+  -> Store in DB as `analysisData` JSON
+  -> Display in card-based workspace (evaluation cards per dimension)
+  -> Export analysis report as PDF/DOCX
+```
+
+**Key facts established from code:**
+- Original script text IS stored in DB via `uploadData.text` (confirmed in `workspace-context.tsx` line 116 and `db.ts` `uploadData` column)
+- Analysis output IS stored as structured JSON in `analysisData` column
+- Both are JSON-stringified TEXT columns in SQLite (not separate tables)
+- Projects table is flat: one row per project, all data as JSON blobs
+- The workspace context manages all state client-side, persisting via PUT to `/api/projects/[id]`
+- Document workspace uses a tab-based layout: Report tab, optional Critic tab, generated document tabs
+- Export uses Playwright Chromium for PDF, docx library for Word
+
+## Recommended Architecture for v3.0 Script Improvement
+
+### High-Level Flow
+
+```
+Completed Analysis (existing)
+  -> "Generate Suggestions" button (new, user-triggered)
+  -> POST /api/suggestions/generate (new API route)
+     - Reads: uploadData.text + analysisData (weaknesses/recommendations)
+     - AI generates array of Suggestion objects via streamText + Output.object
+     - Streams suggestions back to client
+  -> Store suggestions in DB (new `suggestions` column on projects table)
+  -> Display in new "Script Review" tab in DocumentWorkspace
+     - Each suggestion shown as inline diff card (original vs suggested)
+     - Accept/reject buttons per suggestion
+  -> "Apply Changes" merges accepted suggestions into revised text
+  -> Export revised script via new /api/export/script route
 ```
 
 ### Component Boundaries
 
-| Component | Responsibility | Communicates With |
-|-----------|---------------|-------------------|
-| `ThemeProvider` (next-themes) | Manages dark/light toggle, persists choice, prevents flash | `layout.tsx`, `globals.css` |
-| `ThemeToggle` | UI button for switching themes | `ThemeProvider` via `useTheme()` |
-| `AnalysisWorkspace` (new) | Orchestrates which card workspace renders based on project type | `page.tsx`, per-type workspace components |
-| `NarrativeWorkspace` | 8 evaluation dimension cards for narrative projects | `AnalysisWorkspace`, `NarrativeAnalysis` schema |
-| `DocumentaryWorkspace` (new) | Interview-specific evaluation cards | `AnalysisWorkspace`, `DocumentaryAnalysis` schema |
-| `CorporateWorkspace` (new) | Messaging-specific evaluation cards | `AnalysisWorkspace`, `CorporateAnalysis` schema |
-| `TvEpisodicWorkspace` (new) | Episode/series evaluation cards | `AnalysisWorkspace`, `TvEpisodicAnalysis` schema |
-| `ShortFormWorkspace` (new) | Pacing/messaging evaluation cards | `AnalysisWorkspace`, `ShortFormAnalysis` schema |
-| `LibraryProvider` / `useLibrary` (new) | CRUD operations on saved analyses in IndexedDB | `providers.tsx`, Library page, `page.tsx` (auto-save) |
-| `LibraryPage` (new) | Browse, open, delete saved analyses | `LibraryProvider`, router |
-| `DocumentWorkspace` (existing, modified) | Still handles generated docs (outline, treatment, proposal) and export | `page.tsx`, export APIs |
+| Component | Responsibility | Communicates With | Status |
+|-----------|---------------|-------------------|--------|
+| `POST /api/suggestions/generate` | AI suggestion generation, streams structured suggestions | AI provider registry, DB | **NEW** |
+| `POST /api/projects/[id]` | Persist suggestions (add `suggestions` field) | DB | **MODIFY** (add suggestions field) |
+| `POST /api/export/script` | Export revised script as PDF/DOCX/FDX/TXT | Parsers, export libs | **NEW** |
+| `db.ts` | Add `suggestions` column, add `revisedText` column | SQLite | **MODIFY** |
+| `SuggestionReviewPanel` | Tracked-changes UI, accept/reject per suggestion | Workspace context | **NEW** |
+| `DocumentWorkspace` | Add "Script Review" tab alongside existing tabs | SuggestionReviewPanel | **MODIFY** |
+| `workspace-context.tsx` | Add suggestions state, revisedText state | All components | **MODIFY** |
+| `SuggestionCard` | Single suggestion display: original vs suggested with diff | SuggestionReviewPanel | **NEW** |
+| `ScriptDiffView` | Inline or side-by-side text diff rendering | SuggestionCard | **NEW** |
+| `lib/suggestions/types.ts` | Suggestion TypeScript types and Zod schema | All suggestion code | **NEW** |
+| `lib/suggestions/merge.ts` | Apply accepted suggestions to original text | Export route, UI | **NEW** |
+| `lib/suggestions/prompt.ts` | Prompt engineering for suggestion generation | API route | **NEW** |
+| `lib/ai/schemas/suggestions.ts` | Zod schema for AI-generated suggestions | API route | **NEW** |
 
 ### Data Flow
 
-#### Current Flow (v1.0)
 ```
-Upload -> /api/analyze -> streaming JSON -> setAnalysisData (in-memory)
-                                              |
-                                              v
-                                      buildReportDocument -> DocumentWorkspace (Tiptap render)
-```
-
-#### New Flow (v1.1)
-```
-Upload -> /api/analyze -> streaming JSON -> setAnalysisData (in-memory)
-                                              |
-                                   +----------+----------+
-                                   |                     |
-                                   v                     v
-                          AnalysisWorkspace         auto-save to
-                          (card-based, per-type)    IndexedDB via
-                               |                    LibraryProvider
-                               v
-                          DocumentWorkspace
-                          (generated docs only,
-                           export still here)
+Client                          Server
+  |                               |
+  |-- POST /api/suggestions/generate -->
+  |   { projectId }               |
+  |                               |-- Read project from DB
+  |                               |-- Extract uploadData.text + analysisData
+  |                               |-- Build prompt: weaknesses + recommendations
+  |                               |     + original script text
+  |                               |-- streamText({ output: Output.object({
+  |                               |     schema: suggestionsResponseSchema }) })
+  |   <-- SSE stream of partial JSON --|
+  |                               |
+  |-- Parse progressive JSON      |
+  |-- Update suggestions state    |
+  |                               |
+  |-- When done: POST /api/projects/[id] -->
+  |   { suggestions: [...] }      |
+  |                               |-- Save to DB
 ```
 
-Key change: The analysis report is no longer rendered through the Tiptap normalizer path for on-screen display. Instead, `AnalysisWorkspace` dispatches to a per-type card component that renders directly from the typed analysis data (like `NarrativeReport` already does). The Tiptap/normalizer path remains for generated documents (outlines, treatments, proposals) and PDF/DOCX export.
+**Why server reads from DB (not client sends text):** The original text + analysis can be large. Sending them from client to server wastes bandwidth and risks payload limits. The server already has the project ID and can read directly from SQLite.
 
-## Feature 1: Theme System
+### Data Flow: Accept/Reject/Merge
 
-### Architecture Decision
-
-Use `next-themes` because:
-- It handles SSR hydration mismatch (the hardest part of theme toggles in Next.js)
-- It persists user preference to localStorage automatically
-- It prevents flash-of-wrong-theme on page load
-- It is the standard recommended by shadcn/ui docs for dark mode
-- The app already has both `:root` and `.dark` CSS custom property blocks in `globals.css`
-
-**Confidence:** HIGH -- next-themes is the de facto standard for Next.js theming, and the CSS variables are already in place.
-
-### What Changes
-
-| File | Change |
-|------|--------|
-| `src/app/layout.tsx` | Remove hardcoded `className="dark"` from `<html>`. Add `suppressHydrationWarning` to `<html>`. |
-| `src/app/providers.tsx` | Wrap children in `<ThemeProvider attribute="class" defaultTheme="dark" enableSystem>` from `next-themes`. |
-| `src/app/globals.css` | Add orange/amber brand accent CSS variables to both `:root` and `.dark` blocks (e.g., `--brand`, `--brand-foreground`). The existing light/dark variable sets are already defined. |
-| `src/components/theme-toggle.tsx` (new) | Button component using `useTheme()` from next-themes. Sun/Moon icon toggle. |
-| `src/components/app-topnav.tsx` | Add `ThemeToggle` button next to the Settings icon. |
-| Hardcoded colors | Audit `bg-stone-900`, `text-stone-50`, `bg-white`, `hover:bg-gray-100` etc. in `app-topnav.tsx`, `document-workspace.tsx` and replace with semantic tokens (`bg-background`, `text-foreground`, `bg-card`, etc.). |
-
-### Brand Color System
-
-Add to `globals.css`:
-```css
-:root {
-  --brand: oklch(0.705 0.191 47.604);      /* amber-500 equivalent */
-  --brand-foreground: oklch(0.145 0 0);
-}
-.dark {
-  --brand: oklch(0.769 0.188 70.08);       /* amber-400 equivalent */
-  --brand-foreground: oklch(0.145 0 0);
-}
+```
+1. User reviews suggestions in SuggestionReviewPanel
+2. Clicks Accept or Reject on each SuggestionCard
+3. Status updated in workspace context (local state)
+4. Auto-save suggestions with statuses to DB (debounced PUT)
+5. "Apply Changes" button:
+   a. Filter to accepted suggestions
+   b. Sort by position in original text (string search order)
+   c. Apply replacements sequentially (last-to-first to preserve offsets)
+   d. Store result as revisedText
+   e. Save revisedText to DB
+6. Export uses revisedText for script output
 ```
 
-Then reference as `bg-brand`, `text-brand` via Tailwind theme inline config. The existing amber-500/amber-600 hardcoded references in `NarrativeReport`, `AppTopNav`, and `AppSidebar` should migrate to `text-brand` / `border-brand`.
-
-### Tailwind v4 Note
-
-Tailwind CSS v4 uses the `@custom-variant dark (&:is(.dark *))` approach already present in `globals.css`. The `darkMode: 'class'` config from v3 is not needed -- the custom variant declaration handles it. next-themes toggles the `dark` class on `<html>`, which matches this setup.
-
-## Feature 2: Card-Based Analysis Workspaces
-
-### Architecture Decision
-
-Follow the pattern already established by `NarrativeReport` -- each project type gets a dedicated component that renders directly from the typed analysis schema using shadcn `Card`, `Badge`, and semantic layout. Do NOT use the Tiptap normalizer path for card rendering.
-
-**Rationale:** `NarrativeReport` already demonstrates this exact pattern and it works well. The normalizers flatten rich structured data into linear Tiptap nodes, losing the ability to do per-dimension cards with badges, strength/weakness columns, etc. Card workspaces need the full typed data.
-
-**Confidence:** HIGH -- proven pattern already in the codebase.
-
-### New Components
-
-| Component | File | Cards/Dimensions | Source Schema |
-|-----------|------|-------------------|---------------|
-| `AnalysisWorkspace` | `src/components/analysis-workspace.tsx` | Dispatcher -- renders correct workspace by project type | N/A |
-| `NarrativeWorkspace` | `src/components/workspaces/narrative-workspace.tsx` | Rename/refactor from existing `NarrativeReport` (8 cards) | `NarrativeAnalysis` |
-| `DocumentaryWorkspace` | `src/components/workspaces/documentary-workspace.tsx` | Summary, Key Quotes, Recurring Themes, Key Moments, Editorial Notes | `DocumentaryAnalysis` |
-| `CorporateWorkspace` | `src/components/workspaces/corporate-workspace.tsx` | Summary, Soundbites, Messaging Themes, Speaker Effectiveness, Editorial Notes | `CorporateAnalysis` |
-| `TvEpisodicWorkspace` | `src/components/workspaces/tv-episodic-workspace.tsx` | Cold Open, Story Strands, Episode Arc, Series Analysis, Serialized Hooks, Season Arc | `TvEpisodicAnalysis` |
-| `ShortFormWorkspace` | `src/components/workspaces/short-form-workspace.tsx` | Summary, Hook Strength, Pacing, Messaging Clarity, CTA Effectiveness | `ShortFormAnalysis` |
-
-### Workspace Registry Pattern
-
-Create a registry similar to `reportNormalizers` but for workspace components:
+### Data Model: Suggestion Schema
 
 ```typescript
-// src/components/workspaces/registry.ts
-import type { ComponentType } from 'react';
+// lib/suggestions/types.ts
 
-export interface WorkspaceProps<T = unknown> {
-  data: Partial<T> | null;
-  isStreaming: boolean;
-}
+import { z } from 'zod';
 
-export const workspaceRegistry: Record<string, ComponentType<WorkspaceProps<any>>> = {
-  'narrative': NarrativeWorkspace,
-  'documentary': DocumentaryWorkspace,
-  'corporate': CorporateWorkspace,
-  'tv-episodic': TvEpisodicWorkspace,
-  'short-form': ShortFormWorkspace,
-};
-```
+export const suggestionSchema = z.object({
+  id: z.string().describe('Unique suggestion ID'),
+  // Location in original text
+  originalText: z.string().describe('The exact text span being targeted for rewrite'),
+  suggestedText: z.string().describe('The proposed replacement text'),
+  // Context for the user
+  rationale: z.string().describe('Why this change is suggested, referencing the analysis finding'),
+  category: z.enum([
+    'dialogue',
+    'structure',
+    'pacing',
+    'character',
+    'description',
+    'theme',
+    'clarity',
+    'other',
+  ]).describe('What aspect of the script this suggestion addresses'),
+  severity: z.enum(['critical', 'important', 'minor']).describe('Priority level'),
+  // Link back to analysis
+  analysisSource: z.string().describe('Which analysis finding prompted this suggestion'),
+  // Approximate location for ordering
+  approximatePosition: z.enum(['early', 'middle', 'late']).describe('Where in the script'),
+});
 
-### Shared Sub-Components
+export const suggestionsResponseSchema = z.object({
+  suggestions: z.array(suggestionSchema),
+});
 
-Extract reusable pieces from `NarrativeReport` into shared components:
+export type Suggestion = z.infer<typeof suggestionSchema>;
 
-| Component | Purpose | Currently In |
-|-----------|---------|-------------|
-| `CategoryLabel` | Numbered evaluation dimension header with brand-colored circle | `narrative-report.tsx` |
-| `EffectivenessBadge` | Color-coded badge for effectiveness/quality ratings | `narrative-report.tsx` |
-| `StrengthWeaknessGrid` | Two-column green/red bullet list layout | `narrative-report.tsx` (inline) |
-| `SectionSkeleton` | Loading placeholder for streaming sections | `narrative-report.tsx` |
-| `QuoteBadge` | Styled quote display with speaker attribution | New (for documentary/corporate) |
-
-### Integration with page.tsx
-
-`page.tsx` currently renders `DocumentWorkspace` for the report. The change:
-
-**Before:** Analysis complete -> `buildReportDocument` -> `DocumentWorkspace` renders report + generated docs.
-
-**After:** Analysis complete -> `AnalysisWorkspace` renders card-based report (primary display). `DocumentWorkspace` renders only generated docs (outline, treatment, proposal) when user requests them. `buildReportDocument` still runs for export purposes (PDF/DOCX still use Tiptap path).
-
-The `AnalysisWorkspace` replaces the report tab inside `DocumentWorkspace`. The tabs for generated documents (Outline, Treatment, Proposal) stay in `DocumentWorkspace`.
-
-### Impact on Existing Normalizers
-
-The normalizers in `report-normalization.ts` are NOT removed. They are still needed for:
-- PDF/DOCX export (which renders from Tiptap JSON via `render-document-html.ts`)
-- Generated documents (outlines, treatments, proposals)
-
-The card workspaces are a parallel rendering path for on-screen display only.
-
-## Feature 3: Library Persistence
-
-### Architecture Decision
-
-Use **Dexie.js** (IndexedDB wrapper) because:
-- This is a personal single-user tool -- no server database needed
-- IndexedDB handles large analysis objects (JSON blobs) that would exceed localStorage's 5MB limit
-- Dexie provides a clean Promise-based API with TypeScript support and schema versioning
-- No backend changes required -- persistence is entirely client-side
-- Analyses include source text and analysis snapshots which can be large (50KB+ each)
-
-**Confidence:** MEDIUM -- Dexie is well-established but this is the most architecturally novel feature. The key risk is that IndexedDB is browser-only, so all database access must be guarded against SSR execution.
-
-### Data Model
-
-```typescript
-// src/lib/storage/schema.ts
-import type { AnalysisReportKind } from '@/lib/documents/report-normalization';
-
-export interface SavedAnalysis {
-  id: string;                              // crypto.randomUUID()
-  projectType: string;                     // 'narrative' | 'documentary' | etc.
-  title: string;                           // User-editable, defaults to filename
-  createdAt: string;                       // ISO timestamp
-  updatedAt: string;                       // ISO timestamp
-  sourceFileName: string;                  // Original upload filename
-  sourceText: string;                      // Full source text
-  analysisData: Record<string, unknown>;   // Full analysis JSON
-  reportKind: AnalysisReportKind;          // For export reconstruction
+// Client-side enrichment (not from AI)
+export interface SuggestionWithStatus extends Suggestion {
+  status: 'pending' | 'accepted' | 'rejected';
 }
 ```
 
-### Storage Layer
+**Why this schema:**
+- `originalText` + `suggestedText` enables diff display without needing character offsets (which AI models produce unreliably)
+- `rationale` links back to analysis findings so users understand WHY
+- `category` enables filtering in the review UI
+- `severity` enables sorting critical issues first
+- `status` is client-side only (not generated by AI) -- tracked in workspace state
+- String-based text matching (not character indices) because AI models cannot reliably produce exact character offsets in long documents
+
+### Database Changes
+
+```sql
+-- Migration in db.ts (same pattern as existing migrations)
+ALTER TABLE projects ADD COLUMN suggestions TEXT;
+-- JSON-stringified array of SuggestionWithStatus objects
+
+ALTER TABLE projects ADD COLUMN revisedText TEXT;
+-- The merged text after accepting/rejecting suggestions, plain string
+```
+
+**Why columns on existing table (not a new table):** The app's architecture is JSON-blob-per-project. Every other data type (analysisData, reportDocument, generatedDocuments, criticAnalysis, uploadData) follows this pattern. Adding a suggestions table with foreign keys would be architecturally inconsistent and add complexity with zero benefit for a single-user app.
+
+### UI Integration: Where the New Tab Lives
+
+The existing `DocumentWorkspace` uses `<Tabs>` with these values:
+- `{reportDocument.id}` -- Report tab (workspace cards)
+- `__critic__` -- Industry Critic tab (optional)
+- `{doc.id}` per generated document -- Outline, Treatment, Proposal tabs
+
+**New tab: "Script Review"** inserted after Report, before Critic:
+
+```
+[Report] [Script Review] [Industry Critic] [Outline] [Treatment]
+```
+
+The Script Review tab contains:
+1. A summary bar: "12 suggestions (3 critical, 5 important, 4 minor) -- 0 accepted, 0 rejected"
+2. Filter/sort controls: by category, by severity, show accepted/rejected
+3. A scrollable list of `SuggestionCard` components
+4. Each card shows:
+   - Category badge + severity indicator
+   - Original text (red/strikethrough styling)
+   - Suggested text (green/highlight styling)
+   - Rationale text
+   - Accept / Reject buttons
+5. Bottom action bar: "Apply N Accepted Changes" button
+6. After applying: "Export Revised Script" dropdown (PDF/DOCX/FDX/TXT)
+
+**Why a tab (not a separate page):** The entire app workflow lives in the main page with workspace context. Adding a separate route would break the existing state management pattern and require duplicating project loading logic.
+
+### Merge Algorithm
 
 ```typescript
-// src/lib/storage/db.ts
-import Dexie from 'dexie';
-import type { SavedAnalysis } from './schema';
+// lib/suggestions/merge.ts
 
-class FilmInternDB extends Dexie {
-  analyses!: Dexie.Table<SavedAnalysis, string>;
+export function mergeAcceptedSuggestions(
+  originalText: string,
+  accepted: Suggestion[]
+): string {
+  // 1. Find each suggestion's originalText in the document
+  // 2. Record the start index of each match
+  // 3. Sort by start index DESCENDING (apply from end to start
+  //    so earlier indices remain valid)
+  // 4. Replace each span with suggestedText
+  // 5. Return merged result
 
-  constructor() {
-    super('filmintern');
-    this.version(1).stores({
-      analyses: 'id, projectType, createdAt, updatedAt, title',
-    });
+  let result = originalText;
+  const located = accepted
+    .map(s => ({
+      ...s,
+      index: result.indexOf(s.originalText),
+    }))
+    .filter(s => s.index !== -1)
+    .sort((a, b) => b.index - a.index); // descending
+
+  for (const s of located) {
+    const before = result.slice(0, s.index);
+    const after = result.slice(s.index + s.originalText.length);
+    result = before + s.suggestedText + after;
   }
-}
 
-export const db = new FilmInternDB();
-```
-
-### Library Context
-
-```typescript
-// src/contexts/library-context.tsx
-interface LibraryState {
-  analyses: SavedAnalysis[];
-  isLoading: boolean;
-}
-
-interface LibraryActions {
-  saveAnalysis: (data: Omit<SavedAnalysis, 'id' | 'createdAt' | 'updatedAt'>) => Promise<string>;
-  deleteAnalysis: (id: string) => Promise<void>;
-  loadAnalysis: (id: string) => Promise<SavedAnalysis | undefined>;
-  refreshList: () => Promise<void>;
+  return result;
 }
 ```
 
-### Auto-Save Flow
+**Why string search (not regex or char offsets):**
+- AI models cannot produce reliable character offsets for long documents
+- The original text spans come directly from the script, so `indexOf` is deterministic
+- If a span appears multiple times, we take the first occurrence -- the AI prompt should instruct specificity (include surrounding context in originalText)
+- Edge case: overlapping suggestions. The prompt instructs non-overlapping spans, and the UI should warn if two accepted suggestions target overlapping text
 
-In `page.tsx`, after analysis completes and `finalData` is set:
+### Script Export Architecture
 
-```
-Analysis completes -> buildReportDocument (existing)
-                   -> saveAnalysis via LibraryContext (new, automatic)
-```
+Revised script export is fundamentally different from analysis report export:
 
-The save happens automatically after analysis completion. No explicit "Save" button needed for v1.1.
+- **Analysis export** (existing): Renders a structured report document (TipTap JSON -> HTML -> PDF via Playwright)
+- **Script export** (new): Takes plain text and outputs in screenplay/transcript format
 
-### Library Page
+| Format | Approach | Library |
+|--------|----------|---------|
+| TXT | Direct write -- just the text | None (Buffer.from) |
+| PDF | Playwright Chromium with screenplay CSS formatting | Playwright (existing) |
+| DOCX | docx library with screenplay paragraph styles | docx (existing) |
+| FDX | Generate Final Draft XML from text | Custom XML builder (new, simple) |
 
-| Route | Component | Purpose |
-|-------|-----------|---------|
-| `/dashboard` | `LibraryPage` | Grid/list of saved analyses, sorted by date |
-
-The existing `/dashboard` route stub becomes the Library page. Each item shows: title, project type badge, date, preview snippet. Click opens the analysis in the workspace. Delete button with confirmation.
-
-### Opening a Saved Analysis
-
-When a user clicks an item in the Library, the flow is:
-1. Load `SavedAnalysis` from IndexedDB
-2. Populate `WorkspaceContext` with the loaded data (projectType, analysisData, sourceText, etc.)
-3. Navigate to `/` (the main workspace page)
-4. The workspace renders the card-based analysis from the loaded data
-
-This requires adding a `loadFromSaved` action to `WorkspaceContext` that hydrates all the relevant state fields at once.
-
-### SSR Guard
-
-Because IndexedDB is browser-only, the `LibraryProvider` must lazy-initialize:
-
-```typescript
-// In LibraryProvider
-const [isReady, setIsReady] = useState(false);
-
-useEffect(() => {
-  setIsReady(true);
-  refreshList();
-}, []);
+**FDX export** is the only genuinely new export format. FDX is XML:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<FinalDraft DocumentType="Script" Template="No" Version="5">
+  <Content>
+    <Paragraph Type="Action"><Text>INT. HOUSE - DAY</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Hello world</Text></Paragraph>
+  </Content>
+</FinalDraft>
 ```
 
-All Dexie calls are naturally async and only execute client-side. The provider just needs to avoid calling `db` during SSR rendering.
+The FDX parser already exists for import (`fdx-parser.ts`). The export is the inverse -- but only needed for screenplay types (narrative, tv-episodic), not documentary/corporate transcripts. For transcripts, TXT/PDF/DOCX suffice.
 
-## Modified Existing Components
+### Prompt Engineering Strategy
 
-| Component | Modification | Risk |
-|-----------|-------------|------|
-| `layout.tsx` | Remove `className="dark"`, add `suppressHydrationWarning` | Low -- minimal change |
-| `providers.tsx` | Add `ThemeProvider`, add `LibraryProvider` | Low -- additive wrapping |
-| `app-topnav.tsx` | Add `ThemeToggle`, replace hardcoded dark colors with semantic tokens | Low -- visual only |
-| `page.tsx` | Add `AnalysisWorkspace` above `DocumentWorkspace`, add auto-save after analysis, track `sourceFileName` | Medium -- core page logic changes |
-| `document-workspace.tsx` | Remove report tab rendering (report now in `AnalysisWorkspace`), keep generated docs + export. Replace hardcoded `bg-white`/`hover:bg-gray-100` with semantic tokens. | Medium -- structural change to tabs |
-| `narrative-report.tsx` | Rename to `narrative-workspace.tsx`, move to `workspaces/` directory, extract shared sub-components | Low -- refactor only, no behavior change |
-| `globals.css` | Add `--brand` / `--brand-foreground` CSS variables | Low -- additive |
-| `workspace-context.tsx` | Add `sourceFileName` field, add `loadFromSaved` action for Library | Medium -- context shape change |
+The suggestion generation prompt needs to:
 
-## New Files Summary
+1. Receive the full original script text
+2. Receive the analysis weaknesses/recommendations extracted from analysisData
+3. Generate specific, locatable text replacements
 
-| File | Purpose |
-|------|---------|
-| `src/components/theme-toggle.tsx` | Dark/light mode toggle button |
-| `src/components/analysis-workspace.tsx` | Project-type dispatcher for card workspaces |
-| `src/components/workspaces/narrative-workspace.tsx` | Narrative 8-card workspace (from existing NarrativeReport) |
-| `src/components/workspaces/documentary-workspace.tsx` | Documentary card workspace |
-| `src/components/workspaces/corporate-workspace.tsx` | Corporate card workspace |
-| `src/components/workspaces/tv-episodic-workspace.tsx` | TV/Episodic card workspace |
-| `src/components/workspaces/short-form-workspace.tsx` | Short-form card workspace |
-| `src/components/workspaces/registry.ts` | Workspace component registry |
-| `src/components/workspaces/shared.tsx` | Shared sub-components (CategoryLabel, EffectivenessBadge, etc.) |
-| `src/lib/storage/db.ts` | Dexie database definition |
-| `src/lib/storage/schema.ts` | SavedAnalysis type definition |
-| `src/contexts/library-context.tsx` | Library CRUD context |
-| `src/app/dashboard/page.tsx` | Library page (replace existing stub) |
+**Critical prompt design decisions:**
+- Instruct the AI to quote EXACT text spans (not paraphrased) for `originalText`
+- Limit to 10-20 suggestions per run (quality over quantity)
+- Order by severity
+- Each suggestion must target a non-overlapping span
+- `originalText` should be long enough to be unique (minimum a full sentence)
+
+The prompt should vary by project type:
+- **Narrative/TV-Episodic:** Focus on dialogue, scene descriptions, structure
+- **Documentary:** Focus on interview question flow, narration text, segment transitions
+- **Corporate:** Focus on messaging clarity, soundbite sharpening, narrative coherence
+
+### New Files (Complete List)
+
+```
+src/
+  lib/
+    suggestions/
+      types.ts           -- Suggestion, SuggestionWithStatus types + Zod schemas
+      merge.ts           -- mergeAcceptedSuggestions() function
+      prompt.ts          -- Per-project-type suggestion prompts
+  app/
+    api/
+      suggestions/
+        generate/
+          route.ts       -- POST handler: stream suggestion generation
+      export/
+        script/
+          route.ts       -- POST handler: export revised script
+  components/
+    suggestions/
+      suggestion-review-panel.tsx  -- Main container for Script Review tab
+      suggestion-card.tsx          -- Individual suggestion with diff + accept/reject
+      suggestion-summary-bar.tsx   -- Stats bar (counts by status/severity)
+      suggestion-filters.tsx       -- Category/severity filter controls
+```
+
+### Modified Files (Complete List)
+
+```
+src/
+  lib/
+    db.ts                          -- Add suggestions + revisedText columns
+  contexts/
+    workspace-context.tsx          -- Add suggestions, revisedText state + save functions
+  components/
+    document-workspace.tsx         -- Add "Script Review" tab + "Generate Suggestions" button
+  lib/
+    documents/
+      types.ts                     -- Add ExportFormat 'fdx' | 'txt' (extend union)
+  app/
+    api/
+      projects/
+        [id]/
+          route.ts                 -- Add suggestions + revisedText to PUT handler
+```
 
 ## Patterns to Follow
 
-### Pattern 1: Registry-Based Dispatch
-**What:** Map project type strings to components/functions instead of switch statements.
-**When:** Anywhere behavior varies by project type.
-**Why:** Already established with `reportNormalizers`. Keeps `page.tsx` clean and makes adding new project types a single-file addition.
+### Pattern 1: Match Existing Streaming Pattern
+**What:** Use the same progressive JSON parsing pattern as the existing analysis flow
+**When:** Suggestion generation streaming
+**Why:** The app already has a proven pattern for `streamText` + `Output.object` -> progressive `JSON.parse`. Reuse it exactly rather than introducing a new streaming approach.
 
-### Pattern 2: Typed Analysis Props with Streaming Support
-**What:** Each workspace component accepts `Partial<T> | null` where T is the specific analysis schema type (e.g., `NarrativeAnalysis`).
-**When:** All card workspace components.
-**Why:** Enables streaming (partial data renders as cards fill in with skeleton fallbacks) and type safety. Already proven in `NarrativeReport`.
+```typescript
+// Same pattern as page.tsx handleAnalyze()
+const response = await fetch('/api/suggestions/generate', { ... });
+const reader = response.body?.getReader();
+let accumulated = '';
+while (reader) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  accumulated += decoder.decode(value, { stream: true });
+  try {
+    const partial = JSON.parse(accumulated);
+    setSuggestions(partial.suggestions?.map(s => ({ ...s, status: 'pending' })));
+  } catch { /* incomplete JSON */ }
+}
+```
 
-### Pattern 3: CSS Custom Properties for Theme
-**What:** All colors referenced through CSS variables, toggled via class on `<html>`.
-**When:** All styling decisions.
-**Why:** The infrastructure is already in `globals.css`. Adding next-themes just automates the class toggle. Brand accent color should be a variable, not hardcoded `amber-500`.
+### Pattern 2: Match Existing DB Column Pattern
+**What:** Store suggestions as JSON-stringified TEXT column on projects table
+**When:** Persisting suggestions
+**Why:** Every other piece of project data follows this pattern. Architectural consistency matters more than theoretical normalization benefits in a single-user SQLite app.
 
-### Pattern 4: Shared Sub-Component Extraction
-**What:** Extract common card patterns (numbered headers, effectiveness badges, strength/weakness grids) into shared components.
-**When:** Building the 4 new workspace components.
-**Why:** `NarrativeReport` already has these patterns. Duplicating across 5 workspaces would create maintenance burden.
+### Pattern 3: Match Existing Tab Pattern
+**What:** Add Script Review as a tab in DocumentWorkspace, using the same Tabs/TabsList/TabsTrigger/TabsContent structure
+**When:** Building the review UI
+**Why:** The existing tab infrastructure handles active state, loading indicators, and layout. No reason to reinvent.
+
+### Pattern 4: Server-Side Project Data Access
+**What:** The suggestion generation API route reads the project from DB by ID rather than receiving text from the client
+**When:** Triggering suggestion generation
+**Why:** Avoids sending potentially 100KB+ of script text + analysis in the request body. The server already has direct SQLite access.
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Rendering Cards via Tiptap Normalizers
-**What:** Trying to make the normalizer output render as cards.
-**Why bad:** Normalizers flatten structured data into linear document nodes. Cards need the original typed structure for layouts like two-column strength/weakness grids, badges, etc.
-**Instead:** Use normalizers for export only. Card workspaces render from typed analysis data directly.
+### Anti-Pattern 1: Character Offset-Based Suggestions
+**What:** Having the AI output `{ startChar: 1234, endChar: 1456, replacement: "..." }`
+**Why bad:** LLMs cannot reliably count characters in long documents. Off-by-one or off-by-hundreds errors would make suggestions unmatchable.
+**Instead:** Use exact text span matching. The AI quotes the original text verbatim, and we use string search to locate it.
 
-### Anti-Pattern 2: Server-Side Database for Library
-**What:** Adding SQLite/Postgres for a single-user personal tool.
-**Why bad:** Massive complexity increase for no benefit. No multi-device sync is needed.
-**Instead:** IndexedDB via Dexie. Zero server changes. Data lives in the browser.
+### Anti-Pattern 2: Real-Time Collaborative Diff (OT/CRDT)
+**What:** Implementing operational transforms or CRDTs for the tracked-changes view
+**Why bad:** This is a single-user personal tool. OT/CRDT adds massive complexity for zero benefit.
+**Instead:** Simple accept/reject per suggestion with sequential merge. No concurrent editing.
 
-### Anti-Pattern 3: Lifting All State to URL/Search Params
-**What:** Trying to make every workspace state URL-addressable.
-**Why bad:** Analysis data is large (can be 50KB+ JSON). URL state is for navigation, not data storage.
-**Instead:** React context for active session, IndexedDB for persistence. URL only for Library item IDs (e.g., `/dashboard?open=abc` to deep-link a saved analysis).
+### Anti-Pattern 3: Separate Suggestions Table with Foreign Keys
+**What:** Creating a `suggestions` table with `project_id` FK and one row per suggestion
+**Why bad:** Architecturally inconsistent with the existing all-JSON-blobs-on-projects approach. Adds migration complexity, join queries, and transaction concerns for a single-user app.
+**Instead:** JSON blob column, same as every other data type.
 
-### Anti-Pattern 4: Removing the Normalizer Layer
-**What:** Deleting `report-normalization.ts` because card workspaces replace on-screen rendering.
-**Why bad:** The normalizer layer is still needed for PDF/DOCX export via `render-document-html.ts` and for generated documents.
-**Instead:** Keep both paths. Cards for screen, Tiptap for export.
+### Anti-Pattern 4: Inline Script Editor
+**What:** Building a full rich-text editor for the script where users manually edit alongside AI suggestions
+**Why bad:** PROJECT.md explicitly lists "AI rewriting / script editing" as out of scope. The goal is review+accept/reject, not manual editing.
+**Instead:** Read-only diff view with accept/reject buttons. The revised text is computed, not manually edited.
 
-## Suggested Build Order
+### Anti-Pattern 5: Generating Suggestions During Analysis
+**What:** Bundling suggestion generation into the analysis streaming call
+**Why bad:** Analysis is already a complex, expensive AI call. Adding suggestions would make it slower, more fragile, and impossible to re-run suggestions without re-running analysis.
+**Instead:** Separate, user-triggered "Generate Suggestions" action after analysis completes.
 
-Build order is driven by dependencies:
+## Build Order (Suggested Phases)
 
-### Phase 1: Theme System (no dependencies on other features)
-1. Install `next-themes`
-2. Create `ThemeProvider` wrapper in `providers.tsx`
-3. Update `layout.tsx` (remove hardcoded dark, add `suppressHydrationWarning`)
-4. Create `ThemeToggle` component
-5. Add to `AppTopNav`
-6. Add brand CSS variables to `globals.css`
-7. Audit and replace hardcoded colors in existing components
+### Phase 1: Data Foundation + Suggestion Generation
+**Build:** types, schema, DB migration, API route, prompt engineering
+**Why first:** Everything else depends on having suggestions data. This can be tested independently via API calls.
+**Delivers:** `POST /api/suggestions/generate` that streams suggestions for a project
 
-**Why first:** Zero risk to existing functionality. Purely additive. Establishes the visual foundation that card workspaces will use.
+### Phase 2: Suggestion Review UI
+**Build:** SuggestionCard, SuggestionReviewPanel, DocumentWorkspace tab integration, workspace context additions
+**Why second:** Depends on Phase 1 data model. This is the core UX of the feature.
+**Delivers:** Users can see and accept/reject suggestions in the UI
 
-### Phase 2: Card Workspaces (depends on theme for consistent styling)
-1. Extract shared sub-components from `NarrativeReport` into `workspaces/shared.tsx`
-2. Move `NarrativeReport` to `workspaces/narrative-workspace.tsx` (refactor, keep behavior)
-3. Create `AnalysisWorkspace` dispatcher and workspace registry
-4. Build remaining 4 workspace components (documentary, corporate, tv-episodic, short-form)
-5. Integrate `AnalysisWorkspace` into `page.tsx`
-6. Adjust `DocumentWorkspace` to only handle generated docs (remove report tab)
+### Phase 3: Merge + Revised Text
+**Build:** merge.ts algorithm, "Apply Changes" button, revisedText storage
+**Why third:** Depends on Phase 2 for accepted/rejected status. Relatively small scope.
+**Delivers:** Users can produce a revised script from accepted suggestions
 
-**Why second:** The schemas and normalizers already exist as a reference for what each workspace must display. The pattern is proven by `NarrativeReport`. This is mostly feature work, not infrastructure.
+### Phase 4: Script Export
+**Build:** Export API route for revised script, FDX export builder, PDF/DOCX script formatting, TXT export
+**Why last:** Depends on Phase 3 for revised text. Can reuse existing Playwright/docx infrastructure.
+**Delivers:** Full export of revised script in all 4 formats
 
-### Phase 3: Library Persistence (depends on workspaces for "open saved analysis" flow)
-1. Install `dexie`
-2. Create `db.ts` and `schema.ts`
-3. Create `LibraryContext` with CRUD operations
-4. Add `LibraryProvider` to `providers.tsx`
-5. Add `sourceFileName` tracking to `WorkspaceContext`
-6. Add auto-save after analysis completion in `page.tsx`
-7. Build Library page at `/dashboard`
-8. Add `loadFromSaved` to `WorkspaceContext` for opening saved analyses
-9. Wire up "open from Library" navigation flow
-
-**Why third:** Persistence is the most self-contained feature but needs the workspace rendering to be in place so that opening a saved analysis displays correctly in the card-based format.
+**Phase ordering rationale:** Each phase produces a usable increment. Phase 1 can be validated via curl. Phase 2 adds visual validation. Phase 3 completes the core loop. Phase 4 is output formatting that can be tackled format-by-format.
 
 ## Scalability Considerations
 
-| Concern | At 10 analyses | At 100 analyses | At 1000 analyses |
-|---------|----------------|-----------------|------------------|
-| IndexedDB storage | Trivial (~5MB) | Fine (~50MB) | May need cleanup UI (~500MB) |
-| Library page rendering | Simple list | Paginate or virtual scroll | Virtual scroll + search |
-| Memory (open analysis) | Fine | Fine (only 1 loaded at a time) | Fine |
+| Concern | Current (single user) | If text gets very large (100+ pages) |
+|---------|----------------------|--------------------------------------|
+| Suggestion generation time | 30-60s for typical script | May need chunked generation for very long texts |
+| DB storage | JSON blob is fine | JSON blob is still fine -- SQLite handles multi-MB TEXT columns |
+| Merge performance | Instant for 10-20 suggestions | Still instant -- string replacement is O(n*m) but n and m are small |
+| Context window limits | Most scripts fit in 128K context | Very long scripts may need excerpt-based suggestion generation |
 
-For a personal tool, 100 analyses is the likely ceiling. No virtual scrolling needed in v1.1. Simple date-sorted list is sufficient.
+The main scalability concern is **AI context window limits**. A 120-page screenplay is ~30K words / ~40K tokens. With analysis data added, this approaches the context window of smaller models. The prompt should be designed to:
+1. Include the full original text
+2. Include only the weakness/recommendation portions of the analysis (not the full analysis)
+3. This keeps total prompt size manageable for 128K-200K context window models
 
 ## Sources
 
-- [next-themes GitHub](https://github.com/pacocoursey/next-themes) -- HIGH confidence, de facto standard for Next.js dark mode
-- [shadcn/ui dark mode docs](https://ui.shadcn.com/docs/dark-mode/next) -- HIGH confidence, official docs recommending next-themes
-- [Dark mode in Next.js 15 + Tailwind v4](https://www.sujalvanjare.com/blog/dark-mode-nextjs15-tailwind-v4) -- MEDIUM confidence, community guide confirming approach
-- [Dexie.js](https://dexie.org/) -- HIGH confidence, mature IndexedDB wrapper with TypeScript support
-- [Next.js + IndexedDB pattern](https://oluwadaprof.medium.com/building-an-offline-first-pwa-notes-app-with-next-js-indexeddb-and-supabase-f861aa3a06f9) -- MEDIUM confidence, reference architecture for client-side persistence
+- Codebase analysis: `src/lib/db.ts`, `src/app/api/analyze/route.ts`, `src/app/page.tsx`, `src/contexts/workspace-context.tsx`, `src/components/document-workspace.tsx`
+- Existing patterns: JSON blob storage, progressive JSON streaming, tab-based workspace
+- Architecture decisions derived from existing codebase patterns (HIGH confidence -- based on direct code reading)
+
+---
+*Architecture research for: FilmIntern v3.0 Script Improvement*
+*Researched: 2026-03-21*

@@ -1,295 +1,235 @@
-# Feature Research: v1.1 UI Redesign -- Card Workspaces, Theme, Library
+# Feature Research
 
-**Domain:** Filmmaking AI Workflow / Analysis Workspace UI
-**Researched:** 2026-03-17
-**Confidence:** HIGH (features are well-scoped in PROJECT.md; existing codebase thoroughly reviewed; UI patterns well-established)
-
-## Existing Foundation (Already Built in v1.0)
-
-Understanding what exists is critical for scoping what v1.1 adds:
-
-- **5 project types** with dedicated report components: `NarrativeReport`, `AnalysisReport` (documentary), `CorporateReport`, `TvReport`, `ShortFormReport`
-- **AI schemas** with structured Zod schemas per type returning typed analysis data
-- **DocumentWorkspace** component with tabbed document switching (report, generated docs)
-- **WorkspaceContext** holding all state in React context (no persistence -- entirely in-memory)
-- **Sidebar navigation** with Dashboard, Projects, Shot Lists, Image Prompts, Exports, Settings
-- **No storage layer** -- zero localStorage, IndexedDB, or database usage. Analyses vanish on page refresh.
-- **Dark-only UI** -- currently hardcoded `stone-900` sidebar, no theme system
-
----
+**Domain:** AI-driven script improvement and rewrite suggestions for filmmaking analysis tool
+**Researched:** 2026-03-21
+**Confidence:** MEDIUM-HIGH
 
 ## Feature Landscape
 
 ### Table Stakes (Users Expect These)
 
-Features that the v1.1 milestone must deliver. Missing any of these makes the update feel incomplete.
+Features that are non-negotiable for v3.0 to feel complete. Without these, the improvement workflow is broken.
 
-| Feature | Why Expected | Complexity | Dependencies |
-|---------|--------------|------------|--------------|
-| **Dark/light theme toggle** | Every modern creative tool supports this. The current hardcoded dark UI is a v1 shortcut. Users working in bright environments need a light mode. | LOW | Requires `next-themes` + Tailwind CSS dark mode class strategy. Existing shadcn/ui components already support dark mode via CSS variables. |
-| **Theme persistence** | If I set dark mode, it must stay dark mode after refresh. System-preference detection is also expected. | LOW | `next-themes` handles this via localStorage automatically. No custom storage needed. |
-| **Orange/amber brand accent system** | PROJECT.md specifies this. Already partially present (amber-500 in NarrativeReport CategoryLabel) but inconsistent. Must be systematic. | LOW | CSS variable definitions for primary/accent colors that adapt to light/dark. Already using some `amber-500/600` classes. |
-| **Card-based evaluation dimensions per project type** | This is the core v1.1 deliverable. The current reports are already card-based (using shadcn Card components) but the cards are generic sections, not "evaluation dimension" cards with clear scoring/rating. The redesign makes each card a focused evaluation lens. | MEDIUM | Existing report components and AI schemas provide all the data. This is primarily a UI restructuring, not new AI work. |
-| **Narrative "Story Lab Workspace" with 8 cards** | Explicitly specified in PROJECT.md. The current NarrativeReport already renders 8 numbered sections (Logline, Structure, Characters, Dialogue, Theme, Pacing, Genre, Recommendations). The redesign elevates these into a named workspace identity. | MEDIUM | Existing `narrativeAnalysisSchema` already produces all needed data for 8 cards. No schema changes needed. |
-| **Auto-save analyses after completion** | A Library is useless without saved content. Analyses must persist without user action. | MEDIUM | Requires a storage layer (IndexedDB via `idb` or localStorage). Currently zero persistence exists. This is the biggest infrastructure addition. |
-| **Library page: browse saved analyses** | PROJECT.md requirement. Users need to see what they've previously analyzed. | MEDIUM | Depends on storage layer. Needs a list view with project type, title, date, and quick status. |
-| **Library: open a saved analysis** | Users must be able to click a saved analysis and see it rendered in its workspace view. | MEDIUM | Requires hydrating WorkspaceContext from stored data. Need a routing scheme (e.g., `/library/[id]` or rehydrating the main page). |
-| **Library: delete a saved analysis** | Basic CRUD. Users need to remove old or test analyses. | LOW | Simple storage deletion + UI confirmation. |
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Analysis-linked suggestion generation | The whole point: existing analysis flags weaknesses, suggestions must target those specific weaknesses -- not generic rewrites | HIGH | Requires mapping analysis schema fields (structuralWeaknesses, dialogueQuality.weaknesses, overallWeaknesses, developmentRecommendations) to actionable rewrite prompts per project type. Each of the 4 project types has different weakness fields in its Zod schema. |
+| Block-level suggestions (not line-level, not whole-scene) | Professional tools (Scriptmatix, Arc Studio) work at scene/block granularity. Line-level is too noisy; whole-scene rewrites discard too much. A "block" = a dialogue exchange, an action paragraph, a scene heading + its content, or a thematic passage | MEDIUM | The script text is already parsed as plain text without structural markup. Block boundaries must be inferred or defined during suggestion generation. AI should output: original block, suggested replacement, rationale tied to analysis finding. |
+| Accept/reject per suggestion | Every tracked-changes tool (Word, Arc Studio, VS Code Copilot, Cursor) offers per-change accept/reject. Users will not accept a workflow where it is all-or-nothing. | MEDIUM | State management: each suggestion has status (pending/accepted/rejected). Persisted so the user can leave and return. |
+| Visual diff between original and suggested text | Arc Studio highlights additions in green, deletions in red. VS Code uses inline diff with gutter controls. Without visual diff, user cannot evaluate what changed. | MEDIUM | Use jsdiff (npm `diff` package) to compute word-level diffs for display. Render inline: strikethrough red for removed, highlighted green for added. |
+| Merged/revised script preview | After accepting some suggestions and rejecting others, user needs to see the resulting script as a unified document before export. | MEDIUM | Apply accepted changes to original text in order. Handle overlapping regions carefully (suggestions should not overlap). |
+| Multi-format export of revised script (PDF, DOCX, plain text) | Existing app already exports analysis reports as PDF/DOCX via Playwright and docx library. Users expect the same for the revised script. Plain text is trivial. | MEDIUM | Existing export infrastructure can be reused with new document kind: 'revised-script'. Screenplay formatting (Courier 12pt, proper margins) expected for narrative/TV scripts. |
+| FDX export of revised script | PROJECT.md lists FDX export as a target. Writers who use Final Draft need to get their revised script back into Final Draft. | HIGH | No mature npm library for FDX writing exists. screenplay-tools has an FDX.Writer but is not battle-tested. Alternative: generate FDX XML directly using fast-xml-parser (already a dependency for FDX parsing). Requires re-parsing revised text into screenplay element types (Scene Heading, Action, Character, Dialogue). |
+| Suggestion rationale tied to analysis | Each suggestion must explain why it was made, referencing the specific analysis finding. Without rationale, suggestions feel arbitrary. | LOW | Include in the AI prompt: for each suggestion, output the analysis dimension and specific finding that motivated it. Display alongside the diff. |
+| Works across all 4 project types | Narrative, TV/episodic, documentary, corporate all need improvement support. The analysis schemas differ significantly across types. | HIGH | Documentary improvements target interview content (quote selection, narrative threads). Corporate targets messaging clarity. Narrative/TV target dialogue, structure, pacing. Different prompts per type, different block definitions. |
+| Persistence of suggestion state | User should be able to generate suggestions, close the browser, come back, and find their accept/reject state intact. | MEDIUM | Extend SQLite schema: new table for suggestions linked to analysis ID. Fields: original_text, suggested_text, rationale, position, status (pending/accepted/rejected), analysis_dimension. |
 
-### Differentiators (Set This Update Apart)
+### Differentiators (Competitive Advantage)
 
-Features that make the v1.1 redesign feel like a genuine upgrade, not just a reskin.
+Features that go beyond what Scriptmatix, Arc Studio, and generic AI tools offer. These leverage the existing structured analysis uniquely.
 
-| Feature | Value Proposition | Complexity | Dependencies |
-|---------|-------------------|------------|--------------|
-| **Named workspace identities per project type** | "Story Lab Workspace" (narrative), "Interview Mining Workspace" (documentary), "Messaging Workspace" (corporate), "Episode Lab" (TV/episodic), "Content Pulse" (short-form). Gives each analysis type a distinct professional personality beyond generic "Analysis Report." | LOW | Naming + workspace header component. No data changes. |
-| **Evaluation dimension cards with visual scoring** | Each card shows a clear effectiveness rating (badge system already exists) but enhanced with visual weight: color-coded borders, summary scores, expand/collapse for detail. The current flat list of cards becomes a scannable dashboard. | MEDIUM | Existing badge system (EffectivenessBadge, RatingBadge) is the foundation. Add card-level summary indicators. |
-| **Card grid layout (not just vertical stack)** | Current reports are a single vertical column of cards. A 2-column grid for wider screens lets users scan evaluation dimensions at a glance, like a dashboard. | LOW | CSS Grid/Flexbox. Already using responsive `grid-cols-1 md:grid-cols-2` inside cards -- extend to card-level layout. |
-| **Library with project-type filtering** | Filter saved analyses by documentary, narrative, corporate, etc. Small feature, big usability win when the Library grows. | LOW | Client-side filter on stored metadata. |
-| **Library with search** | Search by title or content keywords across saved analyses. | LOW | Client-side text search on stored metadata (title, overview text). |
-| **Library card previews** | Show a preview snippet of the analysis (overview text, key rating, date) on each Library card rather than just a title and date. | LOW | Pull summary/overview from stored analysis data for the card preview. |
-| **Workspace header with project metadata** | Show project title, project type badge, analysis date, file name at the top of every workspace. Currently this metadata is scattered or absent. | LOW | Pull from WorkspaceContext. Already stores `title`, `projectType`. |
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Analysis dimension filtering | Filter suggestions by which analysis dimension triggered them (e.g., show only dialogue suggestions, only pacing suggestions). Scriptmatix shows all suggestions flat. Being able to focus on one weakness category at a time is more useful for iterative revision. | LOW | Tag each suggestion with its source dimension. UI filter is trivial given the existing card-based workspace pattern. |
+| Suggestion confidence/priority | AI rates each suggestion by impact (critical, recommended, optional). User tackles high-impact changes first. | LOW | Add to AI output schema. Sort/group in UI. |
+| Batch accept/reject by dimension | "Accept all dialogue improvements" or "Reject all pacing suggestions." Useful when user trusts the AI on one dimension but not another. | LOW | UI convenience feature. Trivial given per-suggestion dimension tagging. |
+| Regenerate single suggestion | If a suggestion is bad, regenerate just that one with additional user guidance ("make it more subtle" / "keep the original tone"). | MEDIUM | Requires a focused AI call with the original block, the rejected suggestion, and user feedback. Context window cost is minimal since it is a single block. |
+| Harsh Critic integration | If Harsh Critic mode was enabled, generate more aggressive rewrite suggestions that address the critic's specific callouts. Different tone and scope than standard suggestions. | LOW | Already have critic analysis as prose. Parse critic findings into suggestion prompts. Natural extension of existing feature. |
 
-### Anti-Features (Do NOT Build in v1.1)
+### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| **Server-side database for Library** | "Real" persistence, future multi-device sync | Massively overengineered for a single-user personal tool. Adds API routes, migrations, connection management. IndexedDB gives the same persistence for this use case. | Use IndexedDB via `idb` library. Revisit server storage only if multi-device becomes a real need. |
-| **Drag-and-drop card reordering** | Users might want to rearrange evaluation cards | Adds complexity (drag library, state management for custom order, persistence of order) for minimal value. Evaluation dimensions have a logical order that should be opinionated. | Fixed card order per project type, designed for logical reading flow. |
-| **Custom theme colors / theme editor** | Power users want to customize beyond light/dark | Scope creep. Two themes (light/dark) with a good brand palette is more than enough. | Ship light and dark with orange/amber accents. Done. |
-| **Collaborative annotations on cards** | "Share feedback with my editor" | Multi-user is explicitly out of scope. Adds auth, real-time sync, comment threading. | Export the analysis as PDF/DOCX (already built) and share that. |
-| **Analysis comparison view** | "Compare two analyses side by side" | Cool but complex: requires a new layout paradigm, data alignment logic, and unclear UX for different project types. | Defer to v2+. Users can open two browser tabs for now. |
-| **Cloud sync / backup** | "What if I lose my data" | Requires a backend service, auth, and storage infrastructure. | IndexedDB is persistent across sessions. Users can export to PDF/DOCX for archival. Mention in UI that analyses are stored locally. |
-| **Tagging or folder organization in Library** | "Organize my analyses into projects" | Premature structure. Until the Library has 50+ items, flat list with search/filter is simpler and faster. | Filter by project type + search by title. Add folders later if needed. |
-
----
-
-## Evaluation Dimensions Per Project Type
-
-This is the core intellectual design of v1.1. Each project type gets a workspace with evaluation "dimension" cards tailored to what matters for that type.
-
-### Narrative -- "Story Lab Workspace" (8 Dimensions)
-
-Already mapped 1:1 to existing NarrativeReport sections and `narrativeAnalysisSchema` data:
-
-| # | Dimension | Data Source | Card Focus |
-|---|-----------|-------------|------------|
-| 1 | Logline & Premise Clarity | `scriptCoverage.marketability.loglineQuality`, `suggestedLogline` | Quality badge + suggested logline |
-| 2 | Story Structure / Act Breakdown | `storyStructure.beats[]` | Beat-by-beat with effectiveness badges, structural strengths/weaknesses |
-| 3 | Character Arcs & Development | `scriptCoverage.characters[]` | Per-character cards with role, arc assessment, strengths/weaknesses |
-| 4 | Dialogue & Voice | `scriptCoverage.dialogueQuality` | Overall rating, strengths/weaknesses, notable lines |
-| 5 | Theme & Emotional Resonance | `themes` | Central themes as tags, emotional resonance and audience impact text |
-| 6 | Pacing & Tension | `storyStructure.pacingAssessment`, `tensionArc` | Pacing assessment + tension arc narrative |
-| 7 | Genre Positioning & Comparables | `scriptCoverage.marketability` | Comp titles, commercial viability badge, conflict assessment |
-| 8 | Development Recommendations | `developmentRecommendations`, `scriptCoverage.overallStrengths/Weaknesses` | Numbered priorities + overall strengths/weaknesses |
-
-**No schema changes needed.** The current AI output already maps perfectly to 8 cards.
-
-### Documentary -- "Interview Mining Workspace" (5 Dimensions)
-
-Maps to existing `documentaryAnalysisSchema` and `AnalysisReport` sections:
-
-| # | Dimension | Data Source | Card Focus |
-|---|-----------|-------------|------------|
-| 1 | Source Overview | `summary` | Overview, interviewee count, dominant themes, total quotes |
-| 2 | Key Quotes & Soundbites | `keyQuotes[]` | Quotes ranked by usefulness with category badges, speaker attribution |
-| 3 | Recurring Themes | `recurringThemes[]` | Theme cards with frequency badges, supporting evidence quotes |
-| 4 | Key Moments | `keyMoments[]` | Moment type badges, significance, approximate location |
-| 5 | Editorial Direction | `editorialNotes` | Narrative threads, missing perspectives, suggested structure |
-
-**No schema changes needed.**
-
-### Corporate Interview -- "Messaging Workspace" (5 Dimensions)
-
-Maps to existing `corporateAnalysisSchema` and `CorporateReport`:
-
-| # | Dimension | Data Source | Card Focus |
-|---|-----------|-------------|------------|
-| 1 | Executive Summary | `summary` | Overview, speaker count, context badge, dominant messages |
-| 2 | Soundbite Quality | `soundbites[]` | Ranked soundbites with usability badges, category tags, speaker attribution |
-| 3 | Messaging Consistency | `messagingThemes[]` | Theme cards with consistency ratings, supporting evidence |
-| 4 | Speaker Effectiveness | `speakerEffectiveness[]` | Per-speaker scorecards: strengths, areas for improvement, quotability + on-message badges |
-| 5 | Editorial Recommendations | `editorialNotes` | Recommended narrative, messaging gaps, suggested cuts |
-
-**No schema changes needed.**
-
-### TV/Episodic -- "Episode Lab Workspace" (2 Tabs, 8 Dimensions Total)
-
-Maps to existing `tvEpisodicAnalysisSchema` and `TvReport` (already uses Tabs for Episode/Series split):
-
-**Episode Arc Tab (4 cards):**
-
-| # | Dimension | Data Source | Card Focus |
-|---|-----------|-------------|------------|
-| 1 | Cold Open & Hook | `episodeAnalysis.coldOpen` | Hook strength badge, description, notes |
-| 2 | Story Strands | `episodeAnalysis.storyStrands[]` | A/B/C story with effectiveness badges, character lists |
-| 3 | Character Introductions | `episodeAnalysis.characterIntroductions[]` | Intro method + effectiveness per character |
-| 4 | Episode Arc & Pacing | `episodeAnalysis.episodeArc` | Setup/escalation/resolution flow, pacing badge, cliffhanger |
-
-**Series Structure Tab (4 cards):**
-
-| # | Dimension | Data Source | Card Focus |
-|---|-----------|-------------|------------|
-| 5 | Premise Longevity | `seriesAnalysis.premiseLongevity` | Multi-season/limited/one-season badge + reasoning |
-| 6 | Serialized Hooks | `seriesAnalysis.serializedHooks[]` | Hook type + sustainability badges |
-| 7 | Episodic vs Serial Balance | `seriesAnalysis.episodicVsSerial` | Balance badge + assessment |
-| 8 | Season Arc Potential | `seriesAnalysis.seasonArcPotential` | Suggested arc, strengths/concerns split |
-
-**No schema changes needed.** Tab structure already exists in TvReport.
-
-### Short-Form/Branded -- "Content Pulse Workspace" (6 Dimensions)
-
-Maps to existing `shortFormAnalysisSchema` and `ShortFormReport`:
-
-| # | Dimension | Data Source | Card Focus |
-|---|-----------|-------------|------------|
-| 1 | Content Overview | `summary` | Overview, detected format badge, estimated duration, primary objective |
-| 2 | Hook Strength | `hookStrength` | Hook rating badge, time to hook, suggestions |
-| 3 | Pacing | `pacing` | Overall rating badge, dead spots, recommendations |
-| 4 | Messaging Clarity | `messagingClarity` | Clarity badge, primary message, retention assessment, improvements |
-| 5 | CTA Effectiveness | `ctaEffectiveness` | Has-CTA boolean, placement badge, urgency badge, suggestions |
-| 6 | Emotional/Rational Balance | `emotionalRationalBalance` | Balance badge, emotional moments, rational elements |
-
-**No schema changes needed.**
-
----
+| Full auto-rewrite ("rewrite the whole script") | Feels like the ultimate time-saver | Produces generic, voice-flattened output. Strips the writer's style. AI hallucination risk scales with output length. Professional screenwriters would never trust this. | Block-level suggestions targeting specific weaknesses. Writer stays in control. |
+| Real-time streaming suggestions as you edit | Copilot-style inline suggestions while typing | This is not an editor -- it is an analysis tool. Adding a full screenplay editor is a massive scope expansion (screenplay formatting, pagination, element types). The tool's value is structured analysis, not being Yet Another Screenwriter. | Generate suggestions from completed analysis, review in dedicated UI, export to writer's preferred editor. |
+| AI tone/style matching ("write like Aaron Sorkin") | Fun and marketable | Produces pastiche, not improvement. Suggestions should fix structural/dramatic issues, not impose a style. Style matching degrades with script length. | Focus suggestions on analysis findings. If dialogue is flagged as flat, suggest alternatives that add subtext -- let the writer apply their own voice. |
+| Version tree / branching | "What if I accepted different suggestions?" | Combinatorial explosion of versions. Massive UX complexity for a personal tool. | Single linear flow: original -> suggestions -> accept/reject -> revised. User can re-run suggestions if they want a different set. |
+| Inline editing of suggestions | Let user manually edit the AI's suggested text before accepting | Adds significant UI complexity (contenteditable regions within diff view). Error-prone. Hard to maintain diff integrity. | Accept, reject, or regenerate. If user wants to tweak, they edit in their screenwriting tool after export. |
+| Before/after score projection | Show how accepting suggestions would change the overall score | Requires re-running full analysis on merged text (expensive AI call, slow). Projected scores could be inaccurate, creating false confidence. | User can re-run analysis on the exported revised script if they want updated scores. |
 
 ## Feature Dependencies
 
 ```
-Theme System (next-themes + CSS variables)
-    -- independent, no dependencies on other features --
-
-Card Workspace Redesign
-    requires --> Existing AI schemas (already built)
-    requires --> Existing report components (refactor targets)
-    requires --> Theme system (cards must work in both themes)
-
-Storage Layer (IndexedDB)
-    -- new infrastructure, no dependencies on existing features --
-
-Auto-Save
-    requires --> Storage Layer
-    requires --> WorkspaceContext (already built, needs save trigger)
-
-Library Page
-    requires --> Storage Layer
-    requires --> Auto-Save (Library is empty without saved analyses)
-
-Library: Open Analysis
-    requires --> Library Page
-    requires --> WorkspaceContext hydration from stored data
-    requires --> Card Workspace Redesign (what gets rendered when opened)
-
-Library: Delete Analysis
-    requires --> Library Page
-    requires --> Storage Layer
+[Completed Analysis (existing)]
+    |
+    +--requires--> [Suggestion Generation]
+    |                  |
+    |                  +--requires--> [Block segmentation of script text]
+    |                  |
+    |                  +--requires--> [Analysis-to-prompt mapping per project type]
+    |                  |
+    |                  +--requires--> [Suggestion Zod schema + AI output contract]
+    |
+    +--requires--> [Suggestion Review UI]
+    |                  |
+    |                  +--requires--> [Visual diff rendering (jsdiff)]
+    |                  |
+    |                  +--requires--> [Suggestion persistence (SQLite)]
+    |                  |
+    |                  +--enhances--> [Dimension filtering]
+    |                  |
+    |                  +--enhances--> [Batch accept/reject]
+    |                  |
+    |                  +--enhances--> [Regenerate single suggestion]
+    |
+    +--requires--> [Script Merging]
+    |                  |
+    |                  +--requires--> [Ordered application of accepted changes]
+    |                  |
+    |                  +--requires--> [Suggestion Review UI] (accept/reject state)
+    |
+    +--requires--> [Revised Script Export]
+                       |
+                       +--requires--> [Script Merging]
+                       |
+                       +--reuses----> [Existing PDF export (Playwright)]
+                       |
+                       +--reuses----> [Existing DOCX export (docx library)]
+                       |
+                       +--new-------> [FDX export (XML generation via fast-xml-parser)]
+                       |
+                       +--trivial---> [Plain text export]
 ```
 
 ### Dependency Notes
 
-- **Theme system is independent.** It can be built first with zero impact on other features. Good warm-up task.
-- **Card workspace redesign depends on theme system** because cards must look right in both light and dark. Build theme first, then redesign cards.
-- **Storage layer is the linchpin for Library.** Without it, Library/auto-save/open/delete are all impossible. Build storage before any Library features.
-- **Library page depends on storage + auto-save.** An empty Library is useless, so auto-save must work before the Library page matters.
-- **Opening a saved analysis requires both the workspace redesign AND the storage hydration.** This is where the two feature tracks converge.
-
----
+- **Suggestion generation requires completed analysis:** Suggestions are driven by analysis findings. No analysis = no suggestions. This is the core differentiator vs generic AI rewriting tools.
+- **Block segmentation is prerequisite for suggestion generation:** The AI needs to know what "block" of text to rewrite. For screenplays, blocks are scene-level (scene heading + content). For transcripts, blocks are speaker turns or thematic passages. This must be solved before generation prompts can work.
+- **Visual diff requires jsdiff:** Computing word-level diffs between original and suggested blocks is necessary for the tracked-changes display. The `diff` npm package (jsdiff) is the standard choice -- 40M+ weekly downloads, well-maintained.
+- **FDX export is the highest-risk dependency:** Writing valid FDX XML requires understanding Final Draft's element type schema (Scene Heading, Action, Character, Dialogue, Parenthetical, Transition). The existing FDX parser strips structure to plain text -- export needs to reconstruct it. fast-xml-parser is already a project dependency and can write XML.
+- **Script merging is simpler than it sounds:** Suggestions target non-overlapping blocks (enforced by generation). Merging = replacing original blocks with accepted suggestion text in position order. No operational transform needed.
 
 ## MVP Definition
 
-### Phase 1: Theme + Card Workspaces
+### Launch With (v3.0 Core)
 
-Build first because they have no storage dependency and deliver visible UI improvement.
+- [ ] Block segmentation logic per project type -- foundation for everything
+- [ ] Analysis-to-prompt mapping for all 4 project types -- drives suggestion quality
+- [ ] Suggestion Zod schema and AI streaming output -- structured generation
+- [ ] Suggestion generation endpoint (API route) -- server-side AI calls
+- [ ] SQLite schema extension for suggestions -- persistence
+- [ ] Accept/reject UI with inline visual diff (jsdiff) -- the review experience
+- [ ] Dimension filtering -- focus review by weakness category
+- [ ] Script merging from accepted suggestions -- produces revised text
+- [ ] Export revised script as PDF, DOCX, plain text -- reuse existing infrastructure
 
-- [ ] **next-themes integration** -- light/dark/system with localStorage persistence
-- [ ] **CSS variable-based brand color system** -- orange/amber accents that adapt to theme
-- [ ] **Refactor sidebar, topnav, and layout** for theme-aware colors (currently hardcoded `stone-900`)
-- [ ] **Narrative Story Lab Workspace** -- refactor NarrativeReport into workspace layout with 8 dimension cards, grid layout on wide screens
-- [ ] **Workspace header component** -- project title, type badge, date, consistent across all types
-- [ ] **Apply workspace pattern to remaining 4 types** -- Documentary, Corporate, TV/Episodic, Short-Form
+### Add After Core Works (v3.0 Polish)
 
-### Phase 2: Storage + Library
+- [ ] FDX export -- highest complexity export format, build last
+- [ ] Suggestion priority/confidence ratings -- add to AI schema after core generation is stable
+- [ ] Batch accept/reject by dimension -- UI convenience, add after filtering works
+- [ ] Regenerate single suggestion -- requires focused AI call, add after core flow is proven
 
-Build second because it requires new infrastructure.
+### Future Consideration (v3.1+)
 
-- [ ] **IndexedDB storage layer** -- save/load/delete/list operations for analyses
-- [ ] **Auto-save on analysis completion** -- trigger save when streaming finishes
-- [ ] **Library page** -- list view with project-type filter, search, card previews
-- [ ] **Open saved analysis** -- hydrate workspace from stored data
-- [ ] **Delete saved analysis** -- with confirmation dialog
-
-### Add After Validation
-
-- [ ] **Library sort options** (by date, by type, by title) -- add when Library has enough content to need sorting
-- [ ] **Analysis rename** -- edit the title of a saved analysis from Library
-- [ ] **Storage size indicator** -- show how much IndexedDB space is used, warn when approaching limits
-
-### Future Consideration (v2+)
-
-- [ ] **Analysis comparison view** -- side-by-side comparison of two analyses
-- [ ] **Cloud backup/sync** -- only if multi-device need is validated
-- [ ] **Custom card order** -- drag-and-drop reordering within a workspace
-- [ ] **Analysis versioning** -- re-run analysis on same material, compare versions
-
----
+- [ ] Harsh Critic integration for suggestions -- natural follow-on once standard suggestions work
+- [ ] Side-by-side full script diff view -- nice-to-have visualization
 
 ## Feature Prioritization Matrix
 
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| Dark/light theme toggle | HIGH | LOW | P1 |
-| Brand color system (amber/orange) | MEDIUM | LOW | P1 |
-| Narrative Story Lab Workspace (8 cards) | HIGH | MEDIUM | P1 |
-| Workspace header with metadata | MEDIUM | LOW | P1 |
-| Doc/Corp/TV/Short workspaces (4 types) | HIGH | MEDIUM | P1 |
-| Card grid layout (2-col on wide screens) | MEDIUM | LOW | P1 |
-| IndexedDB storage layer | HIGH | MEDIUM | P1 |
-| Auto-save after analysis | HIGH | LOW | P1 |
-| Library page (browse) | HIGH | MEDIUM | P1 |
-| Library: open saved analysis | HIGH | MEDIUM | P1 |
-| Library: delete analysis | MEDIUM | LOW | P1 |
-| Named workspace identities | MEDIUM | LOW | P2 |
-| Library: project-type filter | MEDIUM | LOW | P2 |
-| Library: search | LOW | LOW | P2 |
-| Library card previews | MEDIUM | LOW | P2 |
-| Visual scoring enhancements on cards | MEDIUM | MEDIUM | P2 |
-| Library sort options | LOW | LOW | P3 |
-| Analysis rename from Library | LOW | LOW | P3 |
+| Feature | User Value | Implementation Cost | Priority | Depends On |
+|---------|------------|---------------------|----------|------------|
+| Block segmentation logic | HIGH | MEDIUM | P1 | Script text, project type detection |
+| Analysis-to-prompt mapping (4 types) | HIGH | HIGH | P1 | Analysis schemas (existing) |
+| Suggestion generation endpoint | HIGH | HIGH | P1 | Block segmentation, prompt mapping |
+| SQLite suggestion persistence | HIGH | LOW | P1 | Schema design |
+| Accept/reject UI with visual diff | HIGH | MEDIUM | P1 | Suggestion data, jsdiff |
+| Suggestion rationale display | MEDIUM | LOW | P1 | AI output schema |
+| Dimension filtering | MEDIUM | LOW | P1 | Suggestion dimension tagging |
+| Script merging | HIGH | LOW | P1 | Accept/reject state |
+| PDF export of revised script | HIGH | LOW | P1 | Existing Playwright pipeline |
+| DOCX export of revised script | HIGH | LOW | P1 | Existing docx library |
+| Plain text export | MEDIUM | LOW | P1 | Trivial |
+| FDX export | MEDIUM | HIGH | P2 | FDX XML generation |
+| Suggestion priority ratings | MEDIUM | LOW | P2 | AI output schema |
+| Batch accept/reject | MEDIUM | LOW | P2 | Dimension tagging |
+| Regenerate single suggestion | MEDIUM | MEDIUM | P2 | Focused AI call |
+| Harsh Critic integration | LOW | LOW | P3 | Critic analysis data |
 
 **Priority key:**
-- P1: Must have for v1.1 launch
-- P2: Should have, add within v1.1 if time permits
-- P3: Nice to have, defer to v1.2+
+- P1: Must have for v3.0 launch
+- P2: Should have, add when core is solid
+- P3: Nice to have, future consideration
 
----
+## Per-Project-Type Suggestion Shapes
+
+Different project types need fundamentally different suggestion strategies. This is not a one-size-fits-all feature.
+
+| Project Type | What Gets Suggested | Block Definition | Analysis Fields Driving Suggestions |
+|--------------|--------------------|-----------------|------------------------------------|
+| Narrative | Dialogue rewrites, action line tightening, scene restructuring, character moment additions | Scene (heading + content), dialogue exchange, action paragraph | `storyStructure.structuralWeaknesses`, `scriptCoverage.dialogueQuality.weaknesses`, `scriptCoverage.overallWeaknesses`, `developmentRecommendations`, per-character weaknesses |
+| TV/Episodic | Episode pacing fixes, act break repositioning, B-story integration, cold open/tag improvements | Scene, act section, dialogue exchange | Episode-level structural findings, arc assessment, pacing issues |
+| Documentary | Interview passage reordering, narrative thread strengthening, quote selection optimization, structural reorganization | Speaker turn, thematic passage, editorial section | `editorialNotes.missingPerspectives`, `editorialNotes.suggestedStructure`, narrative thread gaps |
+| Corporate | Messaging tightening, soundbite optimization, key message reinforcement, structure improvements | Speaker segment, messaging section | Key messaging analysis findings, soundbite quality, messaging gaps |
+
+## Technical Considerations for Downstream
+
+### AI Output Schema for Suggestions
+
+Each suggestion should be structured as:
+
+```typescript
+{
+  id: string,
+  originalText: string,          // The block being replaced
+  suggestedText: string,         // The replacement
+  rationale: string,             // Why this change was suggested
+  analysisDimension: string,     // Which analysis card/section drove this
+  analysisFindings: string[],    // Specific findings referenced
+  priority: 'critical' | 'recommended' | 'optional',
+  position: { start: number, end: number },  // Character offsets in original text
+  blockType: string              // 'scene' | 'dialogue' | 'action' | 'speaker-turn' | 'passage'
+}
+```
+
+### Suggestion Count Guidance
+
+- Aim for 8-15 suggestions per script. Too few feels incomplete; too many overwhelms.
+- Group by analysis dimension so user can work through one category at a time.
+- Critical suggestions first, optional last.
+
+### Export Reuse Strategy
+
+- **PDF:** Reuse existing Playwright pipeline with new HTML template for screenplay formatting (Courier 12pt, industry margins for narrative/TV; standard formatting for doc/corporate).
+- **DOCX:** Reuse existing docx library with new document builder for screenplay formatting.
+- **Plain text:** Direct string output. Trivial.
+- **FDX:** New. Build XML using fast-xml-parser (already a dependency for FDX parsing). Map revised text back to FDX Paragraph elements with Type attributes (Scene Heading, Action, Character, Dialogue, Parenthetical, Transition). Highest risk -- requires screenplay element detection from plain text.
+
+### Tracked Changes UI Pattern
+
+Based on research of Arc Studio, VS Code Copilot, and Cursor:
+
+1. **Per-suggestion card layout** -- each suggestion is a card showing the diff, rationale, and accept/reject buttons. Fits the existing card-based workspace pattern.
+2. **Inline diff within each card** -- red strikethrough for removed text, green highlight for added text. Word-level granularity via jsdiff `diffWords()`.
+3. **Status indicators** -- pending (neutral), accepted (green check), rejected (red X). Persisted in SQLite.
+4. **Dimension sidebar/filter** -- list of analysis dimensions with suggestion counts. Click to filter. Similar to how the workspace grid already organizes evaluation cards.
+5. **Merge preview panel** -- shows the full revised script with accepted changes applied. Updates live as user accepts/rejects.
 
 ## Competitor Feature Analysis
 
-| Feature | StudioBinder | Descript | Final Draft | Our Approach |
-|---------|-------------|----------|-------------|--------------|
-| Card-based analysis | N/A (breakdown sheets, not analysis) | N/A (transcription, not analysis) | N/A (writing tool) | Evaluation dimension cards per project type -- unique in this space |
-| Theme toggle | Light only | Dark/light | Dark only | Full dark/light with system preference |
-| Saved analyses library | Project-based file management | Media library for transcripts | Script list (files, not analyses) | Analysis-centric Library with type filtering and previews |
-| Project-type-aware UI | Partial (breakdown categories vary) | No (one-size-fits-all) | No (screenplay only) | Fully differentiated workspaces per type with unique dimension cards |
-| Named workspace identity | No | No | No | "Story Lab", "Interview Mining", etc. -- professional identity per workflow |
+| Feature | Scriptmatix | Arc Studio | Final Draft | FilmIntern v3.0 |
+|---------|-------------|------------|-------------|-----------------|
+| AI suggestions | Scene-level rewrites via "Rewrite in Story Engine" | No AI rewrite | No AI features | Block-level suggestions driven by structured analysis |
+| Suggestion granularity | Scene-level | N/A | N/A | Block-level (dialogue exchange, action paragraph, thematic passage) |
+| Analysis-to-suggestion link | Separate workflows -- user bridges manually | N/A | N/A | Automatic: suggestions derived from analysis findings with explicit rationale |
+| Tracked changes display | Not tracked-changes -- paste into rewrite tool | Green/red between draft versions | Revision pages with asterisks | Inline diff per suggestion with accept/reject |
+| Accept/reject | Manual -- user picks which to use | Per-draft comparison | Revision mode (whole-draft) | Per-suggestion accept/reject with persistence |
+| Export formats | Fountain, PDF | PDF, FDX, Fountain | FDX, PDF | PDF, DOCX, FDX, plain text |
+| Project type awareness | Screenplay only | Screenplay only | Screenplay only | 4 types with type-appropriate suggestions |
 
-No direct competitor does analysis workspace cards. The closest patterns are dashboard/scorecard UIs from business intelligence tools (Tableau, Looker) and educational rubric displays, adapted for creative analysis.
+### Key Competitive Insight
 
----
+No existing tool combines structured analysis with targeted rewrite suggestions in a tracked-changes review flow. Scriptmatix comes closest but treats analysis and rewriting as separate workflows. FilmIntern v3.0's core advantage is that suggestions are automatically derived from the analysis findings, with explicit rationale linking each suggestion to the specific weakness it addresses.
 
 ## Sources
 
-- Existing codebase: `narrative-report.tsx`, `analysis-report.tsx`, `corporate-report.tsx`, `tv-report.tsx`, `short-form-report.tsx`, all 5 AI schemas, `workspace-context.tsx`, `app-sidebar.tsx`, `page.tsx`
-- PROJECT.md v1.1 milestone requirements
-- [next-themes GitHub](https://github.com/pacocoursey/next-themes) -- standard Next.js theme library
-- [shadcn/ui dark mode docs](https://ui.shadcn.com/docs/dark-mode/next) -- integration with Next.js and next-themes
-- [Card UI Design Examples (BricxLabs)](https://bricxlabs.com/blogs/card-ui-design-examples) -- card layout patterns
-- [Dashboard Design Trends 2025 (Fuselab)](https://fuselabcreative.com/top-dashboard-design-trends-2025/) -- workspace dashboard patterns
-- [Dashboard Design Trends for SaaS (UITop)](https://uitop.design/blog/design/top-dashboard-design-trends/) -- card grid and scoring patterns
-- [SaaS UI Workflow Patterns (GitHub Gist)](https://gist.github.com/mpaiva-cc/d4ef3a652872cb5a91aa529db98d62dd) -- document management UI patterns
-- Training data knowledge of StudioBinder, Descript, Final Draft feature sets (MEDIUM confidence -- may have changed since cutoff)
+- [Scriptmatix AI screenwriting workflow](https://scriptmatix.com/ai-screenwriting-hacks/) -- scene-level rewrite suggestions, "Rewrite in Story Engine" pattern
+- [Arc Studio draft and revision management](https://help.arcstudiopro.com/guides/draft-revision-management) -- green/red tracked changes between drafts, per-author color coding
+- [VS Code Copilot review code edits](https://code.visualstudio.com/docs/copilot/chat/review-code-edits) -- per-hunk accept/reject UI pattern
+- [jsdiff (npm diff)](https://github.com/kpdecker/jsdiff) -- standard text diffing library for JavaScript, 40M+ weekly downloads
+- [screenplay-tools FDX writer](https://github.com/wildwinter/screenplay-tools) -- FDX read/write in JavaScript (LOW confidence -- not widely adopted)
+- [Best screenwriting software 2026](https://skene.pub/best-screenwriting-software-2026/) -- market landscape, Skrib tracked-changes approach
+- [Scriptmatix analysis-to-rewrite flow](https://scriptmatix.com/ai-screenwriting-software-questions-answered/) -- how analysis and rewriting connect
 
 ---
-*Feature research for: FilmIntern v1.1 UI Redesign*
-*Researched: 2026-03-17*
+*Feature research for: AI-driven script improvement (FilmIntern v3.0)*
+*Researched: 2026-03-21*

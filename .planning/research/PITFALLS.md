@@ -1,162 +1,178 @@
 # Pitfalls Research
 
-**Domain:** Adding theme toggle, card-based UI redesign, and local persistence to existing Next.js filmmaking analysis app
-**Researched:** 2026-03-17
-**Confidence:** HIGH (based on direct codebase analysis + well-documented Next.js patterns)
+**Domain:** Adding AI rewrite suggestions + tracked-changes UI + FDX export to existing filmmaking analysis tool
+**Researched:** 2026-03-21
+**Confidence:** HIGH (codebase-verified pitfalls) / MEDIUM (FDX write-back edge cases)
 
 ## Critical Pitfalls
 
-### Pitfall 1: Theme Flash of Unstyled Content (FOUC) on Hydration
+### Pitfall 1: Existing FDX Parser Destroys Round-Trip Data
 
 **What goes wrong:**
-The app loads with the server-rendered theme (currently hardcoded `className="dark"` on `<html>` in layout.tsx), then React hydrates and applies the user's stored preference. This causes a visible flash where the entire page switches themes after load. For dark-to-light transitions this is especially jarring -- a bright white flash.
+The current `fdx-parser.ts` uses `fast-xml-parser` with `ignoreAttributes: false` but strips the parsed FDX down to plain text lines, discarding all paragraph Type attributes (Action, Character, Dialogue, Parenthetical, Scene Heading, Transition, Shot), Text styling attributes (Font, Style, AdornmentStyle, Color, RevisionID, Size), SceneProperties, ElementSettings, PageLayout, SmartType lists, HeaderAndFooter, Cast/Actors metadata, and revision history. The parser outputs a flat `{ text, metadata }` result. There is no preserved XML tree to write back to.
 
 **Why it happens:**
-Next.js server-renders HTML before the client JavaScript runs. If the theme preference is stored in localStorage (client-only), the server has no access to it and renders with the default. The mismatch between server HTML and client state causes the flash.
+The parser was built for analysis input -- you only need the text content to feed to an LLM. Writing back was never a requirement. This is the correct design for v1-v2, but v3 now needs to modify content and export as FDX, which requires the full XML structure.
 
 **How to avoid:**
-Use `next-themes` which injects a blocking `<script>` tag into `<head>` that reads localStorage and sets the `class` attribute on `<html>` BEFORE the browser paints. This eliminates the flash entirely. The current layout already has `className="dark"` on `<html>` (line 24 of layout.tsx) -- this needs to become dynamic via `suppressHydrationWarning` on the `<html>` element.
-
-Concrete steps:
-1. Install `next-themes`
-2. Wrap app in `ThemeProvider` inside `providers.tsx` (already has a Providers component)
-3. Add `suppressHydrationWarning` to `<html>` tag
-4. Remove hardcoded `className="dark"` from `<html>`
-5. Use `useTheme()` hook in toggle component
+Build a separate FDX round-trip layer that parses with `preserveOrder: true` and `ignoreAttributes: false` on `fast-xml-parser`, retaining the complete JS object tree. The existing `parseFdx` stays as-is for analysis input. The new layer stores the full parsed tree alongside the project so that when exporting FDX, you modify Text nodes within the preserved tree and rebuild via `XMLBuilder` with the same `preserveOrder: true` option. Never try to reconstruct FDX from plain text -- you will lose all formatting, scene structure, and metadata.
 
 **Warning signs:**
-- Visible color flash on page load or navigation
-- Hydration mismatch warnings in console
-- `className` on `<html>` is hardcoded rather than dynamic
+- FDX files exported from the app do not open correctly in Final Draft
+- Paragraph types are all "General" instead of correct types (Action, Dialogue, etc.)
+- Scene numbers, revision marks, or headers/footers are missing after round-trip
+- Font or styling information is lost
 
 **Phase to address:**
-Phase 1 (Theme System) -- must be the first thing built because all subsequent UI work depends on the color system being correct.
+Phase 1 (FDX infrastructure). Must be the first thing built before any suggestion merging or export work begins. Without a preserved XML tree, there is nothing to merge suggestions into.
 
 ---
 
-### Pitfall 2: Hardcoded Colors That Break in Opposite Theme
+### Pitfall 2: Generic AI Suggestions Not Grounded in Analysis Findings
 
 **What goes wrong:**
-The codebase currently has many hardcoded color classes that only work in dark mode: `bg-white` in document-workspace.tsx (line 267), `hover:bg-gray-100` (lines 269, 275), `text-stone-50`, `bg-white/5`, `text-stone-400`, `hover:bg-white/10` across app-sidebar.tsx. These will look wrong or be invisible in light mode. Similarly, `text-green-500`, `text-red-400`, and `bg-amber-500/20` across 11+ component files use raw Tailwind colors instead of semantic tokens.
+The LLM generates surface-level rewrite suggestions ("make the dialogue more natural," "add more conflict") that are not specifically connected to the weaknesses flagged in the analysis. The suggestions feel like a second, independent analysis rather than actionable fixes for the issues already identified. Users get generic writing advice instead of targeted rewrites addressing their script's specific problems.
 
 **Why it happens:**
-The app was built dark-mode-only (hardcoded `className="dark"`), so colors were chosen to look correct in dark mode without considering the inverse. This is the natural result of building single-theme first and adding a theme toggle later.
+The prompt for suggestion generation does not include the actual analysis results, or includes them as background context rather than as the driving instruction. The LLM defaults to its training on general screenwriting advice rather than addressing the specific `structuralWeaknesses`, `dialogueQuality.weaknesses`, character `weaknesses`, or `developmentRecommendations` from the analysis schema.
 
 **How to avoid:**
-Before building any new card components, audit and replace all hardcoded colors with semantic Tailwind classes:
-- `bg-white` becomes `bg-popover` or `bg-card`
-- `hover:bg-gray-100` becomes `hover:bg-muted`
-- `text-stone-400` becomes `text-muted-foreground`
-- Status colors (`text-green-500`, `text-red-400`) need CSS custom properties that adapt per theme, or use `dark:` variants
-
-The shadcn/ui components already use semantic tokens (the app uses shadcn -- `Card`, `Badge`, `Button` etc.). The problem is the custom rendering code that bypasses shadcn primitives.
-
-Files confirmed to have hardcoded colors: narrative-report.tsx, document-workspace.tsx, app-sidebar.tsx, app-topnav.tsx, short-form-report.tsx, tv-report.tsx, corporate-report.tsx, moments-section.tsx, themes-section.tsx, quotes-section.tsx, settings/page.tsx (11 files total).
+Structure the suggestion prompt as: "Here is the original script. Here are the specific issues found in analysis: [inject actual weakness strings from analysis data]. For each issue, generate a concrete rewrite of the specific passage that addresses that weakness." The analysis schema already contains granular weakness arrays -- `storyStructure.structuralWeaknesses`, `scriptCoverage.dialogueQuality.weaknesses`, `scriptCoverage.characters[].weaknesses`, `scriptCoverage.overallWeaknesses`, and `developmentRecommendations`. Use these as the literal instruction list, not as background context. Each suggestion should reference which analysis finding it addresses.
 
 **Warning signs:**
-- Any Tailwind class using a specific color number (e.g., `gray-100`, `stone-400`, `green-500`) instead of semantic names (`muted`, `foreground`, `destructive`)
-- Export dropdown (document-workspace.tsx lines 267-281) uses `bg-white` and `hover:bg-gray-100` -- will be invisible or wrong in light mode
-- Components that render correctly in one theme but have invisible text, wrong backgrounds, or unreadable contrast in the other
+- Suggestions could apply to any script, not specifically this one
+- Suggestions do not reference specific character names, scene locations, or dialogue lines from the script
+- Users cannot trace a suggestion back to a specific analysis card/finding
+- Suggestions repeat the same general advice the analysis already gave
 
 **Phase to address:**
-Phase 1 (Theme System) -- color audit must happen during theme setup, not deferred to card redesign.
+Phase 2 (suggestion generation). This is a prompt engineering problem. Get the prompt-to-analysis-data pipeline right before building any UI.
 
 ---
 
-### Pitfall 3: localStorage Quota Exceeded for Large Analysis Data
+### Pitfall 3: Suggestion Merge Corrupts Script Structure via Offset Drift
 
 **What goes wrong:**
-Analysis results for a full screenplay can be substantial -- the `analysisData` field in WorkspaceContext is `Record<string, unknown>` and for a narrative analysis includes story structure beats, character assessments, dialogue analysis, theme extraction, and script coverage. A single analysis could easily be 50-200KB of JSON. localStorage has a ~5MB limit per origin. Saving 20-30 analyses could approach or exceed this limit, causing silent data loss when `setItem` throws.
+When applying multiple accepted suggestions to the original text, earlier insertions/deletions shift the character offsets of later suggestions. If suggestions reference positions in the original text (line numbers, character offsets, paragraph indices), applying suggestion #1 invalidates the positions for suggestions #2 through #N. The result is suggestions applied to wrong passages, text corruption, or structural breakage in the script.
 
 **Why it happens:**
-localStorage seems like the obvious choice for a personal single-user tool with no backend database. The limit feels generous until you store structured AI analysis output, which is verbose JSON. Most developers never test with realistic data volumes.
+This is the classic "edit offset drift" problem. Each text modification changes the length of the document, making all subsequent position references stale. It is especially dangerous in screenplay format where a one-line dialogue change could shift everything below it.
 
 **How to avoid:**
-Use IndexedDB instead of localStorage for analysis data storage. IndexedDB has effectively no practical storage limit for this use case (typically hundreds of MB). Use a thin wrapper like `idb-keyval` (3KB) to keep the API simple -- it provides `get`/`set`/`del` that work like localStorage but with async and IndexedDB backing.
+Use one of two strategies:
 
-Reserve localStorage only for small preferences (theme choice, last project type selected). Never store analysis payloads in localStorage.
+Option A (recommended): Reference suggestions by stable identifiers rather than character offsets. Use paragraph index + paragraph Type as the anchor (e.g., "Dialogue paragraph #47 belonging to character SARAH"). Since FDX paragraphs are discrete XML nodes, they have stable identity regardless of text changes to other paragraphs.
+
+Option B: Apply suggestions in reverse document order (bottom-to-top), so earlier text is never shifted by later edits.
+
+Option A is strongly preferred because it also solves the FDX merge problem -- you are replacing content within a specific XML Paragraph node, not doing string surgery on a flat text blob.
 
 **Warning signs:**
-- `try/catch` around `localStorage.setItem` that silently swallows errors
-- No storage usage monitoring or user feedback when storage is full
-- Analysis data disappearing after many saves with no error shown
+- Accepting multiple suggestions produces garbled text
+- Text from one scene appears inside another scene's dialogue
+- The more suggestions you accept, the worse the output gets
+- Suggestions near the end of the script work fine but suggestions near the beginning cause cascading errors
 
 **Phase to address:**
-Phase 3 (Library/Persistence) -- this is the core storage decision and must be right from the start of persistence work.
+Phase 1 (data model design). The suggestion data structure must use paragraph-level anchoring from the start. Retrofitting this after building offset-based suggestions would require rewriting the merge engine.
 
 ---
 
-### Pitfall 4: Breaking Existing Report Display During Card Redesign
+### Pitfall 4: FDX Write-Back Edge Cases in Paragraph/Text Structure
 
 **What goes wrong:**
-The app has 6+ report components (`narrative-report.tsx`, `short-form-report.tsx`, `tv-report.tsx`, `corporate-report.tsx`, plus section components in `report-sections/`) that render analysis data. A "card-based redesign" risks breaking the data-to-UI mapping for project types that aren't the primary focus of testing. The narrative report already IS card-based (it renders 8 `Card` components with `CategoryLabel` headings), so the redesign is really about extracting reusable patterns and applying workspace layout consistency, not inventing a new card pattern.
+FDX Paragraph elements have complex internal structure that breaks if you naively replace text content. A single Paragraph can contain multiple `<Text>` child elements with different styling (bold, italic, ALL CAPS via Style attribute). RevisionID attributes track change history. Dual dialogue requires specific Paragraph grouping. Scene Heading paragraphs contain SceneProperties with scene arc beats. Replacing the text content of a paragraph without preserving these nested structures produces FDX files that Final Draft either rejects or displays incorrectly.
 
 **Why it happens:**
-Each project type has unique analysis schemas (narrative has `scriptCoverage.characters`, documentary has different fields). Redesigning the card layout for one project type and assuming the pattern applies to all 5 types leads to runtime errors or missing data display for the less-tested types.
+Developers treat FDX paragraphs as simple containers: `<Paragraph Type="Dialogue"><Text>line</Text></Paragraph>`. In reality, a dialogue paragraph might be: `<Paragraph Type="Dialogue"><Text Style="" Font="Courier Final Draft" Size="12" RevisionID="1">I told you </Text><Text Style="Italic" Font="Courier Final Draft" Size="12" RevisionID="1">never</Text><Text Style="" Font="Courier Final Draft" Size="12" RevisionID="1"> to come back.</Text></Paragraph>`. Replacing the entire text loses the italic on "never."
 
 **How to avoid:**
-1. Recognize that `narrative-report.tsx` is already the target pattern (numbered CategoryLabel cards with EffectivenessBadge ratings). The work is extracting reusable card primitives from it, not redesigning from scratch.
-2. Build a shared `EvaluationCard` component that all 5 project types use, but keep the per-type data mapping in separate files.
-3. Test all 5 project types after each card component change, not just the narrative type.
-4. Keep the old report components working until the new ones are verified -- don't delete and rebuild simultaneously.
+When generating a suggestion that replaces text in a paragraph, the merge operation should:
+1. Extract the plain text from all Text children (concatenated)
+2. Apply the AI-suggested replacement text
+3. If the original had a single Text child, replace its text content directly
+4. If the original had multiple Text children (mixed formatting), either: (a) collapse to a single Text child with the default style (simpler, loses inline formatting), or (b) use a diff algorithm to map which parts of the old text map to which Text nodes and update accordingly (complex but format-preserving)
+
+For v3.0 MVP, option (a) is acceptable -- collapse to single Text child when a suggestion modifies a multi-formatted paragraph, and document this as a known limitation. Full format preservation is a future enhancement.
 
 **Warning signs:**
-- Changes to card components tested only with narrative project type
-- Removing old report components before new ones render all data fields
-- `undefined` errors in less-tested project types (corporate, short-form)
+- Italic, bold, or underline formatting disappears after accepting suggestions
+- RevisionID tracking breaks in Final Draft when opening exported files
+- Dual dialogue scenes lose their paired formatting
+- Scene heading metadata (scene numbers, arc beats) vanishes
 
 **Phase to address:**
-Phase 2 (Card Redesign) -- needs explicit test coverage for all 5 project types, not just narrative.
+Phase 3 (FDX export). Must be tested with real Final Draft files that contain mixed formatting, dual dialogue, and revision marks.
 
 ---
 
-### Pitfall 5: WorkspaceContext Becomes an Unmaintainable God Object
+### Pitfall 5: Tracked-Changes UI State Explosion
 
 **What goes wrong:**
-The current `WorkspaceContext` already has 11 state fields and 11 setters (22 values in a single context). Adding persistence (saved analyses list, active library item, save/load status), theme state, and UI state for card-based workspace will balloon this to 30+ fields. Every state change re-renders every consumer. The context becomes impossible to reason about.
+The tracked-changes UI needs to track per-suggestion state (pending/accepted/rejected), display inline diffs (old text strikethrough, new text highlighted), support undo (re-reject an accepted change, re-accept a rejected one), maintain the "current document preview" that reflects all accepted changes, and keep this in sync with the original text plus all decisions. The state management becomes a tangled mess of derived state, and bugs appear as: accepted changes not showing in preview, rejected changes still appearing, undo not working correctly, or the preview diverging from what will actually export.
 
 **Why it happens:**
-The initial WorkspaceContext was fine for v1.0's simple flow. Adding features incrementally to the same context is the path of least resistance. Each new feature "just needs one more field" until the context is unmanageable.
+Developers build the state incrementally -- first accept/reject toggles, then preview, then undo -- without designing the state model upfront. Each addition interacts with the others in unexpected ways. The fundamental issue is that the "current state of the document" is derived state (original + accepted suggestions - rejected suggestions), and keeping derived state in sync with source state is a classic React foot-gun.
 
 **How to avoid:**
-Split into focused contexts before adding new features:
-- `ThemeContext` (or use `next-themes` which provides its own) -- theme preference only
-- `WorkspaceContext` -- current analysis session state (upload, analysis, documents) -- keep as-is
-- `LibraryContext` -- saved analyses list, CRUD operations, active/loaded state
-
-Each context should have a clear boundary. The `Providers` component in `providers.tsx` already provides a clean composition point for nesting multiple providers.
+Design the state as a single source of truth: an array of suggestions, each with `{ id, paragraphAnchor, originalText, suggestedText, status: 'pending' | 'accepted' | 'rejected', analysisSource }`. The document preview is always computed (never stored) by: take original text, apply all `status === 'accepted'` suggestions. Never store the "current document" as separate state -- always derive it. Use `useMemo` or equivalent to compute the preview from the suggestion array. This makes undo trivial (flip status back) and export deterministic (apply all accepted suggestions to original).
 
 **Warning signs:**
-- Adding more than 2-3 new fields to WorkspaceContext
-- Components re-rendering when unrelated state changes (e.g., theme toggle causes analysis card to re-render)
-- Context value object growing past 15 fields
+- Preview shows different text than what exports
+- Undoing an accept does not restore the original text in preview
+- Rapidly toggling accept/reject causes the preview to desync
+- Two suggestions on the same paragraph conflict silently
 
 **Phase to address:**
-Phase 1 (Theme) and Phase 3 (Library) -- theme gets its own provider from the start; library persistence gets its own context rather than extending WorkspaceContext.
+Phase 2 (data model) and Phase 3 (UI). The data model must be designed in Phase 2 before the UI is built. The UI in Phase 3 should be a pure function of the data model.
 
 ---
 
-### Pitfall 6: Persisting Stale or Incompatible Analysis Schema Versions
+### Pitfall 6: Token Cost Explosion from Per-Issue Suggestion Generation
 
 **What goes wrong:**
-Analysis data is saved to IndexedDB with the current schema shape. A future update changes the AI analysis schema (adds fields, renames properties, restructures). Old saved analyses fail to render because the UI expects fields that don't exist in the stored data. The Library page crashes or shows blank cards when opening old analyses.
+A single analysis produces 10-30+ weakness findings across all schema fields (structuralWeaknesses, dialogueQuality.weaknesses, character weaknesses, overallWeaknesses, developmentRecommendations). If you make a separate LLM call per finding, each call must include the full script text as context. A 120-page screenplay is roughly 25,000-30,000 tokens. Generating suggestions for 20 findings means 500,000-600,000 input tokens -- at Anthropic's Sonnet pricing that is $1.50-$1.80 per suggestion run, just in input tokens. With output tokens for actual suggestions, a single "generate suggestions" click could cost $3-5.
 
 **Why it happens:**
-Schema evolution is invisible -- the analysis schemas in `src/lib/ai/schemas/` define what the AI returns, and the report components expect that shape. Storing raw analysis output without versioning means there is no migration path.
+The natural architecture is "for each weakness, ask the LLM to suggest a fix." This is clean, modular, and produces well-scoped suggestions. But it is economically brutal because the script context must be repeated in every call.
 
 **How to avoid:**
-1. Add a `schemaVersion: number` field to every persisted analysis record
-2. Write a simple migration function that upgrades old records when loaded: `if (record.schemaVersion < CURRENT_VERSION) { record = migrate(record); }`
-3. Use Zod's `.safeParse()` (already in dependencies as zod v4) to validate loaded data before rendering -- gracefully degrade rather than crash
-4. Never delete fields from analysis schemas in updates -- only add new optional fields or use explicit versioned migrations
+Batch all analysis findings into a single LLM call. Send the full script once, with all weakness findings as a structured list, and ask the LLM to generate suggestions for all of them in one response. Use structured output (Zod schema via AI SDK `Output.object`) to get back an array of suggestion objects. This reduces token cost from O(N * script_length) to O(script_length + N * suggestion_length). For a 30,000-token script with 20 findings, this drops the input cost from ~600K tokens to ~35K tokens -- a 17x reduction.
+
+The tradeoff is that a single massive prompt may produce lower-quality suggestions for later items in the list (attention degradation). Mitigate by ordering findings by severity (most critical first) and limiting to the top 10-15 most impactful findings rather than every minor weakness.
 
 **Warning signs:**
-- Saved analyses with no version identifier
-- Report components that crash on `undefined` when opening old saves
-- No validation step between loading from storage and rendering
+- API costs spike dramatically when users generate suggestions
+- Suggestion generation takes 2+ minutes due to sequential API calls
+- Users complain about cost (if they are using their own API keys)
+- The "generate suggestions" button feels unreasonably slow
 
 **Phase to address:**
-Phase 3 (Library/Persistence) -- versioning must be part of the storage schema from day one, not retrofitted.
+Phase 2 (suggestion generation API). The batching strategy must be decided before the API route is built. Single-call batched generation should be the default, with per-issue generation only as a future "deep dive" option.
+
+---
+
+### Pitfall 7: Streaming Suggestions Needs Different Architecture Than Analysis Streaming
+
+**What goes wrong:**
+The existing analysis streaming works by streaming a single structured object via `streamText` with `Output.object`. The client does progressive JSON parsing to display sections as they arrive. Suggestions are fundamentally different -- they are an array of independent items, each tied to a specific paragraph. If you stream suggestions the same way (as a single object), the UI cannot display individual suggestions as they arrive; it must wait for the full array to parse. Alternatively, if suggestions stream as plain text, you lose the structured mapping between suggestions and their target paragraphs.
+
+**Why it happens:**
+Developers copy the existing analysis streaming pattern without considering that the data shape and consumption pattern are different. Analysis has named sections that fill in progressively. Suggestions are a flat list where each item should become independently actionable as soon as it arrives.
+
+**How to avoid:**
+Use `Output.object` with a schema that has an array of suggestion objects. AI SDK's progressive JSON parsing will surface array items as they become available. The client-side consumer watches for new items appearing in the array and renders each suggestion card as soon as it is complete. This is similar to the existing pattern but requires the client to track "last known array length" and render new items incrementally.
+
+Alternatively, if suggestion count is manageable (10-15 per batch), non-streaming may be acceptable. The generation takes 15-30 seconds for a batched call. Show a progress indicator with "Generating suggestions for 12 issues..." and display them all at once. This is simpler and avoids the complexity of streaming individual array items. For a personal tool, this is likely the right tradeoff.
+
+**Warning signs:**
+- Blank screen for 30+ seconds while suggestions generate
+- Partial suggestions appear with missing fields (incomplete JSON parse)
+- Suggestion cards flash/rerender every time a new token arrives
+- Memory usage spikes from accumulating partial parse results
+
+**Phase to address:**
+Phase 2 (API design). Decide streaming vs. non-streaming before building the endpoint. The choice affects both the API route and the client consumer.
 
 ---
 
@@ -164,93 +180,93 @@ Phase 3 (Library/Persistence) -- versioning must be part of the storage schema f
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Store analysis in localStorage instead of IndexedDB | Simpler synchronous API | 5MB limit hit with ~25-50 analyses, silent data loss | Never for analysis data; OK for tiny preferences like theme |
-| Add all new state to existing WorkspaceContext | No refactoring needed | Context becomes unmaintainable, every consumer re-renders on every change | Never -- split contexts at feature boundaries |
-| Use raw Tailwind color values for status badges | Faster to code, visually correct in dark mode | Every theme addition requires auditing status colors across 11+ files | Only acceptable if you also add `dark:` variant for each |
-| Use `window.matchMedia` instead of `next-themes` | No dependency added | FOUC on every page load, no SSR support, manual system-preference sync | Never in Next.js |
-| Skip schema versioning on stored analyses | Ships persistence faster | First schema change breaks all saved data with no migration path | Never |
-| Copy-paste card layout per project type instead of shared components | Each type is independent, faster initial build | 5 nearly-identical card components to maintain; bug fixes applied inconsistently | Only for the first prototype of one project type; extract shared components immediately after |
+| Collapse multi-Text paragraphs to single Text on suggestion merge | Simpler merge logic, no diff-within-paragraph complexity | Loses inline formatting (bold, italic) in rewritten paragraphs | MVP -- document as known limitation, fix in v3.1 |
+| Store suggestion state in React component state only | Fast to implement, no schema migration | Lost on page refresh, cannot resume review session | Never -- suggestions must persist to SQLite |
+| Skip FDX metadata preservation (SmartType, Cast, Macros) | Can ship FDX export faster | Files lose autocomplete lists, cast info, macros when round-tripped | MVP if user warning is shown ("FDX export preserves script content; some metadata may need re-entry in Final Draft") |
+| Generate suggestions only for narrative project type first | Faster delivery of core feature | Other 3 project types (documentary, corporate, TV/episodic) lack suggestions | Acceptable if documented -- these types have different weakness schemas that need separate prompt work |
+| Hardcode suggestion count limit (e.g., top 10 issues) | Controls token cost and generation time | Misses lower-priority issues | Yes -- 10-15 suggestions is a good UX ceiling. More causes decision fatigue |
 
 ## Integration Gotchas
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| next-themes + shadcn/ui | Forgetting `attribute="class"` in ThemeProvider config, so shadcn components don't respond to theme changes | Set `attribute="class"` and `defaultTheme="dark"` to match current behavior; shadcn uses CSS variables scoped to `.dark` class |
-| IndexedDB + React state | Reading IndexedDB on every render (it is async), causing loading flickers or stale state | Load from IndexedDB once into React state on mount; write-through on changes. Use a custom hook like `usePersistedState` |
-| Tailwind dark mode + CSS variables | Defining CSS variables only in `.dark` block and forgetting `:root` (light) values in globals.css | shadcn's globals.css already defines both `:root` and `.dark` blocks -- ensure both have complete variable sets, especially for custom brand colors (orange/amber) |
-| ContentEditable + theme switching | The contentEditable div in document-workspace.tsx (line 333) uses `prose` class which has theme-unaware colors | Use `dark:prose-invert` so Tailwind prose plugin adapts to theme automatically |
-| next-themes + Next.js App Router | Using `useTheme()` in a Server Component, which fails because it requires client context | Only use `useTheme()` in components marked `'use client'`; the ThemeProvider must wrap children in a Client Component (already the pattern in providers.tsx) |
+| fast-xml-parser XMLBuilder | Using different options for parse vs. build (e.g., `preserveOrder` on parse but not build) | Use identical options object for both XMLParser and XMLBuilder. The `preserveOrder: true` parsed tree has a different JS structure than normal parse -- XMLBuilder expects the same structure |
+| fast-xml-parser with FDX | Setting `ignoreAttributes: true` (as existing parser does implicitly by not using attribute data) | For round-trip: `ignoreAttributes: false, preserveOrder: true, attributeNamePrefix: '@_'`. Store the full parsed result alongside the project |
+| AI SDK structured output for suggestions | Using `streamText` with `Output.object` for a large array schema and expecting per-item streaming | AI SDK streams the JSON progressively, but the client must do its own incremental array-item detection. Test with the actual schema to confirm items surface individually |
+| SQLite TEXT columns for suggestion data | Storing suggestion JSON in a single TEXT column alongside analysisData | Add a dedicated `suggestionsData` column via migration. The data lifecycle is different from analysis -- suggestions have mutable status (pending/accepted/rejected) that changes as the user reviews |
+| Existing analysis-to-suggestion pipeline | Assuming the analysis data is available in a uniform shape across project types | Parse `analysisData` from the project row, extract weakness fields per project type schema. Each project type has different weakness field paths (narrative has `scriptCoverage.dialogueQuality.weaknesses`, documentary has different fields entirely) |
+| FDX preserved tree storage | Storing the preserved XML tree in the same column as uploadData | Use a separate column (e.g., `fdxTree`) because the tree is large (10-100KB) and only needed for FDX exports, not for every project load. Non-FDX uploads do not have this data at all |
 
 ## Performance Traps
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Re-rendering all cards on any context change | Visible lag when toggling theme, switching tabs, or typing | Split contexts; use `React.memo` on card components | Noticeable with 8+ evaluation cards rendered simultaneously |
-| Loading full analysis JSON to render Library list | Library page is slow to load, memory usage spikes | Store a lightweight index (title, date, project type, id) separately from full analysis data; load full data only when user opens a specific analysis | With 50+ saved analyses |
-| Serializing large objects on every state change for persistence | UI jank when interacting with analysis workspace | Debounce persistence writes; only persist on explicit save or navigation away | With analysis data over 100KB |
-| Prose typography recalculation on theme switch | Layout shift visible when toggling theme with report displayed | Apply prose classes at container level, not per-card; set both `prose` and `dark:prose-invert` once on wrapper | Visible with 8+ cards each with their own prose wrapper |
+| Re-computing document preview on every render | UI jank/lag when toggling accept/reject on suggestions | Memoize the "apply accepted suggestions to original" computation. Only recompute when suggestion status array changes | 20+ suggestions with a long script |
+| Storing full script text in multiple places (original, preview, per-suggestion context) | Memory bloat, especially with 100+ page screenplays | Store original text once. Suggestions reference paragraph indices. Preview is derived | Scripts over 50 pages with 15+ suggestions |
+| Full FDX XML tree in React state | Slow renders, deep comparison overhead | Keep FDX tree server-side only. Client works with paragraphs and plain text. FDX export is a server-side operation that takes the preserved tree + accepted suggestion list | Any FDX file (trees are large) |
+| Diff computation on every keystroke if allowing manual edits | Visible input lag, especially with jsdiff on long texts | Do not allow freeform editing in v3.0. Suggestions are accept/reject only. Manual editing is a future feature | N/A for v3.0 -- avoidance strategy |
 
 ## UX Pitfalls
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Theme toggle without smooth transition | Jarring instant color swap feels broken | Add `transition-colors duration-200` to `<body>` for a brief crossfade between themes |
-| Library shows raw JSON dates or IDs | Analyses list feels technical, not professional | Show formatted date, project type icon/label, and title prominently |
-| No confirmation before deleting saved analysis | User loses hours of AI analysis with one click | Require confirmation dialog for destructive actions |
-| Card layout requiring scroll to see any evaluation summary | User cannot scan analysis overview at a glance | Show compact summary or score row at top, with expandable detail cards below |
-| Theme toggle buried in settings page | User cannot quickly switch themes | Place toggle in app-topnav.tsx (already exists) -- visible on every page |
-| Auto-save with no visible indication | User unsure if analysis was persisted | Show brief "Saved" indicator or toast after auto-save completes |
-| Inconsistent card heights across evaluation dimensions | Layout looks messy, cards jump during streaming | Set minimum card heights; use consistent content structure across all evaluation cards |
+| Showing all suggestions at once in a flat list | Overwhelming, no clear starting point, decision fatigue | Group suggestions by analysis category (structure, dialogue, character, etc.) matching the existing card-based workspace layout. Show count badges per category |
+| No way to see which analysis finding drove a suggestion | Suggestions feel arbitrary, user cannot evaluate whether the fix matches the diagnosis | Each suggestion card should display the originating analysis finding (e.g., "Addresses: Dialogue weakness -- characters sound interchangeable") with a link back to the analysis card |
+| Inline diff showing raw character-level changes | Hard to read, especially for dialogue rewrites where most of the line changes | Use word-level diff (jsdiff `diffWords`), not character-level. For screenplay dialogue, show old line / new line stacked rather than inline strikethrough/insertion |
+| No "Accept All" / "Reject All" option | Tedious if user wants to accept most suggestions and only reject a few | Provide bulk actions: Accept All, Reject All, plus per-suggestion toggle. Also consider "Accept All in Category" |
+| Suggestion preview does not show surrounding script context | User cannot evaluate whether the suggestion flows with adjacent lines | Show 2-3 paragraphs above and below the suggestion target, with the suggestion highlighted in context |
+| No clear "done reviewing" action | User is unsure when they have addressed all suggestions and can export | Show a progress counter: "7 of 12 suggestions reviewed (5 pending)". Enable export only when all suggestions are reviewed, or allow export with pending treated as "keep original" |
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Theme toggle:** Works on initial load with cleared localStorage + hard refresh -- verify no FOUC
-- [ ] **Theme toggle:** Respects system preference as default when no user preference is stored
-- [ ] **Theme colors:** Export dropdown in document-workspace.tsx uses semantic colors (currently hardcoded `bg-white`, `hover:bg-gray-100`)
-- [ ] **Theme colors:** Status badges (green/red/amber EffectivenessBadge) are readable in BOTH themes -- test all effectiveness values across narrative-report.tsx
-- [ ] **Theme colors:** `prose` content areas (TiptapContentRenderer) are readable in both themes
-- [ ] **Theme colors:** Sidebar (app-sidebar.tsx) hardcoded `text-stone-50`, `bg-white/5`, `text-stone-400` replaced with semantic tokens
-- [ ] **Card redesign:** All 5 project types render without errors (not just narrative)
-- [ ] **Card redesign:** Streaming/skeleton states still work during analysis (currently page.tsx lines 272-295)
-- [ ] **Card redesign:** CategoryLabel numbering and EffectivenessBadge pattern works for non-narrative project types that may have different evaluation dimensions
-- [ ] **Persistence:** Saving and loading works with analysis data over 100KB (test with a full screenplay analysis)
-- [ ] **Persistence:** Old saved analyses still load after schema changes (version migration tested)
-- [ ] **Persistence:** Library handles IndexedDB unavailability gracefully (private browsing in some browsers restricts it)
-- [ ] **Persistence:** Deleting an analysis that is currently displayed does not crash the workspace
-- [ ] **Persistence:** Loading a saved analysis correctly populates WorkspaceContext (projectType, analysisData, reportDocument, generatedDocuments all restored)
+- [ ] **FDX Export:** Often missing paragraph Type preservation -- verify exported FDX opens in Final Draft with correct element types (Scene Heading, Action, Character, Dialogue, not all "General")
+- [ ] **FDX Export:** Often missing dual dialogue handling -- verify scripts with simultaneous dialogue export correctly
+- [ ] **FDX Export:** Often missing page break / forced page break preservation -- verify pagination-sensitive scripts
+- [ ] **Suggestion Generation:** Often missing project-type-specific weakness extraction -- verify documentary/corporate/TV weakness fields are extracted correctly (not just narrative schema fields)
+- [ ] **Suggestion Merge:** Often missing empty paragraph handling -- verify suggestions that delete a line entirely do not leave orphaned empty Paragraph nodes in FDX
+- [ ] **Tracked Changes UI:** Often missing keyboard navigation -- verify accept/reject can be done via keyboard (Enter/Backspace or similar), not just click
+- [ ] **Export:** Often missing "no suggestions accepted" edge case -- verify export produces original script unchanged when user rejects all
+- [ ] **Export:** Often missing "all suggestions accepted" edge case -- verify full replacement does not corrupt document structure
+- [ ] **Persistence:** Often missing suggestion state persistence across page refresh -- verify refreshing mid-review does not lose accept/reject decisions
+- [ ] **Persistence:** Often missing association between suggestions and analysis version -- verify that re-running analysis does not orphan existing suggestion review state
 
 ## Recovery Strategies
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Theme FOUC shipped | LOW | Install next-themes, add suppressHydrationWarning, update Providers -- 1-2 hour fix |
-| Hardcoded colors found after redesign | MEDIUM | Grep for raw color classes across 11 files, replace with semantic tokens -- tedious but mechanical, 2-4 hours |
-| localStorage quota exceeded, data lost | HIGH | Data is gone and unrecoverable. Migrate to IndexedDB going forward, but lost analyses cannot be restored |
-| WorkspaceContext became god object | MEDIUM | Extract into separate contexts, update imports across all consumers -- mechanical refactoring, 3-4 hours |
-| Schema version missing, old analyses crash | MEDIUM | Add version field retroactively, write migration handling "no version" as v1, add safeParse validation |
-| Card redesign broke non-narrative types | LOW-MEDIUM | Revert to old components for broken types, fix one type at a time. Lower cost if old components kept as fallbacks |
+| FDX round-trip data loss (Pitfall 1) | MEDIUM | Build the preservation layer as a new module. Existing `parseFdx` stays for analysis. No existing code needs rewriting, but the new module must be designed carefully |
+| Generic suggestions (Pitfall 2) | LOW | Prompt engineering fix -- restructure the prompt to use analysis weakness strings as the instruction list. No architecture change needed |
+| Offset drift corruption (Pitfall 3) | HIGH if built with offsets | Must redesign suggestion data model from scratch. This is why paragraph-level anchoring must be Phase 1 |
+| FDX Text node edge cases (Pitfall 4) | LOW-MEDIUM | Can be incrementally fixed per edge case. Start with single-Text collapse, add multi-Text preservation later |
+| State explosion in UI (Pitfall 5) | MEDIUM | Refactor to single-source-of-truth state model. Manageable but painful if the UI was built with ad-hoc state |
+| Token cost explosion (Pitfall 6) | LOW | Switch from per-issue calls to batched single call. API route change, no UI impact |
+| Wrong streaming architecture (Pitfall 7) | MEDIUM | Rewire the API route and client consumer. If non-streaming was chosen and works, no recovery needed |
 
 ## Pitfall-to-Phase Mapping
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Theme FOUC (Pitfall 1) | Phase 1: Theme System | Hard refresh with cleared localStorage shows no flash; `suppressHydrationWarning` present on `<html>` |
-| Hardcoded colors (Pitfall 2) | Phase 1: Theme System | Toggle light/dark on every page; no invisible text, wrong backgrounds, or unreadable badges in either theme |
-| localStorage quota (Pitfall 3) | Phase 3: Library/Persistence | IndexedDB used from the start; test saving 50+ analyses without errors |
-| Breaking report components (Pitfall 4) | Phase 2: Card Redesign | All 5 project types tested after each card component change; old components kept until verified |
-| Context god object (Pitfall 5) | Phase 1 + Phase 3 | WorkspaceContext stays at ~15 fields max; theme and library have separate contexts |
-| Schema versioning (Pitfall 6) | Phase 3: Library/Persistence | Every stored record has `schemaVersion`; loading a v1 record into a v2+ app works without crashes |
+| FDX round-trip data loss | Phase 1: FDX infrastructure | Parse a real FDX, modify one paragraph's text, rebuild XML, open in Final Draft. All metadata, types, and formatting preserved |
+| Generic suggestions | Phase 2: Suggestion generation | Review 5 generated suggestions -- each must reference specific text from the script and name the analysis finding it addresses |
+| Offset drift corruption | Phase 1: Data model design | Accept 5+ suggestions scattered throughout a script, export, verify all passages are correct with no text corruption |
+| FDX Text node edge cases | Phase 3: FDX export | Test with FDX files containing italic dialogue, dual dialogue, revision marks. Verify round-trip fidelity in Final Draft |
+| State explosion in UI | Phase 2: Data model + Phase 3: UI | Toggle accept/reject rapidly 20 times on various suggestions. Refresh page mid-review. Verify state consistency throughout |
+| Token cost explosion | Phase 2: Suggestion generation API | Log token usage for a full suggestion run. Must be under 50K input tokens for a typical 120-page screenplay |
+| Wrong streaming pattern | Phase 2: API design decision | If streaming: verify first suggestion appears within 5 seconds. If non-streaming: verify total time under 30 seconds with progress feedback |
 
 ## Sources
 
-- Direct codebase analysis of: layout.tsx (hardcoded `className="dark"`, line 24), workspace-context.tsx (11 state fields + 11 setters), document-workspace.tsx (hardcoded `bg-white` line 267, `hover:bg-gray-100` lines 269/275), narrative-report.tsx (hardcoded `text-green-500`, `text-red-400`, `bg-amber-500/20`), app-sidebar.tsx (hardcoded `text-stone-50`, `bg-white/5`, `text-stone-400`)
-- 11 files confirmed with hardcoded color classes via codebase grep
-- next-themes: well-established community standard for Next.js theme management; blocking script approach prevents FOUC (HIGH confidence)
-- localStorage 5MB limit: Web Storage API specification (HIGH confidence)
-- IndexedDB storage limits: effectively unlimited for this scale per MDN documentation (HIGH confidence)
-- shadcn/ui theming: uses CSS custom properties scoped to `.dark` class via `attribute="class"` in theme provider (HIGH confidence, verified from package.json dependency)
-- idb-keyval: minimal IndexedDB wrapper, ~3KB, widely used (MEDIUM confidence -- verify current API before adopting)
+- Codebase analysis: `src/lib/parsers/fdx-parser.ts` (current parser discards structure), `src/lib/ai/schemas/narrative.ts` (weakness fields in analysis schema), `src/lib/db.ts` (current DB schema and migration pattern), `src/app/api/analyze/route.ts` (existing streaming pattern)
+- [fast-xml-parser documentation and XMLBuilder options](https://github.com/NaturalIntelligence/fast-xml-parser)
+- [fast-xml-parser preserveOrder discussion](https://github.com/NaturalIntelligence/fast-xml-parser/discussions/462)
+- [FDX format structure via rsdoiel/fdx sample files](https://github.com/rsdoiel/fdx/blob/main/testdata/sample-01.fdx)
+- [Final Draft screenplay formatting elements](https://www.finaldraft.com/learn/screenplay-formatting-elements/)
+- [jsdiff -- JavaScript text differencing](https://github.com/kpdecker/jsdiff)
+- [NYTimes/ice -- track changes in JavaScript](https://github.com/nytimes/ice)
+- [AI engineering pitfalls (Huyen Chip, 2025)](https://huyenchip.com/2025/01/16/ai-engineering-pitfalls.html)
+- [Token cost optimization strategies (10Clouds)](https://10clouds.com/blog/a-i/mastering-ai-token-optimization-proven-strategies-to-cut-ai-cost/)
+- [LLM edit-list pattern vs. full document rewrite (Waleed Kadous)](https://waleedk.medium.com/the-edit-trick-efficient-llm-annotation-of-documents-d078429faf37)
 
 ---
-*Pitfalls research for: FilmIntern v1.1 UI and Formatting milestone*
-*Researched: 2026-03-17*
+*Pitfalls research for: FilmIntern v3.0 -- AI rewrite suggestions, tracked-changes UI, FDX export*
+*Researched: 2026-03-21*

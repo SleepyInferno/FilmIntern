@@ -1,173 +1,200 @@
-# Stack Research
+# Technology Stack: v3.0 Script Improvement Features
 
-**Domain:** UI redesign additions for filmmaking analysis app (theme toggle, card layouts, local persistence)
-**Researched:** 2026-03-17
+**Project:** FilmIntern v3.0 -- AI Rewrite Suggestions, Tracked Changes UI, FDX Export
+**Researched:** 2026-03-21
 **Confidence:** HIGH
 
-## Existing Stack (DO NOT change)
+## Scope
 
-Already validated and in use -- listed for reference only:
+This research covers ONLY the new libraries and patterns needed for v3.0. The existing validated stack (Next.js 15, AI SDK 6, better-sqlite3, Playwright PDF export, docx library, fast-xml-parser for FDX reading) is not re-evaluated.
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Next.js | 16.1.6 | App framework (App Router) |
-| React | 19.2.3 | UI rendering |
-| Tailwind CSS | v4 | Styling (CSS-first config) |
-| shadcn + @base-ui/react | 4.0.8 / 1.3.0 | Component library |
-| TypeScript | ^5 | Type safety |
-| Zod | ^4.3.6 | Schema validation |
-| lucide-react | ^0.577.0 | Icons |
-| class-variance-authority | ^0.7.1 | Component variants |
-| clsx + tailwind-merge | ^2.1.1 / ^3.5.0 | Class composition |
-| tw-animate-css | ^1.4.0 | CSS animations |
+## Recommended Stack Additions
 
-## New Dependencies to Add
+### Diff/Patch Operations
 
-### 1. Theme Toggle: next-themes
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `diff-match-patch-es` | ^0.1.x | Compute diffs between original and suggested text, apply accepted patches | ESM-native TypeScript rewrite of Google's diff-match-patch by Anthony Fu. Tree-shakable (import only `diff` and `patch` functions, skip `match`). The original `diff-match-patch` npm package hasn't been updated in 5+ years and is not ESM. `@sanity/diff-match-patch` is an alternative with good TypeScript support but heavier due to Sanity ecosystem dependencies. `diff-match-patch-es` is the cleanest fit for a modern Next.js 15 + TypeScript project. |
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| next-themes | ^0.4.6 | Dark/light theme switching with system preference support | De facto standard for Next.js theming. Handles SSR flash prevention, localStorage persistence, system preference detection, and class-based toggling that Tailwind CSS needs. Used by shadcn documentation and virtually every Next.js project with theme support. Zero alternatives worth considering. |
+**Why diff-match-patch at all:** The core workflow is: (1) AI generates a rewritten version of a passage, (2) we diff original vs. rewrite to show insertions/deletions, (3) user accepts/rejects, (4) accepted patches are applied to produce the final text. Character-level diffing (not line-level) is critical because screenplay changes are often word-level within dialogue or action lines. diff-match-patch excels at this -- it was built for Google Docs.
 
-**Integration notes:**
+**Alternatives rejected:**
 
-- The project already has the `.dark` class hardcoded on `<html>` in layout.tsx and a `@custom-variant dark (&:is(.dark *));` rule in globals.css. next-themes replaces the hardcoded class with dynamic toggling.
-- The existing custom-variant should be updated to `@custom-variant dark (&:where(.dark, .dark *));` -- the `:where()` selector has zero specificity (prevents cascade conflicts), and the additional `.dark` match (not just `.dark *`) ensures styles apply to the `<html>` element itself, not only its descendants.
-- ThemeProvider wraps children in the existing `Providers` component (`src/app/providers.tsx`). Configuration: `attribute="class"`, `defaultTheme="dark"`, `enableSystem`.
-- Remove the hardcoded `className="dark"` from `<html>` in layout.tsx -- next-themes manages this dynamically.
-- The `useTheme()` hook provides `theme`, `setTheme`, and `resolvedTheme` for building the toggle button.
-- No Tailwind config changes needed -- the CSS custom-variant handles everything in Tailwind v4.
+| Alternative | Why Not |
+|-------------|---------|
+| `diff` (jsdiff by kpdecker) | Line-oriented by default; character diff exists but less battle-tested than diff-match-patch for prose. No built-in patch apply. |
+| `@sanity/diff-match-patch` | Good TypeScript fork, but pulls in Sanity-ecosystem conventions. `diff-match-patch-es` is leaner and ESM-first. |
+| `diff-match-patch` (original npm) | Not ESM, not tree-shakable, no TypeScript types, unmaintained since ~2020. |
 
-### 2. Card-Based Layouts: No new dependencies needed
+### FDX Export (Writing)
 
-The existing stack is sufficient for building card-based analysis workspaces:
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `fast-xml-parser` (XMLBuilder) | ^5.5.6 (already installed) | Generate FDX XML output from script data | **No new dependency needed.** fast-xml-parser includes `XMLBuilder` alongside `XMLParser`. The project already uses fast-xml-parser ^5.5.6 for FDX reading. XMLBuilder can produce the same XML structure by building a JS object that mirrors the FDX schema and calling `builder.build(obj)`. |
 
-| Need | Already Available |
-|------|-------------------|
-| Card components | shadcn Card, CardHeader, CardContent, CardFooter |
-| Responsive grid layouts | Tailwind CSS grid/flex (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`) |
-| Component variants per card type | class-variance-authority (CVA) |
-| Icons for evaluation dimensions | lucide-react |
-| Entrance animations | tw-animate-css |
-| Class composition | `cn()` utility via clsx + tailwind-merge |
+**FDX file structure for writing** (HIGH confidence -- verified from sample files and format documentation):
 
-**Implementation approach:**
+```xml
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<FinalDraft DocumentType="Script" Template="No" Version="4">
+  <Content>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. APARTMENT - NIGHT</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>The room is dark except for the glow of a laptop.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>SARAH</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>I can't believe you actually did it.</Text>
+    </Paragraph>
+  </Content>
+</FinalDraft>
+```
 
-- Use Tailwind CSS grid with responsive columns for card layouts.
-- Extend shadcn Card components with CVA variants for different evaluation dimension card styles (color-coded borders, accent indicators per dimension category).
-- Brand accent colors (orange/amber) should be added as CSS custom properties in globals.css for both `:root` and `.dark` scopes (see CSS section below).
-- No animation library needed -- tw-animate-css covers entrance animations.
-- No drag-and-drop library needed -- card positions are fixed by project type, not user-configurable.
+Valid `Paragraph Type` values: `Scene Heading`, `Action`, `Character`, `Dialogue`, `Parenthetical`, `Transition`, `General`. Text elements can carry style attributes (`@_Style`, `@_RevisionID`) but a minimal valid FDX only needs `Type` on Paragraph and plain `Text` children.
 
-### 3. Client-Side Persistence: Dexie.js
+**Key implementation detail:** The existing `fdx-parser.ts` flattens FDX to plain text and discards paragraph types. For FDX **export**, the script text needs to be re-parsed into typed paragraphs. This means the internal data model for the revised script should preserve paragraph type annotations (Scene Heading, Action, Character, Dialogue, etc.), not just flat text. This is an architecture decision, not a library decision.
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| dexie | ^4.0.11 | IndexedDB wrapper for storing saved analyses | Analyses contain structured JSON (Tiptap documents, Zod-validated report data) that can be large. localStorage has a 5-10MB limit which is too small for multiple saved analyses with rich content. Dexie wraps IndexedDB with a clean Promise-based API, typed schemas, versioned migrations, and reactive queries. |
-| dexie-react-hooks | ^4.2.0 | React hooks for reactive Dexie queries | Provides `useLiveQuery()` which auto-updates components when IndexedDB data changes. Eliminates manual state sync between the database and React. Works across tabs. |
+### Tracked Changes UI
 
-**Why Dexie over alternatives:**
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| Custom React components | N/A | Display inline insertions/deletions with accept/reject buttons | **No new library needed.** Build a custom `<SuggestionDiff>` component that renders diff output (from diff-match-patch-es) as styled spans: green/underline for insertions, red/strikethrough for deletions, with per-suggestion accept/reject buttons. |
 
-- **vs. idb-keyval (~600B):** idb-keyval is key-value only. The Library feature needs querying (filter by project type, sort by date, search by title). idb-keyval cannot do this without loading everything into memory.
-- **vs. localStorage:** 5-10MB limit is too small. No querying. Synchronous API blocks main thread on large reads.
-- **vs. raw IndexedDB:** IndexedDB native API is callback-based and verbose. Dexie wraps it in ~40KB gzipped with dramatically better DX.
-- **vs. localForage:** Polyfill-era library for pre-IndexedDB browsers. No querying. Essentially unmaintained.
-- **vs. PouchDB / RxDB:** Sync-capable databases designed for CouchDB replication. Massive overkill for single-user local persistence with no sync target.
+**Why NOT use Tiptap for tracked changes:**
 
-**Integration notes:**
+Tiptap `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/pm`, and `@tiptap/static-renderer` are already in package.json (^3.20.4) but **not used anywhere in the codebase**. The Tracked Changes extension is a paid add-on requiring a Tiptap Platform subscription. For a personal single-user tool, paying for a collaboration-focused SaaS extension is unjustifiable. More importantly:
 
-- Define a `db.ts` file with a Dexie subclass. Primary table: `analyses` with fields for id, title, projectType, createdAt, updatedAt, reportData (Zod-validated JSON), documentJson (Tiptap format).
-- Index on `projectType` and `createdAt` for Library filtering and sorting.
-- Use `useLiveQuery()` in the Library page component for reactive listing.
-- Wire save into the existing workspace context -- auto-save after AI streaming completes.
-- Schema versioning via `db.version(1).stores(...)` handles future migrations.
-- Dexie is client-side only. Only import in `'use client'` components -- never in Server Components or API routes.
+1. **The use case is review, not editing.** Users are not free-editing the script -- they are reviewing AI-generated suggestions and clicking accept/reject. This is a read-mostly UI with binary actions per suggestion, not a rich text editor.
+2. **Tiptap adds ~150KB+ to the bundle** for functionality that amounts to rendering colored spans with buttons.
+3. **The `@buddhima_a/tiptap-diff-suggestions` community extension** exists (7 commits, 22 stars, last updated Dec 2024) but is too immature and low-activity to depend on for production.
+
+**Recommendation: Remove Tiptap from dependencies.** It was likely added speculatively for v3.0 but the tracked-changes UI is better served by a lightweight custom component. If Tiptap is genuinely needed later (e.g., for free-form script editing), it can be re-added.
+
+**Why NOT use react-diff-viewer:** These libraries (react-diff-viewer, react-diff-viewer-continued) render side-by-side or unified code diffs in a GitHub-style view. They are designed for code review, not screenplay review with per-suggestion accept/reject. The UI metaphor is wrong -- we need inline tracked changes (like Word's Track Changes), not a diff panel.
+
+### AI Structured Output for Suggestions
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| AI SDK 6 `generateObject` | ^6.0.116 (already installed) | Generate structured array of rewrite suggestions | **No new dependency needed.** Use `generateObject` with `output: 'array'` mode and a Zod schema for each suggestion. This returns a typed array where each element conforms to the schema. Already proven in the codebase via `streamText` + `Output.object`. |
+| Zod | ^4.3.6 (already installed) | Define suggestion schema | Already used for all analysis schemas. |
+
+**Suggested Zod schema pattern:**
+
+```typescript
+const suggestionSchema = z.object({
+  id: z.string().describe('Unique identifier for this suggestion'),
+  location: z.object({
+    paragraphIndex: z.number().describe('Index of the paragraph in the script'),
+    originalText: z.string().describe('The exact original text being targeted'),
+  }),
+  replacementText: z.string().describe('The suggested replacement text'),
+  rationale: z.string().describe('Why this change improves the script, referencing the analysis finding'),
+  category: z.enum([
+    'dialogue', 'action', 'pacing', 'structure', 'character', 'clarity'
+  ]).describe('What aspect of the script this suggestion addresses'),
+  severity: z.enum(['minor', 'moderate', 'significant']).describe('Impact level of the issue'),
+  analysisRef: z.string().describe('Which analysis dimension flagged this issue'),
+});
+```
+
+**Why `generateObject` not `streamText`:** Suggestions are discrete items with clear structure. Unlike the analysis (which benefits from streaming for progressive display), suggestions should be generated as a complete batch so the UI can render the full tracked-changes view at once. If generation is slow, a loading state is more appropriate than partial suggestion rendering. If streaming is desired later, `streamObject` with `output: 'array'` can stream individual array elements as they complete.
+
+### Script Text Export (PDF, DOCX, Plain Text)
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| Playwright (chromium) | ^1.58.2 (already installed) | PDF export of revised script | Same pattern as existing `export-pdf.ts`. Render script as HTML, print to PDF via Playwright. |
+| `docx` | ^9.6.1 (already installed) | DOCX export of revised script | Same library used for existing analysis DOCX export. Build screenplay-formatted Document with paragraph types mapped to Word styles. |
+
+**No new dependencies for script export.** The existing export infrastructure handles the output formats. The new work is building screenplay-formatted templates (as opposed to the current analysis-report templates), but that is implementation work, not library work.
+
+## What NOT to Add
+
+| Avoid | Why | What to Do Instead |
+|-------|-----|-------------------|
+| Tiptap Tracked Changes (paid extension) | Paid SaaS add-on for a personal tool; review UI is simpler than a full editor | Custom React component with diff-match-patch-es |
+| `@tiptap/*` packages (remove existing) | 4 packages in package.json, 0 imports in codebase; adds ~150KB+ bundle weight for unused functionality | Remove from package.json; re-add only if free-form editing is needed later |
+| `react-diff-viewer` or similar | Code-review UI metaphor (side-by-side panels) doesn't match the tracked-changes UX needed | Custom inline diff rendering with styled spans |
+| `prosemirror-changeset` | Low-level ProseMirror plugin; requires building an entire editor around it | Custom component is simpler for review-only use case |
+| Fountain.js or other screenplay parsers | The project already parses all needed formats; adding another parser adds complexity | Enhance existing parsers to preserve paragraph type metadata |
+| Any collaboration/real-time library (Y.js, Automerge) | Single-user personal tool; no collaboration use case | N/A |
+| `xml2js`, `xmlbuilder2`, or other XML libraries | fast-xml-parser already handles both read (XMLParser) and write (XMLBuilder) | Use existing fast-xml-parser |
+
+## Summary: Total New Dependencies
+
+| Package | Purpose | Size Impact |
+|---------|---------|-------------|
+| `diff-match-patch-es` | Diff computation and patch application | ~15KB minified (tree-shakable) |
+
+**That's it. One new package.** Everything else is already installed or should be removed (Tiptap).
 
 ## Installation
 
 ```bash
-# Theme toggle
-npm install next-themes
+# One new dependency
+npm install diff-match-patch-es
 
-# Client-side persistence
-npm install dexie dexie-react-hooks
+# Remove unused Tiptap packages (speculatively added, never used)
+npm uninstall @tiptap/pm @tiptap/react @tiptap/starter-kit @tiptap/static-renderer
 ```
 
-Three packages total. No dev dependencies needed.
+## Integration Points with Existing Stack
 
-## CSS Custom Properties to Add
+### AI Suggestion Generation
+- **Existing:** `streamText` + `Output.object` + Zod schema + provider registry in `src/app/api/analyze/route.ts`
+- **New:** `generateObject` + `output: 'array'` + suggestion Zod schema + same provider registry
+- **Pattern:** Create `src/app/api/suggestions/route.ts` following the identical pattern as the analysis route (settings loading, provider health check, registry building)
 
-For the orange/amber brand system, add these to globals.css alongside existing variables:
+### FDX Export
+- **Existing:** `fast-xml-parser` XMLParser in `src/lib/parsers/fdx-parser.ts`
+- **New:** `fast-xml-parser` XMLBuilder in new `src/lib/documents/export-fdx.ts`
+- **Pattern:** Mirror the export-pdf.ts / export-docx.ts pattern but output XML string via XMLBuilder
 
-```css
-:root {
-  --brand: oklch(0.705 0.213 47.604);        /* warm orange */
-  --brand-foreground: oklch(0.985 0 0);       /* white text on brand */
-  --brand-muted: oklch(0.905 0.081 70.697);   /* light amber for backgrounds */
-}
+### Diff/Merge Engine
+- **New module:** `src/lib/diff/` containing:
+  - `compute-diff.ts` -- wraps diff-match-patch-es to produce typed diff results
+  - `apply-patches.ts` -- applies accepted suggestions to produce final text
+  - `types.ts` -- shared types for suggestions, diffs, patches
 
-.dark {
-  --brand: oklch(0.792 0.194 60.627);         /* brighter amber for dark mode */
-  --brand-foreground: oklch(0.145 0 0);        /* dark text on bright brand */
-  --brand-muted: oklch(0.321 0.066 50.265);   /* dark amber for backgrounds */
-}
-```
+### Tracked Changes UI
+- **New component:** `src/components/suggestions/` containing:
+  - `SuggestionCard.tsx` -- single suggestion with inline diff display and accept/reject
+  - `SuggestionList.tsx` -- scrollable list of all suggestions for a script
+  - `SuggestionToolbar.tsx` -- accept all / reject all / export revised script
+- **Styling:** Use existing Tailwind + shadcn patterns; insertion = green text, deletion = red strikethrough
 
-Register in the `@theme inline` block:
-```css
---color-brand: var(--brand);
---color-brand-foreground: var(--brand-foreground);
---color-brand-muted: var(--brand-muted);
-```
-
-This enables `bg-brand`, `text-brand-foreground`, `bg-brand-muted` Tailwind classes that automatically switch between light/dark values.
-
-## Alternatives Considered
-
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| next-themes | Manual React context + localStorage | Never for Next.js -- next-themes handles SSR hydration flash, system preference sync, and class toggling in ways that are tedious and error-prone to replicate manually |
-| next-themes | CSS-only prefers-color-scheme | Only if you want system-only theming with no user toggle -- not the case here |
-| Dexie.js | idb-keyval | When you only need simple key-value caching with no querying (user preferences, tokens) |
-| Dexie.js | localStorage | When data is small (<1MB), simple strings, and querying is not needed |
-| Existing shadcn Cards | react-grid-layout or similar | When users need drag-and-drop card rearrangement -- not in scope for v1.1 |
-
-## What NOT to Use
-
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| @radix-ui/react-* directly | Already using @base-ui/react which is the successor to Radix primitives in shadcn v4. Adding Radix creates duplicate abstractions. | @base-ui/react via shadcn components |
-| zustand / jotai for persistence | In-memory state managers that need middleware for persistence. Dexie IS the storage layer with built-in reactivity via useLiveQuery. | Dexie + useLiveQuery for persistent data; React context for ephemeral UI state |
-| react-query / SWR for Library data | Server-state caching libraries. The Library is local-first with no server to cache from. | Dexie useLiveQuery for reactive local queries |
-| framer-motion | Card layouts do not need physics-based animations. tw-animate-css (already installed) handles CSS transitions. Framer adds ~30KB for no benefit. | tw-animate-css + Tailwind transition utilities |
-| CSS Modules / styled-components | The project uses Tailwind CSS exclusively. Mixing paradigms creates maintenance burden. | Tailwind CSS classes + CSS custom properties |
-| A separate UI library for cards | shadcn Card components + Tailwind grid is all that is needed. Adding Material UI, Chakra, etc. would conflict with existing shadcn patterns. | shadcn Card + CVA variants |
+### Revised Script Data Model
+- **Existing:** Scripts stored as flat text in SQLite after parsing
+- **New:** Need a structured representation preserving paragraph types for FDX export
+- **Approach:** Store paragraph-typed script data (array of `{type, text}` objects) in SQLite JSON column alongside the flat text
 
 ## Version Compatibility
 
-| Package | Compatible With | Notes |
-|---------|-----------------|-------|
-| next-themes@0.4.6 | Next.js 13-16, React 18-19 | Stable. Uses React context internally. No known issues with Next.js 16 or React 19. |
-| dexie@4.0.11 | All modern browsers, any React version | IndexedDB available in all modern browsers. Dexie has zero React dependency. |
-| dexie-react-hooks@4.2.0 | dexie@4.x, React 16.8+ | Must match major version with dexie (both v4). Works with React 19. |
-
-## Key Architecture Notes
-
-1. **Theme state is UI-only.** next-themes handles persistence (localStorage) and hydration. No database involvement.
-2. **Card layouts are purely presentational.** No new data model needed -- cards render from existing Zod-validated analysis report schemas. Each project type maps to a different set of evaluation dimension cards.
-3. **Library persistence is the only new data layer.** Dexie stores complete analysis results locally. The existing workspace context should gain save/load methods that bridge to the Dexie database.
-4. **No server changes needed.** All three features (theme, cards, Library) are client-side only. No new API routes required.
+| New Package | Compatible With | Notes |
+|-------------|-----------------|-------|
+| `diff-match-patch-es` ^0.1.x | Node 22 LTS, Next.js 15+, ESM | Pure TypeScript, no native dependencies, tree-shakable ESM |
+| `fast-xml-parser` XMLBuilder ^5.5.x | Same version already in use | Same package, different export (`XMLBuilder` instead of `XMLParser`) |
 
 ## Sources
 
-- [next-themes GitHub](https://github.com/pacocoursey/next-themes) -- v0.4.6 confirmed, API reference (HIGH confidence)
-- [Dark Mode in Next.js 15 with Tailwind CSS v4](https://www.sujalvanjare.com/blog/dark-mode-nextjs15-tailwind-v4) -- Tailwind v4 custom-variant config (HIGH confidence)
-- [shadcn dark mode guide](https://ui.shadcn.com/docs/dark-mode/next) -- official integration pattern (HIGH confidence)
-- [Dexie.js npm](https://www.npmjs.com/package/dexie) -- v4.0.11 confirmed, Jan 2026 release (HIGH confidence)
-- [Dexie useLiveQuery docs](https://dexie.org/docs/dexie-react-hooks/useLiveQuery()) -- React hooks API (HIGH confidence)
-- [npm-compare: idb vs dexie vs localforage](https://npm-compare.com/dexie,idb,localforage) -- library comparison data (MEDIUM confidence)
-- [Tailwind v4 + next-themes integration](https://medium.com/@kevstrosky/theme-colors-with-tailwind-css-v4-0-and-next-themes-dark-light-custom-mode-36dca1e20419) -- CSS-first dark mode config (MEDIUM confidence)
+- [diff-match-patch-es GitHub (antfu)](https://github.com/antfu/diff-match-patch-es) -- ESM rewrite, HIGH confidence
+- [diff-match-patch-es npm](https://www.npmjs.com/package/diff-match-patch-es) -- package info, HIGH confidence
+- [@sanity/diff-match-patch npm](https://www.npmjs.com/package/@sanity/diff-match-patch) -- alternative evaluated, MEDIUM confidence
+- [fast-xml-parser XMLBuilder docs](https://naturalintelligence.github.io/fast-xml-parser/) -- official docs confirming XMLBuilder, HIGH confidence
+- [fast-xml-parser GitHub](https://github.com/NaturalIntelligence/fast-xml-parser) -- 52M+ weekly downloads, HIGH confidence
+- [FDX format sample (rsdoiel/fdx)](https://github.com/rsdoiel/fdx/blob/main/testdata/sample-01.fdx) -- XML structure reference, MEDIUM confidence
+- [FDX format documentation (Just Solve)](http://justsolve.archiveteam.org/wiki/Final_Draft) -- format overview, MEDIUM confidence
+- [Tiptap Tracked Changes docs](https://tiptap.dev/docs/editor/extensions/functionality/tracked-changes) -- paid extension confirmation, HIGH confidence
+- [Tiptap pricing page](https://tiptap.dev/pricing) -- tracked changes is paid add-on, HIGH confidence
+- [tiptap-diff-suggestions community extension](https://github.com/bsachinthana/tiptap-diff-suggestions) -- too immature, LOW confidence
+- [AI SDK generateObject docs](https://ai-sdk.dev/docs/reference/ai-sdk-core/generate-object) -- array output mode, HIGH confidence
+- [AI SDK structured data generation](https://ai-sdk.dev/docs/ai-sdk-core/generating-structured-data) -- schema patterns, HIGH confidence
 
 ---
-*Stack research for: FilmIntern v1.1 UI and Formatting milestone*
-*Researched: 2026-03-17*
+*Stack research for: FilmIntern v3.0 Script Improvement Features*
+*Researched: 2026-03-21*
