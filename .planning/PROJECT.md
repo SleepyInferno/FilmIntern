@@ -61,6 +61,12 @@ Upload your material, pick your project type, get a structured analysis back —
 - Export revised script as PDF, DOCX, FDX (Final Draft), or plain text
 - Works across all 4 project types (narrative, TV/episodic, documentary, corporate)
 
+### Validated in Phase 15
+
+- ✓ App branding reads "Film Intern" everywhere (page titles, sidebar, top nav) — v3.0
+- ✓ Dedicated /revision/[projectId] route exists with loading/error/empty/loaded states — v3.0
+- ✓ Completed analysis workspace shows navigation link to revision page — v3.0
+
 ### Active
 
 - [ ] User can generate AI rewrite suggestions from a completed analysis
@@ -129,4 +135,4 @@ Known tech debt: orphaned short-form components safe to delete, harshCriticEnabl
 | GHA cache mode=max | Caches all intermediate layers (deps + builder stages) for fast subsequent CI builds | ✓ Good — significant build time reduction after first run |
 
 ---
-*Last updated: 2026-03-21 after v3.0 milestone start*
+*Last updated: 2026-03-21 after Phase 15 complete — branding renamed to Film Intern, revision page shell created*
