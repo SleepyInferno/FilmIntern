@@ -30,7 +30,7 @@ export function AppTopNav() {
   return (
     <header className="h-14 bg-background border-b border-border flex items-center px-6 shrink-0">
       <span className="text-base font-semibold text-foreground mr-10 tracking-tight shrink-0">
-        FilmIntern
+        Film Intern
       </span>
 
       <nav className="flex items-center flex-1 h-full">
