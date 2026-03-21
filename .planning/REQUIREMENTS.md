@@ -22,8 +22,8 @@ Requirements for the Script Improvement milestone. Each maps to roadmap phases.
 - [ ] **REVW-02**: User can accept or reject each suggestion individually
 - [ ] **REVW-03**: Script preview updates live as user accepts/rejects suggestions
 - [ ] **REVW-04**: User can request a new AI rewrite for any individual suggestion
-- [ ] **REVW-05**: Suggestion review lives on a dedicated "Adjustments / Revision" page, separate from the existing analysis workspace
-- [ ] **REVW-06**: Existing analysis workflow is unchanged — the new page is additive only
+- [x] **REVW-05**: Suggestion review lives on a dedicated "Adjustments / Revision" page, separate from the existing analysis workspace
+- [x] **REVW-06**: Existing analysis workflow is unchanged — the new page is additive only
 
 ### Script Export
 
@@ -53,8 +53,8 @@ Requirements for the Script Improvement milestone. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REVW-05 | Phase 15 | Pending |
-| REVW-06 | Phase 15 | Pending |
+| REVW-05 | Phase 15 | Complete |
+| REVW-06 | Phase 15 | Complete |
 | BRAND-01 | Phase 15 | Complete |
 | SUGG-01 | Phase 16 | Pending |
 | SUGG-02 | Phase 16 | Pending |
