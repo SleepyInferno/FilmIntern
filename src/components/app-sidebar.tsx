@@ -114,10 +114,10 @@ export function AppSidebar() {
       {/* Brand */}
       <div className="px-6 py-6 border-b border-border">
         <h1 className="text-[28px] font-semibold text-foreground leading-[1.2] hidden xl:block">
-          Nano Banana
+          Film Intern
         </h1>
         <span className="text-foreground text-[28px] font-semibold xl:hidden block text-center">
-          NB
+          FI
         </span>
       </div>
 

@@ -13,7 +13,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Nano Banana",
+  title: "Film Intern",
   description: "Filmmaking analysis tool",
 };
 
