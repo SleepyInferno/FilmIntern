@@ -11,7 +11,9 @@ import { TvWorkspace } from '@/components/workspaces/tv-workspace';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, ChevronDown, Film } from 'lucide-react';
+import Link from 'next/link';
+import { Loader2, ChevronDown, Film, ArrowRight } from 'lucide-react';
+import { buttonVariants } from '@/components/ui/button';
 import { buildReportDocument } from '@/lib/documents/report-document';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { PROJECT_TYPES } from '@/lib/types/project-types';
@@ -483,6 +485,13 @@ export default function Home() {
               </>
             )}
           </div>
+          <Link
+            href={`/revision/${currentProjectId}`}
+            className={buttonVariants({ variant: 'outline', size: 'sm' })}
+          >
+            Adjustments &amp; Revision
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
           <DocumentWorkspace
             projectType={projectType}
             reportDocument={reportDocument}
