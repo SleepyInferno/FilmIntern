@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A personal filmmaking workflow web app that lets you select a project type (documentary, narrative film, TV/episodic, or corporate interview), upload a transcript or screenplay, and receive a structured AI analysis report tailored to that project type. Supports PDF, Final Draft (.fdx), DOCX, and plain text. Includes PDF/DOCX export, derivative document generation (treatments, outlines), a persistent library of saved analyses, multi-provider AI (Anthropic/OpenAI/Ollama), dark/light theme, card-based evaluation workspaces, and an optional Harsh Critic Mode for industry-executive-style brutal feedback. Runs fully containerized — one-command dev startup via Docker Compose, production deployment to Unraid via Caddy reverse proxy, with automated image publishing to GHCR. Built to replace a scattered multi-tool workflow and serve as a second set of eyes on your own work.
+A personal filmmaking workflow web app that lets you select a project type (documentary, narrative film, TV/episodic, or corporate interview), upload a transcript or screenplay, and receive a structured AI analysis report tailored to that project type. Supports PDF, Final Draft (.fdx), DOCX, and plain text. Includes PDF/DOCX export, derivative document generation (treatments, outlines), a persistent library of saved analyses, multi-provider AI (Anthropic/OpenAI/Ollama), dark/light theme, card-based evaluation workspaces, and an optional Harsh Critic Mode for industry-executive-style brutal feedback. Runs fully containerized — one-command dev startup via Docker Compose, production deployment to Unraid via Caddy reverse proxy, with automated image publishing to GHCR. Built to replace a scattered multi-tool workflow and serve as a second set of eyes on your own work. v3.0 adds AI-driven script improvement: analysis-targeted rewrite suggestions reviewed in a tracked-changes UI, with export of the revised script in PDF, DOCX, FDX, and plain text.
 
 ## Core Value
 
@@ -50,9 +50,28 @@ Upload your material, pick your project type, get a structured analysis back —
 - ✓ Caddy reverse proxy configured on port 7430 (HTTP, LAN access; HTTPS deferred) — v2.0
 - ✓ GitHub Actions workflow builds and pushes Docker image to GHCR on push to main — v2.0
 
+## Current Milestone: v3.0 Script Improvement
+
+**Goal:** After analysis runs, generate AI rewrite suggestions targeting flagged weaknesses — reviewed accept/reject per suggestion — then export the revised script in any format.
+
+**Target features:**
+- Analysis-driven rewrite suggestions (targets issues flagged in existing analysis)
+- Accept/reject each suggestion in a tracked-changes style UI
+- Merge accepted changes back into the original script
+- Export revised script as PDF, DOCX, FDX (Final Draft), or plain text
+- Works across all 4 project types (narrative, TV/episodic, documentary, corporate)
+
 ### Active
 
-*(None — planning v3.0 Unraid Deployment milestone)*
+- [ ] User can generate AI rewrite suggestions from a completed analysis
+- [ ] Suggestions target specific weaknesses flagged in the analysis
+- [ ] User can review suggestions in a tracked-changes style UI (accept/reject per suggestion)
+- [ ] Accepted suggestions are merged back into the original script
+- [ ] User can export the revised script as PDF
+- [ ] User can export the revised script as DOCX
+- [ ] User can export the revised script as FDX (Final Draft)
+- [ ] User can export the revised script as plain text
+- [ ] Script improvement works for all 4 project types
 
 ### Out of Scope
 
@@ -110,4 +129,4 @@ Known tech debt: orphaned short-form components safe to delete, harshCriticEnabl
 | GHA cache mode=max | Caches all intermediate layers (deps + builder stages) for fast subsequent CI builds | ✓ Good — significant build time reduction after first run |
 
 ---
-*Last updated: 2026-03-20 after v2.0 milestone*
+*Last updated: 2026-03-21 after v3.0 milestone start*
