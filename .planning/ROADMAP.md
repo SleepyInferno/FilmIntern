@@ -43,7 +43,7 @@ Archive: `.planning/milestones/v2.0-ROADMAP.md`
 
 **Milestone Goal:** After analysis runs, generate AI rewrite suggestions targeting flagged weaknesses -- reviewed accept/reject per suggestion -- then export the revised script in any format.
 
-- [ ] **Phase 15: Adjustments / Revision Page + Branding** - Page shell, navigation from analysis workspace, app rename to "Film Intern"
+- [x] **Phase 15: Adjustments / Revision Page + Branding** - Page shell, navigation from analysis workspace, app rename to "Film Intern" (completed 2026-03-21)
 - [ ] **Phase 16: Data Foundation + Suggestion Generation** - Schema, DB migration, FDX preservation, suggestion API, results displayed on revision page
 - [ ] **Phase 17: Review UI** - Accept/reject per suggestion, live script preview, single-suggestion regeneration
 - [ ] **Phase 18: Merge + Script Export** - Apply accepted suggestions, export revised script as PDF, DOCX, FDX, plain text
@@ -59,7 +59,7 @@ Archive: `.planning/milestones/v2.0-ROADMAP.md`
   2. The revision page loads with a shell layout ready for content (placeholder states are fine -- downstream phases fill it in)
   3. Existing analysis workflow (upload, analyze, view workspace, export report) is completely unchanged -- the new page is additive only
   4. App name reads "Film Intern" everywhere (page titles, headers, navigation, metadata) -- "Nano Banana" is gone
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 15-01-PLAN.md -- Rename branding from "Nano Banana" to "Film Intern" across all UI
 - [ ] 15-02-PLAN.md -- Create revision page shell and workspace navigation link
@@ -117,7 +117,7 @@ Plans:
 | 12. Production Deployment | v2.0 | 1/1 | Complete | 2026-03-19 |
 | 13. CI/CD Pipeline | v2.0 | 2/2 | Complete | 2026-03-20 |
 | 14. Documentation Cleanup | v2.0 | 1/1 | Complete | 2026-03-19 |
-| 15. Adjustments / Revision Page + Branding | v3.0 | 0/2 | In progress | - |
+| 15. Adjustments / Revision Page + Branding | 2/2 | Complete   | 2026-03-21 | - |
 | 16. Data Foundation + Suggestion Generation | v3.0 | 0/? | Not started | - |
 | 17. Review UI | v3.0 | 0/? | Not started | - |
 | 18. Merge + Script Export | v3.0 | 0/? | Not started | - |

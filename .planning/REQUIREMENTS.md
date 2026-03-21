@@ -34,7 +34,7 @@ Requirements for the Script Improvement milestone. Each maps to roadmap phases.
 
 ### Branding
 
-- [ ] **BRAND-01**: App name is updated from "Nano Banana" to "Film Intern" across all pages, titles, and metadata
+- [x] **BRAND-01**: App name is updated from "Nano Banana" to "Film Intern" across all pages, titles, and metadata
 
 ## Future Requirements
 
@@ -55,7 +55,7 @@ Requirements for the Script Improvement milestone. Each maps to roadmap phases.
 |-------------|-------|--------|
 | REVW-05 | Phase 15 | Pending |
 | REVW-06 | Phase 15 | Pending |
-| BRAND-01 | Phase 15 | Pending |
+| BRAND-01 | Phase 15 | Complete |
 | SUGG-01 | Phase 16 | Pending |
 | SUGG-02 | Phase 16 | Pending |
 | SUGG-03 | Phase 16 | Pending |
