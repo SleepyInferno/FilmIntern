@@ -5,9 +5,9 @@ milestone_name: Script Improvement
 status: planning
 stopped_at: null
 last_updated: "2026-03-21T00:00:00.000Z"
-last_activity: 2026-03-21 — Milestone v3.0 started
+last_activity: 2026-03-21 — Roadmap revised for v3.0 (Phases 15-18, page shell first)
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,30 +21,27 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Upload your material, pick your project type, get a structured analysis back — one tool that replaces hours of manual review across scattered apps.
-**Current focus:** v3.0 Script Improvement — defining requirements
+**Current focus:** v3.0 Script Improvement — Phase 15 ready to plan
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 15 of 18 (Adjustments / Revision Page + Branding)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-21 — Milestone v3.0 started
+Status: Ready to plan
+Last activity: 2026-03-21 — Roadmap revised for v3.0 (Phases 15-18, page shell first)
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
-**Velocity (from v1.0):**
-- Total plans completed: 29
-- Average duration: ~4.8 min
-- Total execution time: ~1.4 hours
+**Velocity (from v1.0 + v2.0):**
+- Total plans completed: 37
+- Average duration: ~4.5 min
+- Total execution time: ~2.8 hours
 
-| Phase | Plan | Duration | Tasks | Files |
-|-------|------|----------|-------|-------|
-| 10 | 01 | 2min | 2 | 7 |
-| 10 | 02 | 12min | 2 | 2 |
-| 11 | 01 | 2min | 2 | 4 |
-| 12 | 01 | 3min | 2 | 2 |
-| 13 | 01 | 1min | 1 | 1 |
-| 13 | 02 | 1min | 1 | 1 |
+**Recent Trend (v2.0):**
+- Last 6 plans: 2min, 12min, 2min, 3min, 1min, 1min
+- Trend: Stable (infrastructure phases, varied complexity)
 
 ## Accumulated Context
 
@@ -53,27 +50,13 @@ Last activity: 2026-03-21 — Milestone v3.0 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- Research: Use Debian bookworm-slim (not Alpine) due to better-sqlite3 native addon glibc dependency
-- Research: Caddy over Nginx for reverse proxy — automatic HTTPS with minimal config
-- Research: Zero new npm dependencies — only next.config.ts change and /api/health endpoint for app code
-- 10-01: APP_VERSION as simple constant (not package.json read) due to standalone mode fragility
-- 10-01: Dynamic import of db in health endpoint to avoid module-level DB init
-- 10-01: force-dynamic export to prevent Next.js caching health responses at build time
-- 10-02: bookworm-slim over Alpine — SWC/Turbopack and better-sqlite3 both require glibc (Alpine musl causes SIGILL)
-- 10-02: 440MB image size accepted — 300MB target unrealistic given 220MB base image
-- 10-02: Three-stage Dockerfile (deps/builder/runner) with better-sqlite3 prebuild trimming
-- 11-01: TURBOPACK=0 for Docker dev reliability (Turbopack incompatibility from Phase 10)
-- 11-01: WATCHPACK_POLLING=true for HMR on Windows/WSL2 bind mounts
-- 11-01: Anonymous volumes for node_modules/.next isolation from host
-- 11-01: env_file required:false for startup without .env (Compose v2.24+)
-- 12-01: HTTP-only on port 7430 (no HTTPS) -- LAN-only deployment, no domain
-- 12-01: No gzip compression -- Caddy issue #6293 buffers streaming responses
-- 12-01: App container not exposed to host -- only reachable through Caddy
-- 13-01: GHA cache mode=max to cache all intermediate layers (deps, builder stages)
-- 13-01: SHA + latest tagging via metadata-action (not type=ref,event=branch)
-- 13-01: No QEMU -- single-platform linux/amd64 only
-- 13-01: GITHUB_TOKEN auth (no PAT needed for same-repo GHCR push)
-- [Phase 13]: Included full docker-compose.prod.yml and Caddyfile inline in deployment guide for self-contained documentation
+- Revision: Page shell (Phase 15) built first — all v3.0 features render on the "Adjustments / Revision" page, so the container must exist before content phases
+- Research: Text-span anchoring (not character offsets) for suggestion merge — prevents offset drift corruption
+- Research: FDX preservation layer (fast-xml-parser preserveOrder:true) must be built before any export work
+- Research: Single batched generateObject call (not per-weakness) — 17x token reduction
+- Research: Single source of truth state model for suggestions — document preview always derived via useMemo
+- Research: diff-match-patch-es as only new dependency — remove unused Tiptap packages
+- Research: Standalone "Adjustments / Revision" page (new Next.js route), not a tab in existing workspace
 
 ### Pending Todos
 
@@ -81,12 +64,11 @@ None yet.
 
 ### Blockers/Concerns
 
-- ~~better-sqlite3 native binary tracing in standalone output needs verification during Phase 10~~ RESOLVED: verified working in Docker build
 - Host directory permissions for SQLite volume mount (uid 1001) need first-run documentation
 - Ollama host connectivity requires extra_hosts config on Linux Docker (works natively on Docker Desktop)
 
 ## Session Continuity
 
-Last session: 2026-03-20T00:25:04.504Z
-Stopped at: Completed 13-02-PLAN.md
+Last session: 2026-03-21
+Stopped at: Roadmap revised for v3.0
 Resume file: None

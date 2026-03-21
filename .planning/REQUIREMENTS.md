@@ -27,7 +27,7 @@ Requirements for the Script Improvement milestone. Each maps to roadmap phases.
 
 ### Script Export
 
-- [ ] **EXPRT-01**: User can export the revised script (accepted suggestions applied) as PDF
+- [ ] **EXPRT-01**: User can export the revised script as PDF
 - [ ] **EXPRT-02**: User can export the revised script as DOCX
 - [ ] **EXPRT-03**: User can export the revised script as FDX (Final Draft)
 - [ ] **EXPRT-04**: User can export the revised script as plain text (.txt)
@@ -51,33 +51,31 @@ Requirements for the Script Improvement milestone. Each maps to roadmap phases.
 
 ## Traceability
 
-*(Populated during roadmap creation)*
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SUGG-01 | — | Pending |
-| SUGG-02 | — | Pending |
-| SUGG-03 | — | Pending |
-| SUGG-04 | — | Pending |
-| SUGG-05 | — | Pending |
-| SUGG-06 | — | Pending |
-| REVW-01 | — | Pending |
-| REVW-02 | — | Pending |
-| REVW-03 | — | Pending |
-| REVW-04 | — | Pending |
-| REVW-05 | — | Pending |
-| REVW-06 | — | Pending |
-| EXPRT-01 | — | Pending |
-| EXPRT-02 | — | Pending |
-| EXPRT-03 | — | Pending |
-| EXPRT-04 | — | Pending |
-| BRAND-01 | — | Pending |
+| REVW-05 | Phase 15 | Pending |
+| REVW-06 | Phase 15 | Pending |
+| BRAND-01 | Phase 15 | Pending |
+| SUGG-01 | Phase 16 | Pending |
+| SUGG-02 | Phase 16 | Pending |
+| SUGG-03 | Phase 16 | Pending |
+| SUGG-04 | Phase 16 | Pending |
+| SUGG-05 | Phase 16 | Pending |
+| SUGG-06 | Phase 16 | Pending |
+| REVW-01 | Phase 17 | Pending |
+| REVW-02 | Phase 17 | Pending |
+| REVW-03 | Phase 17 | Pending |
+| REVW-04 | Phase 17 | Pending |
+| EXPRT-01 | Phase 18 | Pending |
+| EXPRT-02 | Phase 18 | Pending |
+| EXPRT-03 | Phase 18 | Pending |
+| EXPRT-04 | Phase 18 | Pending |
 
 **Coverage:**
-- v3.0 requirements: 17 total (15 feature + 2 clarified from scoping)
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 17 ⚠️
+- v3.0 requirements: 17 total
+- Mapped to phases: 17/17
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-21*
-*Last updated: 2026-03-21 after initial definition*
+*Last updated: 2026-03-21 after roadmap revision*
