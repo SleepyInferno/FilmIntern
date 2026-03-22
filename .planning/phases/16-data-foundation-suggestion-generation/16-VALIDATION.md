@@ -38,13 +38,12 @@ created: 2026-03-22
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 16-01-01 | 01 | 0 | SUGG-04 | unit | `npx vitest run --reporter=verbose` | ❌ W0 | ⬜ pending |
-| 16-01-02 | 01 | 1 | SUGG-04 | unit | `npx vitest run --reporter=verbose` | ❌ W0 | ⬜ pending |
-| 16-02-01 | 02 | 1 | SUGG-01, SUGG-05 | unit | `npx vitest run --reporter=verbose` | ❌ W0 | ⬜ pending |
-| 16-02-02 | 02 | 1 | SUGG-02 | unit | `npx vitest run --reporter=verbose` | ❌ W0 | ⬜ pending |
-| 16-03-01 | 03 | 2 | SUGG-01 | e2e-manual | — | — | ⬜ pending |
-| 16-03-02 | 03 | 2 | SUGG-03 | unit | `npx vitest run --reporter=verbose` | ❌ W0 | ⬜ pending |
-| 16-04-01 | 04 | 2 | SUGG-06 | unit | `npx vitest run --reporter=verbose` | ❌ W0 | ⬜ pending |
+| 16-01-T0 | 16-01 | 1 | SUGG-01..SUGG-06 | unit stubs | `npx vitest run src/lib/__tests__/suggestions.test.ts src/app/api/projects/__tests__/suggestions-route.test.ts --reporter=verbose` | ❌ W0 | ⬜ pending |
+| 16-01-T1 | 16-01 | 1 | SUGG-04, SUGG-06 | type | `npx tsc --noEmit` | — | ⬜ pending |
+| 16-01-T2 | 16-01 | 1 | SUGG-02, SUGG-05 | type | `npx tsc --noEmit` | — | ⬜ pending |
+| 16-02-T1 | 16-02 | 2 | SUGG-01, SUGG-03 | unit | `npx vitest run --reporter=verbose` | ❌ W0 | ⬜ pending |
+| 16-02-T2 | 16-02 | 2 | SUGG-01, SUGG-03, SUGG-04 | type | `npx tsc --noEmit` | — | ⬜ pending |
+| 16-02-T3 | 16-02 | 2 | SUGG-01..SUGG-06 | manual | — | — | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -52,11 +51,8 @@ created: 2026-03-22
 
 ## Wave 0 Requirements
 
-- [ ] `src/__tests__/suggestions/db.test.ts` — stubs for SUGG-04 (schema, insert, fetch)
-- [ ] `src/__tests__/suggestions/extract-weaknesses.test.ts` — stubs for SUGG-05 (per-type extraction)
-- [ ] `src/__tests__/suggestions/generate.test.ts` — stubs for SUGG-01, SUGG-02 (generation, structured output)
-- [ ] `src/__tests__/suggestions/count.test.ts` — stubs for SUGG-03 (count selection)
-- [ ] `src/__tests__/suggestions/project-types.test.ts` — stubs for SUGG-06 (all 4 project types)
+- [ ] `src/lib/__tests__/suggestions.test.ts` — stubs for SUGG-02 (weakness extraction), SUGG-04 (count/slice), SUGG-05 (all 4 project types), SUGG-06 (DB CRUD round-trip)
+- [ ] `src/app/api/projects/__tests__/suggestions-route.test.ts` — stubs for SUGG-01 (POST triggers generation), SUGG-03 (NDJSON streaming), SUGG-06 (GET loads persisted suggestions)
 
 ---
 
