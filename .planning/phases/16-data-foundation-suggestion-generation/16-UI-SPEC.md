@@ -33,7 +33,7 @@ Declared values (must be multiples of 4):
 |-------|-------|-------|
 | xs | 4px | Icon gaps, inline badge padding |
 | sm | 8px | Compact element spacing, gap between inline controls |
-| md | 16px | Default element spacing, card internal padding (px-4) |
+| md | 16px | Default element spacing, card internal padding (px-4), text block inner padding (p-4) |
 | lg | 24px | Section padding, gap between suggestion cards |
 | xl | 32px | Layout gaps between major sections |
 | 2xl | 48px | Empty state vertical padding |
@@ -82,7 +82,7 @@ Components needed for this phase, mapped to existing shadcn components or new cu
 | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent` | `@/components/ui/card` | Suggestion cards, generation control panel |
 | `Button` (default variant) | `@/components/ui/button` | "Generate Suggestions" CTA |
 | `Button` (destructive variant) | `@/components/ui/button` | "Replace Suggestions" confirm action |
-| `Button` (outline variant) | `@/components/ui/button` | "Regenerate" trigger, navigation links |
+| `Button` (outline variant) | `@/components/ui/button` | "Regenerate Suggestions" trigger, navigation links |
 | `Skeleton` | `@/components/ui/skeleton` | Loading placeholders for suggestion cards |
 | `Badge` | `@/components/ui/badge` | Weakness category label on each suggestion card |
 
@@ -117,14 +117,14 @@ The "Generate Suggestions" button is the primary visual focal point on first vis
 |   "AI rewrites targeting weaknesses                               |
 |    from your analysis"                                            |
 | [CardFooter]                                                      |
-|   [Generate Suggestions]              [Regenerate] (if existing)  |
+|   [Generate Suggestions]   [Regenerate Suggestions] (if existing) |
 +------------------------------------------------------------------+
 ```
 
 - Panel is the first card on the revision page, directly below the page heading
 - Number input: `type="number"`, `min={1}`, `max={25}`, `defaultValue={10}`, width 72px (w-18)
 - "Generate Suggestions" button: `variant="default"`, `size="lg"`, left-aligned in footer
-- "Regenerate" button: `variant="outline"`, `size="default"`, right-aligned in footer, only visible when suggestions already exist
+- "Regenerate Suggestions" button: `variant="outline"`, `size="default"`, right-aligned in footer, only visible when suggestions already exist
 - During generation: "Generate Suggestions" button shows `Loader2` spinner icon and text changes to "Generating suggestions...", button is disabled
 
 ### Suggestion Card
@@ -146,8 +146,8 @@ The "Generate Suggestions" button is the primary visual focal point on first vis
 - Scene heading: `text-sm text-muted-foreground`, right side of CardHeader via CardAction slot
 - Character name (if present): shown inline with the scene heading, `font-semibold`
 - "ORIGINAL" and "SUGGESTED REWRITE" labels: `text-xs font-semibold uppercase tracking-wide text-muted-foreground`, with 8px bottom margin
-- Original text: `text-sm` in a `bg-muted rounded-md p-3` block
-- Suggested rewrite: `text-sm` in a `bg-primary/5 rounded-md p-3 border border-primary/10` block (subtle accent tint to differentiate from original)
+- Original text: `text-sm` in a `bg-muted rounded-md p-4` block
+- Suggested rewrite: `text-sm` in a `bg-primary/5 rounded-md p-4 border border-primary/10` block (subtle accent tint to differentiate from original)
 
 ### Suggestion List
 
@@ -164,7 +164,7 @@ The "Generate Suggestions" button is the primary visual focal point on first vis
 | Empty (no suggestions, has analysis) | Generation panel card only. No suggestion cards. Panel description reads "AI rewrites targeting weaknesses from your analysis" |
 | No analysis | Existing "Analysis not yet completed" message (already built in Phase 15, no changes) |
 | Generating | Panel button disabled with spinner. StreamingIndicator below last card. Cards append one at a time. |
-| Generated (has suggestions) | Panel shows suggestion count and "Regenerate" button. Full list of suggestion cards displayed. |
+| Generated (has suggestions) | Panel shows suggestion count and "Regenerate Suggestions" button. Full list of suggestion cards displayed. |
 | Regenerating | Alert dialog confirms intent. On confirm: existing cards cleared, generation restarts. |
 | Partial failure | Successfully generated cards remain visible. Error toast or inline message below the streaming indicator: "N of M suggestions generated. Some failed due to [reason]. You can regenerate to try again." |
 | Full failure | Panel returns to ready state. Inline error message replaces the suggestion list area. |
@@ -182,7 +182,7 @@ The "Generate Suggestions" button is the primary visual focal point on first vis
 | Empty state heading | (no separate empty state -- the generation panel IS the initial state) |
 | Count label | "Number of suggestions" |
 | Count input placeholder | "10" |
-| Regenerate button | "Regenerate" |
+| Regenerate button | "Regenerate Suggestions" |
 | Regenerate confirmation heading | "Regenerate all suggestions?" |
 | Regenerate confirmation body | "This will replace your current suggestions. Any review progress from a previous session will be lost." |
 | Regenerate confirm action | "Replace Suggestions" |
@@ -205,10 +205,10 @@ The "Generate Suggestions" button is the primary visual focal point on first vis
 5. Each suggestion card fades in at the bottom of the list as it arrives
 6. StreamingIndicator updates count ("Generating suggestion 3 of 10...")
 7. On completion: indicator disappears, "{N} suggestions generated" text shown
-8. Button returns to enabled state; "Regenerate" button appears
+8. Button returns to enabled state; "Regenerate Suggestions" button appears
 
 ### Regenerate Flow
-1. User clicks "Regenerate"
+1. User clicks "Regenerate Suggestions"
 2. AlertDialog opens with confirmation copy
 3. On confirm ("Replace Suggestions"): existing suggestion cards are cleared, generation restarts from step 3 of Generate Flow
 4. On cancel ("Keep Current Suggestions"): dialog closes, no changes
