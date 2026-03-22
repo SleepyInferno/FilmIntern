@@ -16,6 +16,7 @@ import type { GeneratedDocument } from '@/lib/documents/types';
 export interface UploadData {
   text: string;
   metadata: ParseResult['metadata'];
+  fdxSource?: string;
 }
 
 export interface ProjectListItem {

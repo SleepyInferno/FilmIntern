@@ -34,6 +34,9 @@ export async function POST(req: Request) {
     } else {
       const buffer = Buffer.from(await file.arrayBuffer());
       result = await parseFile(buffer, file.name);
+      if (ext === '.fdx') {
+        (result as unknown as Record<string, unknown>).fdxSource = buffer.toString('utf-8');
+      }
     }
     result.metadata.size = file.size;
     return NextResponse.json(result);

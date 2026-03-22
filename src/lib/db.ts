@@ -27,6 +27,26 @@ function getDb(): Database.Database {
   try { _db.exec('ALTER TABLE projects ADD COLUMN uploadData TEXT'); } catch { /* already exists */ }
   // Migration: add criticAnalysis column for harsh critic mode
   try { _db.exec('ALTER TABLE projects ADD COLUMN criticAnalysis TEXT'); } catch { /* already exists */ }
+  // Migration: add fdxSource column for raw FDX XML preservation
+  try { _db.exec('ALTER TABLE projects ADD COLUMN fdxSource TEXT'); } catch { /* already exists */ }
+
+  // Suggestions table for AI-generated rewrite suggestions
+  _db.exec(`
+    CREATE TABLE IF NOT EXISTS suggestions (
+      id TEXT PRIMARY KEY,
+      projectId TEXT NOT NULL,
+      orderIndex INTEGER NOT NULL,
+      sceneHeading TEXT,
+      characterName TEXT,
+      originalText TEXT NOT NULL,
+      rewriteText TEXT NOT NULL,
+      weaknessCategory TEXT NOT NULL,
+      weaknessLabel TEXT NOT NULL,
+      createdAt TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (projectId) REFERENCES projects(id) ON DELETE CASCADE
+    )
+  `);
+
   return _db;
 }
 
@@ -44,8 +64,22 @@ export interface ProjectRow {
   reportDocument: string | null;
   generatedDocuments: string | null;
   criticAnalysis: string | null;
+  fdxSource: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SuggestionRow {
+  id: string;
+  projectId: string;
+  orderIndex: number;
+  sceneHeading: string | null;
+  characterName: string | null;
+  originalText: string;
+  rewriteText: string;
+  weaknessCategory: string;
+  weaknessLabel: string;
+  createdAt: string;
 }
 
 export const db = {
@@ -70,7 +104,7 @@ export const db = {
     return (stmt.get(id) as ProjectRow) ?? null;
   },
 
-  updateProject(id: string, fields: Partial<Pick<ProjectRow, 'title' | 'uploadData' | 'analysisData' | 'reportDocument' | 'generatedDocuments' | 'criticAnalysis'>>): ProjectRow | null {
+  updateProject(id: string, fields: Partial<Pick<ProjectRow, 'title' | 'uploadData' | 'analysisData' | 'reportDocument' | 'generatedDocuments' | 'criticAnalysis' | 'fdxSource'>>): ProjectRow | null {
     const now = new Date().toISOString();
     const sets: string[] = ['updatedAt = ?'];
     const values: unknown[] = [now];
@@ -81,6 +115,7 @@ export const db = {
     if (fields.reportDocument !== undefined) { sets.push('reportDocument = ?'); values.push(fields.reportDocument); }
     if (fields.generatedDocuments !== undefined) { sets.push('generatedDocuments = ?'); values.push(fields.generatedDocuments); }
     if (fields.criticAnalysis !== undefined) { sets.push('criticAnalysis = ?'); values.push(fields.criticAnalysis); }
+    if (fields.fdxSource !== undefined) { sets.push('fdxSource = ?'); values.push(fields.fdxSource); }
 
     values.push(id);
     getDb().prepare(`UPDATE projects SET ${sets.join(', ')} WHERE id = ?`).run(...values);
@@ -89,5 +124,19 @@ export const db = {
 
   deleteProject(id: string): void {
     getDb().prepare('DELETE FROM projects WHERE id = ?').run(id);
+  },
+
+  insertSuggestion(row: Omit<SuggestionRow, 'createdAt'>): void {
+    getDb().prepare(
+      'INSERT INTO suggestions (id, projectId, orderIndex, sceneHeading, characterName, originalText, rewriteText, weaknessCategory, weaknessLabel) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(row.id, row.projectId, row.orderIndex, row.sceneHeading, row.characterName, row.originalText, row.rewriteText, row.weaknessCategory, row.weaknessLabel);
+  },
+
+  listSuggestions(projectId: string): SuggestionRow[] {
+    return getDb().prepare('SELECT * FROM suggestions WHERE projectId = ? ORDER BY orderIndex ASC').all(projectId) as SuggestionRow[];
+  },
+
+  deleteSuggestionsForProject(projectId: string): void {
+    getDb().prepare('DELETE FROM suggestions WHERE projectId = ?').run(projectId);
   },
 };

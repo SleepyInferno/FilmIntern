@@ -8,7 +8,7 @@ import { Upload, FileText } from 'lucide-react';
 import type { ParseResult } from '@/lib/parsers/txt-parser';
 
 interface FileDropzoneProps {
-  onFileUploaded: (data: { text: string; metadata: ParseResult['metadata'] }) => void;
+  onFileUploaded: (data: { text: string; metadata: ParseResult['metadata']; fdxSource?: string }) => void;
 }
 
 function formatFileSize(bytes: number): string {

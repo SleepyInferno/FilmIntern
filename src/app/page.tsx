@@ -139,7 +139,10 @@ export default function Home() {
         await fetch(`/api/projects/${project.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ uploadData: data }),
+          body: JSON.stringify({
+            uploadData: data,
+            ...(data?.fdxSource !== undefined && { fdxSource: data.fdxSource }),
+          }),
         });
       }
     } catch {
