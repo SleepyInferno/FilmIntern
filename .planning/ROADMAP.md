@@ -74,7 +74,10 @@ Plans:
   3. User can set how many suggestions to generate (with a sensible default around 10)
   4. Suggestions persist in the database -- user can close the browser, reopen the project, and see their suggestions intact on the revision page
   5. Suggestion generation works for all 4 project types (narrative, TV/episodic, documentary, corporate)
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 16-01-PLAN.md -- Data foundation: DB migrations, types, CRUD, FDX capture, suggestion schema, per-type prompts, weakness extraction
+- [ ] 16-02-PLAN.md -- API route with NDJSON streaming, UI components, revision page integration
 
 ### Phase 17: Review UI
 **Goal**: User can review each suggestion in a tracked-changes interface, accepting or rejecting individually, with a live-updating script preview
@@ -117,7 +120,7 @@ Plans:
 | 12. Production Deployment | v2.0 | 1/1 | Complete | 2026-03-19 |
 | 13. CI/CD Pipeline | v2.0 | 2/2 | Complete | 2026-03-20 |
 | 14. Documentation Cleanup | v2.0 | 1/1 | Complete | 2026-03-19 |
-| 15. Adjustments / Revision Page + Branding | 2/2 | Complete    | 2026-03-21 | - |
-| 16. Data Foundation + Suggestion Generation | v3.0 | 0/? | Not started | - |
+| 15. Adjustments / Revision Page + Branding | v3.0 | 2/2 | Complete | 2026-03-21 |
+| 16. Data Foundation + Suggestion Generation | v3.0 | 0/2 | Not started | - |
 | 17. Review UI | v3.0 | 0/? | Not started | - |
 | 18. Merge + Script Export | v3.0 | 0/? | Not started | - |
