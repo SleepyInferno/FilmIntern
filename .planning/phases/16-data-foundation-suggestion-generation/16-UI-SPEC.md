@@ -50,9 +50,9 @@ Exceptions: none
 | Body | 14px (text-sm) | 400 | 1.5 |
 | Label | 14px (text-sm) | 600 | 1.4 |
 | Heading | 20px (text-xl) | 600 | 1.2 |
-| Card Title | 16px (text-base) | 500 | 1.375 (leading-snug) |
+| Card Title | 16px (text-base) | 600 | 1.375 (leading-snug) |
 
-Note: These match the existing shadcn card component (`text-base font-medium leading-snug` for CardTitle, `text-sm` for CardDescription and body) and the revision page heading (`text-xl font-semibold`). No new typography tokens needed.
+Note: Card Title uses `text-base font-semibold leading-snug` (matching the 2-weight system of 400 and 600). Body uses `text-sm` for CardDescription and body text. Heading uses `text-xl font-semibold` for the revision page heading. No new typography tokens needed.
 
 ---
 
@@ -63,7 +63,7 @@ Note: These match the existing shadcn card component (`text-base font-medium lea
 | Dominant (60%) | `var(--background)` oklch(1 0 0) | Page background, main content area |
 | Secondary (30%) | `var(--card)` oklch(0.97 0 0) | Suggestion cards, generation control panel card |
 | Accent (10%) | `var(--primary)` oklch(0.666 0.179 58.318) | "Generate Suggestions" button, suggestion count input focus ring, streaming progress indicator |
-| Destructive | `var(--destructive)` oklch(0.577 0.245 27.325) | "Regenerate" confirmation dialog confirm button only |
+| Destructive | `var(--destructive)` oklch(0.577 0.245 27.325) | "Replace Suggestions" confirmation dialog confirm button only |
 
 Accent reserved for: "Generate Suggestions" primary CTA button, number input focus ring, streaming activity indicator (pulsing dot or spinner). Never applied to suggestion card borders or backgrounds.
 
@@ -81,7 +81,7 @@ Components needed for this phase, mapped to existing shadcn components or new cu
 |-----------|--------|-------|
 | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent` | `@/components/ui/card` | Suggestion cards, generation control panel |
 | `Button` (default variant) | `@/components/ui/button` | "Generate Suggestions" CTA |
-| `Button` (destructive variant) | `@/components/ui/button` | "Regenerate" confirm action |
+| `Button` (destructive variant) | `@/components/ui/button` | "Replace Suggestions" confirm action |
 | `Button` (outline variant) | `@/components/ui/button` | "Regenerate" trigger, navigation links |
 | `Skeleton` | `@/components/ui/skeleton` | Loading placeholders for suggestion cards |
 | `Badge` | `@/components/ui/badge` | Weakness category label on each suggestion card |
@@ -106,6 +106,8 @@ Components needed for this phase, mapped to existing shadcn components or new cu
 
 ## Layout Contract
 
+The "Generate Suggestions" button is the primary visual focal point on first visit; the suggestion list becomes the focal point after generation.
+
 ### Generation Control Panel
 
 ```
@@ -123,7 +125,7 @@ Components needed for this phase, mapped to existing shadcn components or new cu
 - Number input: `type="number"`, `min={1}`, `max={25}`, `defaultValue={10}`, width 72px (w-18)
 - "Generate Suggestions" button: `variant="default"`, `size="lg"`, left-aligned in footer
 - "Regenerate" button: `variant="outline"`, `size="default"`, right-aligned in footer, only visible when suggestions already exist
-- During generation: "Generate Suggestions" button shows `Loader2` spinner icon and text changes to "Generating...", button is disabled
+- During generation: "Generate Suggestions" button shows `Loader2` spinner icon and text changes to "Generating suggestions...", button is disabled
 
 ### Suggestion Card
 
@@ -174,20 +176,20 @@ Components needed for this phase, mapped to existing shadcn components or new cu
 | Element | Copy |
 |---------|------|
 | Primary CTA | "Generate Suggestions" |
-| Primary CTA (loading) | "Generating..." |
+| Primary CTA (loading) | "Generating suggestions..." |
 | Panel heading | "Generate Suggestions" |
 | Panel description | "AI rewrites targeting weaknesses from your analysis" |
-| Empty state heading | (no separate empty state — the generation panel IS the initial state) |
+| Empty state heading | (no separate empty state -- the generation panel IS the initial state) |
 | Count label | "Number of suggestions" |
 | Count input placeholder | "10" |
 | Regenerate button | "Regenerate" |
 | Regenerate confirmation heading | "Regenerate all suggestions?" |
 | Regenerate confirmation body | "This will replace your current suggestions. Any review progress from a previous session will be lost." |
-| Regenerate confirm action | "Regenerate" |
-| Regenerate cancel action | "Cancel" |
+| Regenerate confirm action | "Replace Suggestions" |
+| Regenerate cancel action | "Keep Current Suggestions" |
 | Streaming indicator | "Generating suggestion {current} of {total}..." |
 | Generation complete | "{N} suggestions generated" |
-| Partial failure | "{N} of {M} suggestions generated. Some failed — you can regenerate to try again." |
+| Partial failure | "{N} of {M} suggestions generated. Some failed -- you can regenerate to try again." |
 | Full failure | "Suggestion generation failed. Check your AI provider settings and try again." |
 | Error state (page load) | "Could not load project. Check your connection and try again." (already exists from Phase 15) |
 
@@ -198,7 +200,7 @@ Components needed for this phase, mapped to existing shadcn components or new cu
 ### Generate Flow
 1. User sets count (optional, default 10) via number input
 2. User clicks "Generate Suggestions"
-3. Button enters disabled + spinner state
+3. Button enters disabled + spinner state with text "Generating suggestions..."
 4. API streams suggestions one at a time
 5. Each suggestion card fades in at the bottom of the list as it arrives
 6. StreamingIndicator updates count ("Generating suggestion 3 of 10...")
@@ -208,8 +210,8 @@ Components needed for this phase, mapped to existing shadcn components or new cu
 ### Regenerate Flow
 1. User clicks "Regenerate"
 2. AlertDialog opens with confirmation copy
-3. On confirm: existing suggestion cards are cleared, generation restarts from step 3 of Generate Flow
-4. On cancel: dialog closes, no changes
+3. On confirm ("Replace Suggestions"): existing suggestion cards are cleared, generation restarts from step 3 of Generate Flow
+4. On cancel ("Keep Current Suggestions"): dialog closes, no changes
 
 ### Keyboard and Accessibility
 - Number input: standard HTML number input behavior (arrow keys to increment/decrement)
