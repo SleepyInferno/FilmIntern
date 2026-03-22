@@ -10,11 +10,11 @@ Requirements for the Script Improvement milestone. Each maps to roadmap phases.
 ### Suggestion Generation
 
 - [ ] **SUGG-01**: User can trigger AI suggestion generation from a completed analysis
-- [ ] **SUGG-02**: Suggestions target specific weaknesses flagged in the analysis (not generic rewrites)
+- [x] **SUGG-02**: Suggestions target specific weaknesses flagged in the analysis (not generic rewrites)
 - [ ] **SUGG-03**: Suggestions stream progressively as they're generated
 - [ ] **SUGG-04**: User can set how many suggestions to generate (default ~10)
-- [ ] **SUGG-05**: Suggestion generation works for all 4 project types (narrative, TV, documentary, corporate)
-- [ ] **SUGG-06**: Generated suggestions are saved to the database linked to the analysis
+- [x] **SUGG-05**: Suggestion generation works for all 4 project types (narrative, TV, documentary, corporate)
+- [x] **SUGG-06**: Generated suggestions are saved to the database linked to the analysis
 
 ### Review UI
 
@@ -57,11 +57,11 @@ Requirements for the Script Improvement milestone. Each maps to roadmap phases.
 | REVW-06 | Phase 15 | Complete |
 | BRAND-01 | Phase 15 | Complete |
 | SUGG-01 | Phase 16 | Pending |
-| SUGG-02 | Phase 16 | Pending |
+| SUGG-02 | Phase 16 | Complete |
 | SUGG-03 | Phase 16 | Pending |
 | SUGG-04 | Phase 16 | Pending |
-| SUGG-05 | Phase 16 | Pending |
-| SUGG-06 | Phase 16 | Pending |
+| SUGG-05 | Phase 16 | Complete |
+| SUGG-06 | Phase 16 | Complete |
 | REVW-01 | Phase 17 | Pending |
 | REVW-02 | Phase 17 | Pending |
 | REVW-03 | Phase 17 | Pending |

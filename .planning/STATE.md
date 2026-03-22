@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Script Improvement
 status: unknown
-stopped_at: Phase 16 context gathered
-last_updated: "2026-03-22T01:44:40.425Z"
+stopped_at: Phase 16 UI-SPEC approved
+last_updated: "2026-03-22T19:36:52.439Z"
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Upload your material, pick your project type, get a structured analysis back — one tool that replaces hours of manual review across scattered apps.
-**Current focus:** Phase 15 — adjustments-revision-page-branding
+**Current focus:** Phase 16 — data-foundation-suggestion-generation
 
 ## Current Position
 
-Phase: 15 (adjustments-revision-page-branding) — COMPLETE
-Plan: 2 of 2 (all plans complete)
+Phase: 16 (data-foundation-suggestion-generation) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -54,6 +54,8 @@ Recent decisions affecting current work:
 - Research: diff-match-patch-es as only new dependency — remove unused Tiptap packages
 - Research: Standalone "Adjustments / Revision" page (new Next.js route), not a tab in existing workspace
 - 15-02: Revision page fetches project data independently from API, not from workspace context
+- 16-01: Added fdxSource to UploadData interface in workspace-context.tsx for type-safe client propagation
+- 16-01: Used double type assertion for fdxSource on ParseResult in upload route (ParseResult lacks index signature)
 
 ### Pending Todos
 
@@ -66,6 +68,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-22T01:44:40.422Z
-Stopped at: Phase 16 context gathered
-Resume file: .planning/phases/16-data-foundation-suggestion-generation/16-CONTEXT.md
+Last session: 2026-03-22T19:36:02Z
+Stopped at: Completed 16-01-PLAN.md
+Resume file: .planning/phases/16-data-foundation-suggestion-generation/16-02-PLAN.md
