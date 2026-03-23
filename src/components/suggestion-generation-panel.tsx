@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -17,20 +17,25 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
+export type AnalysisType = 'standard' | 'critic';
+
 interface SuggestionGenerationPanelProps {
   hasSuggestions: boolean;
   isGenerating: boolean;
-  onGenerate: (count: number) => void;
-  onRegenerate: (count: number) => void;
+  hasCriticAnalysis: boolean;
+  onGenerate: (count: number, analysisType: AnalysisType) => void;
+  onRegenerate: (count: number, analysisType: AnalysisType) => void;
 }
 
 export function SuggestionGenerationPanel({
   hasSuggestions,
   isGenerating,
+  hasCriticAnalysis,
   onGenerate,
   onRegenerate,
 }: SuggestionGenerationPanelProps) {
   const [count, setCount] = useState(10);
+  const [analysisType, setAnalysisType] = useState<AnalysisType>('standard');
 
   return (
     <Card role="region" aria-label="Suggestion generation">
@@ -59,10 +64,47 @@ export function SuggestionGenerationPanel({
           />
         </div>
       </CardHeader>
+
+      {hasCriticAnalysis && (
+        <CardContent className="pt-0 pb-2">
+          <div className="flex items-center gap-1 p-1 rounded-md bg-muted w-fit">
+            <button
+              type="button"
+              onClick={() => setAnalysisType('standard')}
+              disabled={isGenerating}
+              className={`px-3 py-1.5 text-sm rounded-sm transition-colors font-medium ${
+                analysisType === 'standard'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Standard Analysis
+            </button>
+            <button
+              type="button"
+              onClick={() => setAnalysisType('critic')}
+              disabled={isGenerating}
+              className={`px-3 py-1.5 text-sm rounded-sm transition-colors font-medium ${
+                analysisType === 'critic'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Harsh Critic
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            {analysisType === 'critic'
+              ? 'Generates rewrites that directly address the professional critique — sharper, more demanding notes'
+              : 'Generates rewrites targeting specific weaknesses from the standard analysis'}
+          </p>
+        </CardContent>
+      )}
+
       <CardFooter className="flex justify-between">
         <Button
           size="lg"
-          onClick={() => hasSuggestions ? undefined : onGenerate(count)}
+          onClick={() => hasSuggestions ? undefined : onGenerate(count, analysisType)}
           disabled={isGenerating || hasSuggestions}
           className={hasSuggestions ? 'hidden' : ''}
         >
@@ -91,7 +133,7 @@ export function SuggestionGenerationPanel({
               <AlertDialogFooter>
                 <AlertDialogCancel>Keep Current Suggestions</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => onRegenerate(count)}
+                  onClick={() => onRegenerate(count, analysisType)}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   Replace Suggestions

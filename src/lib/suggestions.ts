@@ -1,18 +1,18 @@
-import { narrativeSuggestionPrompt } from '@/lib/ai/prompts/narrative-suggestion';
-import { tvEpisodicSuggestionPrompt } from '@/lib/ai/prompts/tv-episodic-suggestion';
-import { documentarySuggestionPrompt } from '@/lib/ai/prompts/documentary-suggestion';
-import { corporateSuggestionPrompt } from '@/lib/ai/prompts/corporate-suggestion';
+import { narrativeSuggestionPrompt, narrativeCriticSuggestionPrompt } from '@/lib/ai/prompts/narrative-suggestion';
+import { tvEpisodicSuggestionPrompt, tvEpisodicCriticSuggestionPrompt } from '@/lib/ai/prompts/tv-episodic-suggestion';
+import { documentarySuggestionPrompt, documentaryCriticSuggestionPrompt } from '@/lib/ai/prompts/documentary-suggestion';
+import { corporateSuggestionPrompt, corporateCriticSuggestionPrompt } from '@/lib/ai/prompts/corporate-suggestion';
 
 export interface WeaknessTarget {
   category: string;
   label: string;
 }
 
-export const suggestionConfig: Record<string, { prompt: string }> = {
-  narrative: { prompt: narrativeSuggestionPrompt },
-  'tv-episodic': { prompt: tvEpisodicSuggestionPrompt },
-  documentary: { prompt: documentarySuggestionPrompt },
-  corporate: { prompt: corporateSuggestionPrompt },
+export const suggestionConfig: Record<string, { prompt: string; criticPrompt: string }> = {
+  narrative: { prompt: narrativeSuggestionPrompt, criticPrompt: narrativeCriticSuggestionPrompt },
+  'tv-episodic': { prompt: tvEpisodicSuggestionPrompt, criticPrompt: tvEpisodicCriticSuggestionPrompt },
+  documentary: { prompt: documentarySuggestionPrompt, criticPrompt: documentaryCriticSuggestionPrompt },
+  corporate: { prompt: corporateSuggestionPrompt, criticPrompt: corporateCriticSuggestionPrompt },
 };
 
 export function extractWeaknesses(analysisData: Record<string, unknown>, projectType: string): WeaknessTarget[] {
@@ -28,6 +28,60 @@ export function extractWeaknesses(analysisData: Record<string, unknown>, project
     default:
       return [];
   }
+}
+
+// Critic analysis sections that yield actionable rewrite targets (sections 1-8, skip 9 priorities and 10 verdict)
+const CRITIC_SECTIONS: { title: string; category: string }[] = [
+  { title: 'Story Angle Under Pressure', category: 'story_angle' },
+  { title: 'Primary Structural Problems', category: 'structural' },
+  { title: 'Where the Script Loses Power', category: 'power_loss' },
+  { title: 'Character Credibility Problems', category: 'character' },
+  { title: 'On-the-Nose Dialogue Pass', category: 'dialogue' },
+  { title: 'Emotional Payoff Problems', category: 'emotional' },
+  { title: 'What a Tough Industry Reader Would Flag Immediately', category: 'reader_flags' },
+  { title: 'Cut / Trim / Combine Recommendations', category: 'cuts' },
+];
+
+export function extractCriticWeaknesses(criticText: string): WeaknessTarget[] {
+  const weaknesses: WeaknessTarget[] = [];
+
+  for (let i = 0; i < CRITIC_SECTIONS.length; i++) {
+    const section = CRITIC_SECTIONS[i];
+    const nextSection = CRITIC_SECTIONS[i + 1];
+
+    // Match the section header flexibly: ## N. Title, **N. Title**, or plain N. Title
+    const headerPattern = new RegExp(
+      `(?:#{1,3}\\s*)?(?:\\*\\*)?\\d+\\.\\s+${section.title.replace(/[/()]/g, '\\$&')}(?:\\*\\*)?\\s*\\n`,
+      'i'
+    );
+    const headerMatch = headerPattern.exec(criticText);
+    if (!headerMatch) continue;
+
+    const contentStart = headerMatch.index + headerMatch[0].length;
+
+    // Find where the next section starts (or end of text)
+    let contentEnd = criticText.length;
+    if (nextSection) {
+      const nextPattern = new RegExp(
+        `(?:#{1,3}\\s*)?(?:\\*\\*)?\\d+\\.\\s+${nextSection.title.replace(/[/()]/g, '\\$&')}`,
+        'i'
+      );
+      const nextMatch = nextPattern.exec(criticText.slice(contentStart));
+      if (nextMatch) {
+        contentEnd = contentStart + nextMatch.index;
+      }
+    }
+
+    const content = criticText.slice(contentStart, contentEnd).trim();
+    if (content.length < 30) continue; // Skip empty or near-empty sections
+
+    weaknesses.push({
+      category: section.category,
+      label: content,
+    });
+  }
+
+  return weaknesses;
 }
 
 function extractNarrativeWeaknesses(data: Record<string, unknown>): WeaknessTarget[] {

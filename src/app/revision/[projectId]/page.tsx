@@ -7,7 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { SuggestionGenerationPanel } from '@/components/suggestion-generation-panel';
+import { SuggestionGenerationPanel, type AnalysisType } from '@/components/suggestion-generation-panel';
 import { SuggestionList } from '@/components/suggestion-list';
 import type { SuggestionRow } from '@/lib/db';
 
@@ -16,6 +16,7 @@ interface ProjectData {
   title: string;
   projectType: string;
   analysisData: Record<string, unknown> | null;
+  criticAnalysis: string | null;
 }
 
 export default function RevisionPage() {
@@ -74,7 +75,7 @@ export default function RevisionPage() {
     loadSuggestions();
   }, [project, projectId]);
 
-  const handleGenerate = useCallback(async (count: number) => {
+  const handleGenerate = useCallback(async (count: number, analysisType: AnalysisType = 'standard') => {
     setIsGenerating(true);
     setStreamingTotal(count);
     setStreamingCurrent(0);
@@ -86,7 +87,7 @@ export default function RevisionPage() {
       const res = await fetch(`/api/projects/${projectId}/suggestions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ count }),
+        body: JSON.stringify({ count, analysisType }),
       });
 
       if (!res.ok) {
@@ -157,8 +158,8 @@ export default function RevisionPage() {
     }
   }, [projectId]);
 
-  const handleRegenerate = useCallback((count: number) => {
-    handleGenerate(count);
+  const handleRegenerate = useCallback((count: number, analysisType: AnalysisType) => {
+    handleGenerate(count, analysisType);
   }, [handleGenerate]);
 
   if (loading) {
@@ -231,6 +232,7 @@ export default function RevisionPage() {
           <SuggestionGenerationPanel
             hasSuggestions={true}
             isGenerating={false}
+            hasCriticAnalysis={!!project?.criticAnalysis}
             onGenerate={handleGenerate}
             onRegenerate={handleRegenerate}
           />
@@ -240,6 +242,7 @@ export default function RevisionPage() {
           <SuggestionGenerationPanel
             hasSuggestions={suggestions.length > 0}
             isGenerating={isGenerating}
+            hasCriticAnalysis={!!project?.criticAnalysis}
             onGenerate={handleGenerate}
             onRegenerate={handleRegenerate}
           />
