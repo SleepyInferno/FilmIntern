@@ -4,11 +4,11 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SuggestionGenerationPanel, type AnalysisType } from '@/components/suggestion-generation-panel';
 import { SuggestionList } from '@/components/suggestion-list';
+import { ScriptPreview } from '@/components/script-preview';
 import type { SuggestionRow } from '@/lib/db';
 
 interface ProjectData {
@@ -17,6 +17,7 @@ interface ProjectData {
   projectType: string;
   analysisData: Record<string, unknown> | null;
   criticAnalysis: string | null;
+  uploadData: string | null;
 }
 
 export default function RevisionPage() {
@@ -32,6 +33,8 @@ export default function RevisionPage() {
   const [streamingTotal, setStreamingTotal] = useState(0);
   const [failedCount, setFailedCount] = useState(0);
   const [suggestionsLoaded, setSuggestionsLoaded] = useState(false);
+  const [regeneratingIds, setRegeneratingIds] = useState<Set<string>>(new Set());
+  const [scriptText, setScriptText] = useState<string>('');
 
   useEffect(() => {
     if (!projectId) return;
@@ -40,7 +43,14 @@ export default function RevisionPage() {
       try {
         const res = await fetch(`/api/projects/${projectId}`);
         if (res.ok) {
-          setProject(await res.json());
+          const data = await res.json();
+          setProject(data);
+          if (data.uploadData) {
+            try {
+              const parsed = typeof data.uploadData === 'string' ? JSON.parse(data.uploadData) : data.uploadData;
+              setScriptText(parsed?.text ?? '');
+            } catch { /* ignore parse errors */ }
+          }
         } else {
           setError(true);
         }
@@ -74,6 +84,52 @@ export default function RevisionPage() {
 
     loadSuggestions();
   }, [project, projectId]);
+
+  const handleStatusChange = useCallback(async (suggestionId: string, newStatus: 'pending' | 'accepted' | 'rejected') => {
+    // Optimistic update
+    setSuggestions(prev => prev.map(s =>
+      s.id === suggestionId ? { ...s, status: newStatus } : s
+    ));
+
+    try {
+      const res = await fetch(`/api/projects/${projectId}/suggestions/${suggestionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) {
+        // Revert on failure -- reload suggestions from server
+        const reloadRes = await fetch(`/api/projects/${projectId}/suggestions`);
+        if (reloadRes.ok) setSuggestions(await reloadRes.json());
+      }
+    } catch {
+      // Revert on network error
+      const reloadRes = await fetch(`/api/projects/${projectId}/suggestions`);
+      if (reloadRes.ok) setSuggestions(await reloadRes.json());
+    }
+  }, [projectId]);
+
+  const handleRegenerateSingle = useCallback(async (suggestionId: string) => {
+    setRegeneratingIds(prev => new Set(prev).add(suggestionId));
+
+    try {
+      const res = await fetch(`/api/projects/${projectId}/suggestions/${suggestionId}/regenerate`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setSuggestions(prev => prev.map(s => s.id === suggestionId ? updated : s));
+      }
+    } catch {
+      // Silently fail -- suggestion remains unchanged
+    } finally {
+      setRegeneratingIds(prev => {
+        const next = new Set(prev);
+        next.delete(suggestionId);
+        return next;
+      });
+    }
+  }, [projectId]);
 
   const handleGenerate = useCallback(async (count: number, analysisType: AnalysisType = 'standard') => {
     setIsGenerating(true);
@@ -220,23 +276,35 @@ export default function RevisionPage() {
           <Skeleton className="h-[140px] w-full rounded-lg" />
         </>
       ) : suggestions.length > 0 && !isGenerating ? (
-        <>
-          <SuggestionList
-            suggestions={suggestions}
-            isStreaming={false}
-            streamingCurrent={0}
-            streamingTotal={0}
-            error={generationError}
-            failedCount={failedCount}
-          />
-          <SuggestionGenerationPanel
-            hasSuggestions={true}
-            isGenerating={false}
-            hasCriticAnalysis={!!project?.criticAnalysis}
-            onGenerate={handleGenerate}
-            onRegenerate={handleRegenerate}
-          />
-        </>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <SuggestionList
+              suggestions={suggestions}
+              isStreaming={false}
+              streamingCurrent={0}
+              streamingTotal={0}
+              error={generationError}
+              failedCount={failedCount}
+              onStatusChange={handleStatusChange}
+              onRegenerate={handleRegenerateSingle}
+              regeneratingIds={regeneratingIds}
+            />
+            <SuggestionGenerationPanel
+              hasSuggestions={true}
+              isGenerating={false}
+              hasCriticAnalysis={!!project?.criticAnalysis}
+              onGenerate={handleGenerate}
+              onRegenerate={handleRegenerate}
+            />
+          </div>
+          {scriptText && (
+            <div className="hidden lg:block">
+              <div className="sticky top-6">
+                <ScriptPreview scriptText={scriptText} suggestions={suggestions} />
+              </div>
+            </div>
+          )}
+        </div>
       ) : (
         <>
           <SuggestionGenerationPanel
@@ -253,15 +321,12 @@ export default function RevisionPage() {
             streamingTotal={streamingTotal}
             error={generationError}
             failedCount={failedCount}
+            onStatusChange={handleStatusChange}
+            onRegenerate={handleRegenerateSingle}
+            regeneratingIds={regeneratingIds}
           />
         </>
       )}
-
-      <Card role="region" aria-label="Review and export tools">
-        <CardContent className="py-12 text-center text-muted-foreground">
-          Review and export tools will appear here
-        </CardContent>
-      </Card>
     </div>
   );
 }
