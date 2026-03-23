@@ -18,10 +18,10 @@ Requirements for the Script Improvement milestone. Each maps to roadmap phases.
 
 ### Review UI
 
-- [ ] **REVW-01**: User can view each suggestion with the original block and proposed rewrite side-by-side
-- [ ] **REVW-02**: User can accept or reject each suggestion individually
-- [ ] **REVW-03**: Script preview updates live as user accepts/rejects suggestions
-- [ ] **REVW-04**: User can request a new AI rewrite for any individual suggestion
+- [x] **REVW-01**: User can view each suggestion with the original block and proposed rewrite side-by-side
+- [x] **REVW-02**: User can accept or reject each suggestion individually
+- [x] **REVW-03**: Script preview updates live as user accepts/rejects suggestions
+- [x] **REVW-04**: User can request a new AI rewrite for any individual suggestion
 - [x] **REVW-05**: Suggestion review lives on a dedicated "Adjustments / Revision" page, separate from the existing analysis workspace
 - [x] **REVW-06**: Existing analysis workflow is unchanged — the new page is additive only
 
@@ -62,10 +62,10 @@ Requirements for the Script Improvement milestone. Each maps to roadmap phases.
 | SUGG-04 | Phase 16 | Complete |
 | SUGG-05 | Phase 16 | Complete |
 | SUGG-06 | Phase 16 | Complete |
-| REVW-01 | Phase 17 | Pending |
-| REVW-02 | Phase 17 | Pending |
-| REVW-03 | Phase 17 | Pending |
-| REVW-04 | Phase 17 | Pending |
+| REVW-01 | Phase 17 | Complete |
+| REVW-02 | Phase 17 | Complete |
+| REVW-03 | Phase 17 | Complete |
+| REVW-04 | Phase 17 | Complete |
 | EXPRT-01 | Phase 18 | Pending |
 | EXPRT-02 | Phase 18 | Pending |
 | EXPRT-03 | Phase 18 | Pending |
