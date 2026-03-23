@@ -47,6 +47,9 @@ function getDb(): Database.Database {
     )
   `);
 
+  // Migration: add status column for accept/reject tracking
+  try { _db.exec("ALTER TABLE suggestions ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'"); } catch { /* already exists */ }
+
   return _db;
 }
 
@@ -79,6 +82,7 @@ export interface SuggestionRow {
   rewriteText: string;
   weaknessCategory: string;
   weaknessLabel: string;
+  status: 'pending' | 'accepted' | 'rejected';
   createdAt: string;
 }
 
@@ -126,10 +130,10 @@ export const db = {
     getDb().prepare('DELETE FROM projects WHERE id = ?').run(id);
   },
 
-  insertSuggestion(row: Omit<SuggestionRow, 'createdAt'>): void {
+  insertSuggestion(row: Omit<SuggestionRow, 'createdAt' | 'status'> & { status?: string }): void {
     getDb().prepare(
-      'INSERT INTO suggestions (id, projectId, orderIndex, sceneHeading, characterName, originalText, rewriteText, weaknessCategory, weaknessLabel) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-    ).run(row.id, row.projectId, row.orderIndex, row.sceneHeading, row.characterName, row.originalText, row.rewriteText, row.weaknessCategory, row.weaknessLabel);
+      'INSERT INTO suggestions (id, projectId, orderIndex, sceneHeading, characterName, originalText, rewriteText, weaknessCategory, weaknessLabel, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(row.id, row.projectId, row.orderIndex, row.sceneHeading, row.characterName, row.originalText, row.rewriteText, row.weaknessCategory, row.weaknessLabel, row.status ?? 'pending');
   },
 
   listSuggestions(projectId: string): SuggestionRow[] {
@@ -138,5 +142,17 @@ export const db = {
 
   deleteSuggestionsForProject(projectId: string): void {
     getDb().prepare('DELETE FROM suggestions WHERE projectId = ?').run(projectId);
+  },
+
+  updateSuggestionStatus(id: string, status: string): void {
+    getDb().prepare('UPDATE suggestions SET status = ? WHERE id = ?').run(status, id);
+  },
+
+  updateSuggestionRewrite(id: string, rewriteText: string): void {
+    getDb().prepare("UPDATE suggestions SET rewriteText = ?, status = 'pending' WHERE id = ?").run(rewriteText, id);
+  },
+
+  getSuggestion(id: string): SuggestionRow | null {
+    return (getDb().prepare('SELECT * FROM suggestions WHERE id = ?').get(id) as SuggestionRow) ?? null;
   },
 };
