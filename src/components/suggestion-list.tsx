@@ -11,6 +11,9 @@ interface SuggestionListProps {
   streamingTotal: number;
   error: string | null;
   failedCount: number;
+  onStatusChange: (id: string, status: 'pending' | 'accepted' | 'rejected') => void;
+  onRegenerate: (id: string) => void;
+  regeneratingIds: Set<string>;
 }
 
 export function SuggestionList({
@@ -20,6 +23,9 @@ export function SuggestionList({
   streamingTotal,
   error,
   failedCount,
+  onStatusChange,
+  onRegenerate,
+  regeneratingIds,
 }: SuggestionListProps) {
   if (error && suggestions.length === 0) {
     return (
@@ -38,14 +44,19 @@ export function SuggestionList({
       {suggestions.map((suggestion, i) => (
         <SuggestionCard
           key={suggestion.id}
+          id={suggestion.id}
           sceneHeading={suggestion.sceneHeading}
           characterName={suggestion.characterName}
           originalText={suggestion.originalText}
           rewriteText={suggestion.rewriteText}
           weaknessCategory={suggestion.weaknessCategory}
           weaknessLabel={suggestion.weaknessLabel}
+          status={suggestion.status}
           index={i}
           animate={isStreaming}
+          isRegenerating={regeneratingIds.has(suggestion.id)}
+          onStatusChange={onStatusChange}
+          onRegenerate={onRegenerate}
         />
       ))}
 
