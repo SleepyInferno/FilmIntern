@@ -44,7 +44,7 @@ Archive: `.planning/milestones/v2.0-ROADMAP.md`
 **Milestone Goal:** After analysis runs, generate AI rewrite suggestions targeting flagged weaknesses -- reviewed accept/reject per suggestion -- then export the revised script in any format.
 
 - [x] **Phase 15: Adjustments / Revision Page + Branding** - Page shell, navigation from analysis workspace, app rename to "Film Intern" (completed 2026-03-21)
-- [ ] **Phase 16: Data Foundation + Suggestion Generation** - Schema, DB migration, FDX preservation, suggestion API, results displayed on revision page
+- [x] **Phase 16: Data Foundation + Suggestion Generation** - Schema, DB migration, FDX preservation, suggestion API, results displayed on revision page (completed 2026-03-23)
 - [ ] **Phase 17: Review UI** - Accept/reject per suggestion, live script preview, single-suggestion regeneration
 - [ ] **Phase 18: Merge + Script Export** - Apply accepted suggestions, export revised script as PDF, DOCX, FDX, plain text
 
@@ -74,7 +74,7 @@ Plans:
   3. User can set how many suggestions to generate (with a sensible default around 10)
   4. Suggestions persist in the database -- user can close the browser, reopen the project, and see their suggestions intact on the revision page
   5. Suggestion generation works for all 4 project types (narrative, TV/episodic, documentary, corporate)
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 16-01-PLAN.md -- Data foundation: DB migrations, types, CRUD, FDX capture, suggestion schema, per-type prompts, weakness extraction
 - [ ] 16-02-PLAN.md -- API route with NDJSON streaming, UI components, revision page integration
@@ -121,6 +121,6 @@ Plans:
 | 13. CI/CD Pipeline | v2.0 | 2/2 | Complete | 2026-03-20 |
 | 14. Documentation Cleanup | v2.0 | 1/1 | Complete | 2026-03-19 |
 | 15. Adjustments / Revision Page + Branding | v3.0 | 2/2 | Complete | 2026-03-21 |
-| 16. Data Foundation + Suggestion Generation | 1/2 | In Progress|  | - |
+| 16. Data Foundation + Suggestion Generation | 2/2 | Complete   | 2026-03-23 | - |
 | 17. Review UI | v3.0 | 0/? | Not started | - |
 | 18. Merge + Script Export | v3.0 | 0/? | Not started | - |
