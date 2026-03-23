@@ -1,95 +1,36 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-20T21:23:29.802Z",
-  "phase": null,
-  "phase_name": "ad-hoc bug fix — Unraid silent stream failure",
-  "phase_dir": null,
-  "plan": null,
-  "task": null,
-  "total_tasks": null,
+  "timestamp": "2026-03-23T16:14:33.612Z",
+  "phase": "17",
+  "phase_name": "review-ui",
+  "phase_dir": ".planning/phases/17-review-ui",
+  "plan": 2,
+  "task": 3,
+  "total_tasks": 6,
   "status": "paused",
   "completed_tasks": [
-    {
-      "id": 1,
-      "name": "Diagnose silent stream failure on Unraid",
-      "status": "done",
-      "commit": null
-    },
-    {
-      "id": 2,
-      "name": "Fix page.tsx: show error when stream returns no valid JSON",
-      "status": "done",
-      "commit": "921a8b5"
-    },
-    {
-      "id": 3,
-      "name": "Verify gpt-5.4 is a valid OpenAI model via API call",
-      "status": "done",
-      "commit": null
-    },
-    {
-      "id": 4,
-      "name": "Revert default model back to gpt-5.4 (was incorrectly changed to gpt-4o)",
-      "status": "done",
-      "commit": null
-    },
-    {
-      "id": 5,
-      "name": "Commit and push page.tsx fix to GitHub (921a8b5)",
-      "status": "done",
-      "commit": "921a8b5"
-    },
-    {
-      "id": 6,
-      "name": "User rebuilt Docker image on Unraid — error message now surfaces correctly",
-      "status": "done",
-      "commit": null
-    }
+    {"id": "17-01-T1", "name": "DB migration + diff utility + PATCH endpoint scaffold", "status": "done", "commit": "1a9094c"},
+    {"id": "17-01-T2", "name": "DiffDisplay component + PATCH endpoint", "status": "done", "commit": "0f01908"},
+    {"id": "17-01-T3", "name": "Wave 0 test scaffolds (REVW-01/02/03/04)", "status": "done", "commit": "b5560ba"},
+    {"id": "17-02-T1", "name": "Upgrade SuggestionCard with diff display and action buttons", "status": "done", "commit": "a067bc5"},
+    {"id": "17-02-T2", "name": "Create ScriptPreview, script-preview-utils, regeneration API", "status": "done", "commit": "6fbb813"},
+    {"id": "17-02-T3", "name": "Wire two-column revision page", "status": "done", "commit": "222be92"}
   ],
-  "remaining_tasks": [
-    {
-      "id": 7,
-      "name": "Get Unraid container logs after clicking Run Analysis to identify actual root cause",
-      "status": "not_started"
-    },
-    {
-      "id": 8,
-      "name": "Fix the underlying cause once identified from logs",
-      "status": "not_started"
-    }
-  ],
-  "blockers": [
-    {
-      "description": "Root cause of empty stream on Unraid still unknown — error message surfaces but underlying API failure not yet diagnosed",
-      "type": "human_action",
-      "workaround": "Need Unraid container logs to identify the actual error"
-    }
-  ],
+  "remaining_tasks": [],
+  "blockers": [],
   "human_actions_pending": [
     {
-      "action": "Run: docker logs <container-name> --tail 50 on Unraid after clicking Run Analysis, share the output",
-      "context": "The onError callback in /api/analyze/route.ts logs the real error server-side as 'Analysis streaming error: ...'. Logs will show the actual failure — bad key, unsupported model, timeout, etc.",
-      "blocking": true
-    },
-    {
-      "action": "Verify /app/data is mapped to a persistent volume in Unraid container config",
-      "context": "Settings (API key, model) live at /app/data/.filmintern/settings.json — without persistent volume the key resets on restart",
+      "action": "Run verification for phase 17",
+      "context": "All 6 plan tasks committed. Verification agent has NOT been spawned yet. Run /gsd:execute-phase 17 to resume — it will skip completed plans and proceed to regression gate then verification.",
       "blocking": false
     }
   ],
   "decisions": [
-    {
-      "decision": "Keep gpt-5.4 as the default model",
-      "rationale": "Verified via OpenAI API that gpt-5.4 is a valid model. Not the root cause.",
-      "phase": "ad-hoc"
-    },
-    {
-      "decision": "Show error when stream completes with no valid JSON",
-      "rationale": "OpenAI errors mid-stream produce HTTP 200 then empty stream. Client had no feedback. Fix: detect empty accumulated string and show actionable error message.",
-      "phase": "ad-hoc"
-    }
+    {"decision": "Optimistic UI for accept/reject", "rationale": "Update local state immediately, PATCH to server, revert by reloading on failure", "phase": "17"},
+    {"decision": "Reverse-index text replacement in applyAcceptedRewrites", "rationale": "Sort by descending index to prevent offset drift when applying multiple rewrites", "phase": "17"},
+    {"decision": "Always show DiffDisplay regardless of suggestion status", "rationale": "Card border color (green/red/default) indicates accepted/rejected/pending state", "phase": "17"}
   ],
   "uncommitted_files": [],
-  "next_action": "Ask user to share Unraid container logs (docker logs <container> --tail 50) after attempting Run Analysis — look for 'Analysis streaming error:' line to get actual error",
-  "context_notes": "The fix is deployed and working (error message now shows instead of silent failure). But we have not found the root cause yet. Three suspects: (1) API key not persisted due to missing /app/data volume mount on Unraid, (2) gpt-5.4 does not support Output.object structured output mode, (3) Caddy or networking timeout on long requests. Container logs will identify it immediately."
+  "next_action": "Run /gsd:execute-phase 17 — it will skip completed plans (17-01, 17-02 both have SUMMARYs) and proceed directly to regression gate then verify_phase_goal.",
+  "context_notes": "Phase 17 plan execution is 100% complete. Both wave 1 and wave 2 are committed. Paused before the regression gate and verify_phase_goal step. Resume will skip both plans and jump straight to verification."
 }
