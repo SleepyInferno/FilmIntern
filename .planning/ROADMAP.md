@@ -88,7 +88,10 @@ Plans:
   2. User can accept or reject each suggestion individually, and a script preview updates live to reflect current accept/reject decisions
   3. User can request a new AI rewrite for any individual suggestion they are unsatisfied with
   4. Accept/reject state persists across page refreshes -- user can leave and resume their review session
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 17-01-PLAN.md -- Backend foundation: DB migration, status API, diff utility, DiffDisplay component, test scaffolds
+- [ ] 17-02-PLAN.md -- Review UI: upgraded suggestion cards with diff + buttons, script preview, regeneration API, revision page wiring
 
 ### Phase 18: Merge + Script Export
 **Goal**: User can finalize accepted suggestions and export the revised script in PDF, DOCX, FDX, or plain text
@@ -121,6 +124,6 @@ Plans:
 | 13. CI/CD Pipeline | v2.0 | 2/2 | Complete | 2026-03-20 |
 | 14. Documentation Cleanup | v2.0 | 1/1 | Complete | 2026-03-19 |
 | 15. Adjustments / Revision Page + Branding | v3.0 | 2/2 | Complete | 2026-03-21 |
-| 16. Data Foundation + Suggestion Generation | 2/2 | Complete    | 2026-03-23 | - |
-| 17. Review UI | v3.0 | 0/? | Not started | - |
+| 16. Data Foundation + Suggestion Generation | v3.0 | 2/2 | Complete | 2026-03-23 |
+| 17. Review UI | v3.0 | 0/2 | Not started | - |
 | 18. Merge + Script Export | v3.0 | 0/? | Not started | - |
