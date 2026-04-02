@@ -12,9 +12,11 @@ Built with Next.js, SQLite, and the Vercel AI SDK. Runs locally via Docker or de
 - **Harsh Critic mode** — An adversarial second-pass analysis that pressure-tests weak points in your material
 - **Multi-provider AI** — Switch between Anthropic Claude, OpenAI GPT, and local Ollama models from the Settings panel; no restart required
 - **Card-based workspaces** — Analysis results surface as navigable cards; export individual cards or full reports
-- **Export** — PDF and DOCX export for analysis reports and generated documents (shot lists, image prompts)
+- **Script Improvement** — AI-generated rewrite suggestions with accept/reject workflow and live script preview
+- **Export** — PDF (via Playwright Chromium) and DOCX export for analysis reports and generated documents (shot lists, image prompts)
 - **Project library** — All analyses persist to a local SQLite database; browse, revisit, and compare past work
 - **Streaming responses** — Results appear progressively as the model generates them; no waiting for the full response
+- **Security headers** — X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy
 - **Fully self-hosted** — No telemetry, no cloud dependency beyond your chosen AI provider's API
 
 ---
@@ -100,15 +102,24 @@ See [docs/unraid-deployment.md](docs/unraid-deployment.md) for the full step-by-
    chown -R 1001:1001 /mnt/user/appdata/filmintern
    ```
 
-2. Place `docker-compose.prod.yml` and `Caddyfile` in a working directory on Unraid.
+2. (Optional) Create an `.env` file for API keys:
+   ```bash
+   cat > /mnt/user/appdata/filmintern/.env << 'EOF'
+   ANTHROPIC_API_KEY=sk-ant-...
+   OPENAI_API_KEY=sk-...
+   EOF
+   chmod 600 /mnt/user/appdata/filmintern/.env
+   ```
 
-3. Log in to GHCR and start the stack:
+3. Place `docker-compose.prod.yml` and `Caddyfile` in a working directory on Unraid.
+
+4. Log in to GHCR and start the stack:
    ```bash
    docker login ghcr.io -u YOUR_GITHUB_USERNAME
    docker compose -f docker-compose.prod.yml up -d
    ```
 
-4. Verify health:
+5. Verify health:
    ```bash
    curl http://localhost:7430/api/health
    # {"status":"ok","version":"0.1.0","db":"connected"}
@@ -116,9 +127,11 @@ See [docs/unraid-deployment.md](docs/unraid-deployment.md) for the full step-by-
 
 The app is accessible at `http://YOUR_UNRAID_IP:7430`.
 
-**Architecture:** Caddy (port 7430) → reverse proxy → FilmIntern app (port 3000, internal). The app container is not exposed directly. Caddy is configured with `flush_interval -1` to pass streaming SSE responses through without buffering.
+**Architecture:** Caddy (port 7430) → reverse proxy → FilmIntern app (port 3000, internal). The app container is not exposed directly. Caddy is configured with `flush_interval -1` and a 6-minute `response_header_timeout` to support long-running AI generation endpoints without buffering or premature timeouts.
 
 **HTTPS:** The Caddyfile currently uses HTTP on port 7430 for LAN access. To enable automatic HTTPS later, replace `:7430` in the Caddyfile with your domain name — Caddy handles certificate provisioning automatically.
+
+**SQLite on Unraid:** If your Unraid pool uses NFS-backed paths, point the volume directly to a disk path (e.g., `/mnt/disk1/appdata/filmintern`) rather than `/mnt/user/` for reliable SQLite WAL locking.
 
 ---
 
@@ -164,7 +177,7 @@ npx vitest run        # single pass
 {"status":"ok","version":"0.1.0","db":"connected"}
 ```
 
-The Docker image includes a `HEALTHCHECK` directive that polls this endpoint every 30 seconds (40-second start period). The Caddy service in `docker-compose.prod.yml` waits for the app to report healthy before accepting traffic.
+The Docker image includes a `HEALTHCHECK` directive that polls this endpoint every 30 seconds (60-second start period, 5 retries). The health check uses a Node.js one-liner instead of curl to minimize image size. The Caddy service in `docker-compose.prod.yml` waits for the app to report healthy before accepting traffic.
 
 ---
 
@@ -183,18 +196,20 @@ src/
       health/           # Health check endpoint
   lib/
     ai/
-      settings.ts       # Provider settings load/save
-      provider-registry.ts  # Vercel AI SDK registry builder
+      settings.ts       # Provider settings load/save (cached with 5s TTL)
+      provider-registry.ts  # Vercel AI SDK registry builder (cached per config)
       schemas/          # Zod schemas per project type
       prompts/          # System prompts per project type
-    db.ts               # SQLite database client
+    db.ts               # SQLite database client (WAL mode, indexed, foreign keys)
+    suggestions.ts      # Rewrite suggestion extraction logic
+    script-preview-utils.ts  # Script rewrite preview (array-join)
     version.ts          # App version constant
 
-Dockerfile              # Production multi-stage build (node:22-bookworm-slim)
-Dockerfile.dev          # Dev image (adds build-essential for native addons)
+Dockerfile              # Production 3-stage build (node:22-bookworm-slim + Chromium)
+Dockerfile.dev          # Dev image (adds build-essential, runs as node user)
 docker-compose.yml      # Dev stack (bind-mount, HMR, data persistence)
-docker-compose.prod.yml # Production stack (Caddy + app, health-gated)
-Caddyfile               # Caddy reverse proxy config (port 7430, flush_interval -1)
+docker-compose.prod.yml # Production stack (Caddy + app, health-gated, init, env_file)
+Caddyfile               # Caddy reverse proxy config (port 7430, 6-min timeout)
 docs/
   unraid-deployment.md  # Full Unraid setup guide
 .github/
