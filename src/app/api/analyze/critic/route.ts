@@ -1,6 +1,6 @@
 import { streamText, APICallError, LoadAPIKeyError, NoSuchModelError } from 'ai';
 import { loadSettings } from '@/lib/ai/settings';
-import { buildRegistry, checkProviderHealth } from '@/lib/ai/provider-registry';
+import { getModelForSettings, checkProviderHealth } from '@/lib/ai/provider-registry';
 import { harshCriticSystemPrompt } from '@/lib/ai/prompts/harsh-critic';
 
 export const maxDuration = 120;
@@ -23,16 +23,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const registry = buildRegistry(
-      settings.ollama.baseURL,
-      settings.anthropic.apiKey || undefined,
-      settings.openai.apiKey || undefined,
-    );
-    const modelId = ({
-      anthropic: `anthropic:${settings.anthropic.model}`,
-      openai: `openai:${settings.openai.model}`,
-      ollama: `ollama:${settings.ollama.model}`,
-    } as const)[settings.provider];
+    const { registry, modelId } = getModelForSettings(settings);
 
     const result = streamText({
       model: registry.languageModel(modelId),

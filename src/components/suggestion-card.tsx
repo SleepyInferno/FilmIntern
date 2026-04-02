@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { Card, CardHeader, CardContent, CardAction } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Check, X, RefreshCw } from 'lucide-react';
@@ -22,7 +23,7 @@ interface SuggestionCardProps {
   onRegenerate: (id: string) => void;
 }
 
-export function SuggestionCard({
+export const SuggestionCard = memo(function SuggestionCard({
   id,
   sceneHeading,
   characterName,
@@ -118,4 +119,4 @@ export function SuggestionCard({
       </CardContent>
     </Card>
   );
-}
+});

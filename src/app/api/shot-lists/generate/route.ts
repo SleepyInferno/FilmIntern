@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateText } from 'ai';
 import { loadSettings } from '@/lib/ai/settings';
-import { buildRegistry } from '@/lib/ai/provider-registry';
+import { getModelForSettings } from '@/lib/ai/provider-registry';
 
 export const maxDuration = 60;
 
@@ -72,18 +72,7 @@ export async function POST(req: NextRequest) {
     }
 
     const settings = await loadSettings();
-    const registry = buildRegistry(
-      settings.ollama.baseURL,
-      settings.anthropic.apiKey || undefined,
-      settings.openai.apiKey || undefined
-    );
-    const modelId = (
-      {
-        anthropic: `anthropic:${settings.anthropic.model}`,
-        openai: `openai:${settings.openai.model}`,
-        ollama: `ollama:${settings.ollama.model}`,
-      } as const
-    )[settings.provider];
+    const { registry, modelId } = getModelForSettings(settings);
 
     const result = await generateText({
       model: registry.languageModel(modelId),

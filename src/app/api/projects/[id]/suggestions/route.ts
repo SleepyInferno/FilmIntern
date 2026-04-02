@@ -1,6 +1,6 @@
 import { generateObject } from 'ai';
 import { loadSettings } from '@/lib/ai/settings';
-import { buildRegistry, checkProviderHealth } from '@/lib/ai/provider-registry';
+import { getModelForSettings, checkProviderHealth } from '@/lib/ai/provider-registry';
 import { db, generateId } from '@/lib/db';
 import { extractWeaknesses, extractCriticWeaknesses, suggestionConfig, type WeaknessTarget } from '@/lib/suggestions';
 import { suggestionSchema } from '@/lib/ai/schemas/suggestion';
@@ -65,16 +65,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   // Get script text from uploadData
   const scriptText = project.uploadData ? JSON.parse(project.uploadData)?.text ?? '' : '';
 
-  const registry = buildRegistry(
-    settings.ollama.baseURL,
-    settings.anthropic.apiKey || undefined,
-    settings.openai.apiKey || undefined,
-  );
-  const modelId = ({
-    anthropic: `anthropic:${settings.anthropic.model}`,
-    openai: `openai:${settings.openai.model}`,
-    ollama: `ollama:${settings.ollama.model}`,
-  } as const)[settings.provider];
+  const { registry, modelId } = getModelForSettings(settings);
 
   // NDJSON streaming with concurrency limiter (max 3 concurrent AI calls)
   const stream = new ReadableStream({

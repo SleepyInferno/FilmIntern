@@ -1,4 +1,4 @@
-# Build artifacts (DOCK-03 required)
+# Build artifacts
 node_modules/
 .next/
 .git/
@@ -7,17 +7,40 @@ node_modules/
 .planning/
 analysis_prompts/
 *.md
+docs/
 
 # Secrets - never bake into image
 .env
 .env.local
 .env*.local
+.filmintern/
 
-# Local database files
+# Database files
 dev.db
+*.db
 *.db-shm
 *.db-wal
+
+# Test infrastructure
+src/**/__tests__/
+src/**/*.test.ts
+src/**/*.test.tsx
+src/test-setup.ts
+vitest.config.ts
+coverage/
+
+# TypeScript build cache
+tsconfig.tsbuildinfo
+next-env.d.ts
 
 # IDE/editor
 .vscode/
 .idea/
+*.local
+
+# CI config
+.github/
+
+# OS artifacts
+.DS_Store
+Thumbs.db

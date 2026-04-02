@@ -306,15 +306,15 @@ export function DocumentWorkspace({
             Export
           </Button>
           {exportOpen && (
-            <div className="absolute right-0 top-full mt-1 z-10 bg-white border rounded-md shadow-md min-w-[160px]">
+            <div className="absolute right-0 top-full mt-1 z-10 bg-popover border rounded-md shadow-md min-w-[160px]">
               <button
-                className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
+                className="block w-full px-4 py-2 text-left text-sm hover:bg-muted"
                 onClick={() => handleExportFormat('pdf')}
               >
                 PDF (.pdf)
               </button>
               <button
-                className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
+                className="block w-full px-4 py-2 text-left text-sm hover:bg-muted"
                 onClick={() => handleExportFormat('docx')}
               >
                 Word (.docx)

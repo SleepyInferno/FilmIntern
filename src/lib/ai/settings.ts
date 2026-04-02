@@ -18,7 +18,7 @@ export const DEFAULT_SETTINGS: AISettings = {
 export const SETTINGS_DIR_PATH = process.env.SETTINGS_DIR || path.join(process.cwd(), '.filmintern');
 const SETTINGS_PATH = path.join(SETTINGS_DIR_PATH, 'settings.json');
 
-export async function loadSettings(): Promise<AISettings> {
+async function loadSettingsFromDisk(): Promise<AISettings> {
   try {
     const raw = await readFile(SETTINGS_PATH, 'utf-8');
     const parsed = JSON.parse(raw);
@@ -54,7 +54,37 @@ export async function loadSettings(): Promise<AISettings> {
   }
 }
 
+// In-memory cache with short TTL to avoid filesystem reads on every AI call
+let _settingsCache: { value: AISettings; ts: number } | null = null;
+const SETTINGS_TTL_MS = 5000;
+
+export async function loadSettings(): Promise<AISettings> {
+  const now = Date.now();
+  if (_settingsCache && now - _settingsCache.ts < SETTINGS_TTL_MS) {
+    return _settingsCache.value;
+  }
+  const value = await loadSettingsFromDisk();
+  _settingsCache = { value, ts: now };
+  return value;
+}
+
 export async function saveSettings(settings: AISettings): Promise<void> {
+  _settingsCache = null; // invalidate cache on write
   await mkdir(SETTINGS_DIR_PATH, { recursive: true });
-  await writeFile(SETTINGS_PATH, JSON.stringify(settings, null, 2), 'utf-8');
+  await writeFile(SETTINGS_PATH, JSON.stringify(settings, null, 2), { encoding: 'utf-8', mode: 0o600 });
+}
+
+/** Clear the in-memory settings cache (used by tests) */
+export function clearSettingsCache(): void {
+  _settingsCache = null;
+}
+
+/** Return settings with API keys masked for safe client-side display */
+export function maskSettingsKeys(settings: AISettings): AISettings {
+  const mask = (key: string) => key.length > 8 ? key.slice(0, 4) + '...' + key.slice(-4) : key ? '****' : '';
+  return {
+    ...settings,
+    anthropic: { ...settings.anthropic, apiKey: mask(settings.anthropic.apiKey) },
+    openai: { ...settings.openai, apiKey: mask(settings.openai.apiKey) },
+  };
 }

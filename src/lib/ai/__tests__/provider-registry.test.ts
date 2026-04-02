@@ -26,10 +26,14 @@ vi.mock('ollama-ai-provider-v2', () => ({
   createOllama: mockCreateOllama,
 }));
 
-import { buildRegistry, checkProviderHealth } from '../provider-registry';
+import { buildRegistry, checkProviderHealth, clearRegistryCache } from '../provider-registry';
 import type { AISettings } from '../settings';
 
 describe('provider-registry', () => {
+  afterEach(() => {
+    clearRegistryCache();
+  });
+
   it('returns a registry with languageModel method', () => {
     const registry = buildRegistry();
     expect(registry).toBeDefined();

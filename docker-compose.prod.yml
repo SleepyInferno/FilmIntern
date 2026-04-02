@@ -5,13 +5,26 @@
 #      (PAT needs read:packages scope)
 #   2. Create and own the data directory:
 #      mkdir -p /mnt/user/appdata/filmintern && chown -R 1001:1001 /mnt/user/appdata/filmintern
+#   3. Optionally create /mnt/user/appdata/filmintern/.env with API keys:
+#      ANTHROPIC_API_KEY=sk-ant-...
+#      OPENAI_API_KEY=sk-proj-...
+#      (chmod 600 /mnt/user/appdata/filmintern/.env)
+#
+# NOTE: If your Unraid pool uses NFS-backed paths, point the volume directly
+# to a disk (e.g., /mnt/disk1/appdata/filmintern) for reliable SQLite WAL locking.
 
 services:
   app:
     image: ghcr.io/sleepyinferno/filmintern:latest
+    init: true
+    stop_grace_period: 15s
     volumes:
       - /mnt/user/appdata/filmintern:/app/data
+    env_file:
+      - path: /mnt/user/appdata/filmintern/.env
+        required: false
     environment:
+      - NODE_ENV=production
       - DATABASE_PATH=/app/data/filmintern.db
       - SETTINGS_DIR=/app/data/.filmintern
       - OLLAMA_BASE_URL=http://host.docker.internal:11434/api

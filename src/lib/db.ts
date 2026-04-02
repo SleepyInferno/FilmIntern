@@ -1,15 +1,32 @@
 import Database from 'better-sqlite3';
+import { randomUUID } from 'crypto';
 import path from 'path';
 
 export const DB_PATH = process.env.DATABASE_PATH || path.join(process.cwd(), 'dev.db');
 
-let _db: Database.Database | null = null;
+// Attach singleton to globalThis to survive Next.js HMR in dev
+const globalDb = globalThis as typeof globalThis & { __filminternDb?: Database.Database };
+
+function runMigration(db: Database.Database, sql: string, errorSubstring: string): void {
+  try {
+    db.exec(sql);
+  } catch (err) {
+    if (err instanceof Error && err.message.includes(errorSubstring)) return;
+    throw err;
+  }
+}
 
 function getDb(): Database.Database {
-  if (_db) return _db;
-  _db = new Database(DB_PATH);
-  _db.pragma('journal_mode = WAL');
-  _db.exec(`
+  if (globalDb.__filminternDb) return globalDb.__filminternDb;
+  const db = new Database(DB_PATH);
+  db.pragma('journal_mode = WAL');
+  db.pragma('foreign_keys = ON');
+  db.pragma('synchronous = NORMAL');
+  db.pragma('busy_timeout = 5000');
+  db.pragma('cache_size = -32000');
+  db.pragma('temp_store = MEMORY');
+
+  db.exec(`
     CREATE TABLE IF NOT EXISTS projects (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
@@ -19,19 +36,18 @@ function getDb(): Database.Database {
       analysisData TEXT,
       reportDocument TEXT,
       generatedDocuments TEXT,
+      criticAnalysis TEXT,
+      fdxSource TEXT,
       createdAt TEXT NOT NULL DEFAULT (datetime('now')),
       updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
-  // Migration: add uploadData column to existing databases
-  try { _db.exec('ALTER TABLE projects ADD COLUMN uploadData TEXT'); } catch { /* already exists */ }
-  // Migration: add criticAnalysis column for harsh critic mode
-  try { _db.exec('ALTER TABLE projects ADD COLUMN criticAnalysis TEXT'); } catch { /* already exists */ }
-  // Migration: add fdxSource column for raw FDX XML preservation
-  try { _db.exec('ALTER TABLE projects ADD COLUMN fdxSource TEXT'); } catch { /* already exists */ }
+  // Migrations for databases created before these columns existed
+  runMigration(db, 'ALTER TABLE projects ADD COLUMN uploadData TEXT', 'duplicate column name');
+  runMigration(db, 'ALTER TABLE projects ADD COLUMN criticAnalysis TEXT', 'duplicate column name');
+  runMigration(db, 'ALTER TABLE projects ADD COLUMN fdxSource TEXT', 'duplicate column name');
 
-  // Suggestions table for AI-generated rewrite suggestions
-  _db.exec(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS suggestions (
       id TEXT PRIMARY KEY,
       projectId TEXT NOT NULL,
@@ -42,19 +58,36 @@ function getDb(): Database.Database {
       rewriteText TEXT NOT NULL,
       weaknessCategory TEXT NOT NULL,
       weaknessLabel TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
       createdAt TEXT NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (projectId) REFERENCES projects(id) ON DELETE CASCADE
     )
   `);
+  runMigration(db, "ALTER TABLE suggestions ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'", 'duplicate column name');
 
-  // Migration: add status column for accept/reject tracking
-  try { _db.exec("ALTER TABLE suggestions ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'"); } catch { /* already exists */ }
+  // Indexes for common query patterns
+  db.exec('CREATE INDEX IF NOT EXISTS idx_suggestions_projectId ON suggestions(projectId, orderIndex)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_projects_updatedAt ON projects(updatedAt DESC)');
 
-  return _db;
+  globalDb.__filminternDb = db;
+  return db;
 }
 
+// Graceful shutdown: checkpoint WAL before container stop
+function shutdown(): void {
+  if (globalDb.__filminternDb) {
+    try {
+      globalDb.__filminternDb.pragma('wal_checkpoint(TRUNCATE)');
+      globalDb.__filminternDb.close();
+    } catch { /* closing during exit — best effort */ }
+    globalDb.__filminternDb = undefined;
+  }
+}
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+
 export function generateId(): string {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  return randomUUID();
 }
 
 export interface ProjectRow {
@@ -144,7 +177,7 @@ export const db = {
     getDb().prepare('DELETE FROM suggestions WHERE projectId = ?').run(projectId);
   },
 
-  updateSuggestionStatus(id: string, status: string): void {
+  updateSuggestionStatus(id: string, status: SuggestionRow['status']): void {
     getDb().prepare('UPDATE suggestions SET status = ? WHERE id = ?').run(status, id);
   },
 

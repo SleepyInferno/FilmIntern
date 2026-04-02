@@ -30,6 +30,24 @@ vi.mock('@/lib/ai/settings', () => ({
 
 vi.mock('@/lib/ai/provider-registry', () => ({
   buildRegistry: mockBuildRegistry,
+  getModelForSettings: (settings: {
+    provider: 'anthropic' | 'openai' | 'ollama';
+    anthropic: { model: string };
+    openai: { model: string };
+    ollama: { model: string; baseURL: string };
+  }) => {
+    const registry = mockBuildRegistry(
+      settings.ollama.baseURL,
+      undefined,
+      undefined,
+    );
+    const modelId = ({
+      anthropic: `anthropic:${settings.anthropic.model}`,
+      openai: `openai:${settings.openai.model}`,
+      ollama: `ollama:${settings.ollama.model}`,
+    } as const)[settings.provider];
+    return { registry, modelId };
+  },
   checkProviderHealth: mockCheckProviderHealth,
 }));
 

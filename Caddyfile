@@ -5,5 +5,17 @@
 :7430 {
 	reverse_proxy app:3000 {
 		flush_interval -1
+
+		# Allow up to 6 minutes for long-running AI generation endpoints
+		transport http {
+			dial_timeout 10s
+			response_header_timeout 360s
+			read_timeout 360s
+		}
+	}
+
+	# Limit upload size for screenplay files
+	request_body {
+		max_size 50MB
 	}
 }

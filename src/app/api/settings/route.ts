@@ -1,5 +1,8 @@
 import { loadSettings, saveSettings, AISettings } from '@/lib/ai/settings';
 
+// NOTE: This endpoint returns full API keys for the settings UI to pre-fill inputs.
+// In a multi-user or network-exposed deployment, mask keys via maskSettingsKeys()
+// and implement a separate flow for key submission.
 export async function GET() {
   const settings = await loadSettings();
   return Response.json(settings);

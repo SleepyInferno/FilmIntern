@@ -23,6 +23,10 @@ vi.mock('@/lib/ai/provider-registry', () => ({
   buildRegistry: vi.fn(() => ({
     languageModel: vi.fn(),
   })),
+  getModelForSettings: vi.fn(() => ({
+    registry: { languageModel: vi.fn() },
+    modelId: 'anthropic:mock-model',
+  })),
   checkProviderHealth: vi.fn(),
 }));
 

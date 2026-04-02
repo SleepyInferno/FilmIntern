@@ -15,11 +15,12 @@ vi.mock('fs/promises', () => ({
   mkdir: mockMkdir,
 }));
 
-import { loadSettings, saveSettings, DEFAULT_SETTINGS, AISettings } from '../settings';
+import { loadSettings, saveSettings, DEFAULT_SETTINGS, AISettings, clearSettingsCache } from '../settings';
 
 describe('settings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearSettingsCache();
   });
 
   describe('DEFAULT_SETTINGS', () => {
@@ -144,7 +145,7 @@ describe('settings', () => {
       expect(mockWriteFile).toHaveBeenCalledWith(
         expect.stringContaining('settings.json'),
         JSON.stringify(settings, null, 2),
-        'utf-8'
+        { encoding: 'utf-8', mode: 0o600 }
       );
     });
   });

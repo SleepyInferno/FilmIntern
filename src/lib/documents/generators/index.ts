@@ -6,7 +6,7 @@
 
 import { generateText } from 'ai';
 import { loadSettings } from '@/lib/ai/settings';
-import { buildRegistry } from '@/lib/ai/provider-registry';
+import { getModelForSettings } from '@/lib/ai/provider-registry';
 import type {
   GeneratedDocument,
   DocumentCover,
@@ -101,18 +101,7 @@ export async function generateDocument(
   input: GenerateDocumentInput
 ): Promise<GeneratedDocument> {
   const settings = await loadSettings();
-  const registry = buildRegistry(
-    settings.ollama.baseURL,
-    settings.anthropic.apiKey || undefined,
-    settings.openai.apiKey || undefined,
-  );
-  const modelId = (
-    {
-      anthropic: `anthropic:${settings.anthropic.model}`,
-      openai: `openai:${settings.openai.model}`,
-      ollama: `ollama:${settings.ollama.model}`,
-    } as const
-  )[settings.provider];
+  const { registry, modelId } = getModelForSettings(settings);
 
   const prompt = buildPrompt(input);
 

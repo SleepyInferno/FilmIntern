@@ -10,11 +10,19 @@ export function applyAcceptedRewrites(
       index: scriptText.indexOf(s.originalText),
     }))
     .filter(s => s.index !== -1)
-    .sort((a, b) => b.index - a.index); // reverse order to prevent offset drift
+    .sort((a, b) => a.index - b.index); // ascending for forward scan
 
-  let result = scriptText;
+  if (accepted.length === 0) return scriptText;
+
+  // Array-join approach: O(1) string allocations instead of O(n) copies
+  const parts: string[] = [];
+  let cursor = 0;
   for (const s of accepted) {
-    result = result.slice(0, s.index) + s.rewrite + result.slice(s.index + s.original.length);
+    if (s.index < cursor) continue; // overlapping replacement, skip
+    parts.push(scriptText.slice(cursor, s.index));
+    parts.push(s.rewrite);
+    cursor = s.index + s.original.length;
   }
-  return result;
+  parts.push(scriptText.slice(cursor));
+  return parts.join('');
 }
