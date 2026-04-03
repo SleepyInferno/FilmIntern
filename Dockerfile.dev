@@ -5,8 +5,8 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential python3 && \
     rm -rf /var/lib/apt/lists/*
 
-# Pre-create node_modules owned by node so npm install can write to it
-RUN mkdir -p /app/node_modules && chown node:node /app/node_modules
+# Pre-create directories owned by node so npm install and next dev can write to them
+RUN mkdir -p /app/node_modules /app/.next && chown node:node /app/node_modules /app/.next
 
 # Run as node user (uid 1000) to avoid root-owned files on host bind mount
 USER node
