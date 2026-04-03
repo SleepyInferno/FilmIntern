@@ -20,7 +20,9 @@ export async function exportPdf(
 ): Promise<Buffer> {
   const html = renderDocumentHtml(document);
 
-  const browser = await chromium.launch();
+  const browser = await chromium.launch({
+    executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
+  });
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle' });
