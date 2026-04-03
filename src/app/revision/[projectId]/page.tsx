@@ -6,9 +6,11 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SuggestionGenerationPanel, type AnalysisType } from '@/components/suggestion-generation-panel';
 import { SuggestionList } from '@/components/suggestion-list';
 import { ScriptPreview } from '@/components/script-preview';
+import { FullRewritePanel } from '@/components/full-rewrite-panel';
 import type { SuggestionRow } from '@/lib/db';
 
 interface ProjectData {
@@ -269,64 +271,85 @@ export default function RevisionPage() {
         <h1 className="text-xl font-semibold">{project?.title}</h1>
       </div>
 
-      {!suggestionsLoaded ? (
-        <>
-          <Skeleton className="h-[140px] w-full rounded-lg" />
-          <Skeleton className="h-[140px] w-full rounded-lg" />
-          <Skeleton className="h-[140px] w-full rounded-lg" />
-        </>
-      ) : suggestions.length > 0 && !isGenerating ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <SuggestionList
-              suggestions={suggestions}
-              isStreaming={false}
-              streamingCurrent={0}
-              streamingTotal={0}
-              error={generationError}
-              failedCount={failedCount}
-              onStatusChange={handleStatusChange}
-              onRegenerate={handleRegenerateSingle}
-              regeneratingIds={regeneratingIds}
-            />
-            <SuggestionGenerationPanel
-              hasSuggestions={true}
-              isGenerating={false}
-              hasCriticAnalysis={!!project?.criticAnalysis}
-              onGenerate={handleGenerate}
-              onRegenerate={handleRegenerate}
-            />
-          </div>
-          {scriptText && (
-            <div className="hidden lg:block">
-              <div className="sticky top-6">
-                <ScriptPreview scriptText={scriptText} suggestions={suggestions} />
+      <Tabs defaultValue="suggestions" className="w-full">
+        <TabsList>
+          <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
+          <TabsTrigger value="full-rewrite">Full Rewrite</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="suggestions" className="mt-4">
+          {!suggestionsLoaded ? (
+            <>
+              <Skeleton className="h-[140px] w-full rounded-lg" />
+              <Skeleton className="h-[140px] w-full rounded-lg" />
+              <Skeleton className="h-[140px] w-full rounded-lg" />
+            </>
+          ) : suggestions.length > 0 && !isGenerating ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <SuggestionList
+                    suggestions={suggestions}
+                    isStreaming={false}
+                    streamingCurrent={0}
+                    streamingTotal={0}
+                    error={generationError}
+                    failedCount={failedCount}
+                    onStatusChange={handleStatusChange}
+                    onRegenerate={handleRegenerateSingle}
+                    regeneratingIds={regeneratingIds}
+                  />
+                  <SuggestionGenerationPanel
+                    hasSuggestions={true}
+                    isGenerating={false}
+                    hasCriticAnalysis={!!project?.criticAnalysis}
+                    onGenerate={handleGenerate}
+                    onRegenerate={handleRegenerate}
+                  />
+                </div>
+                {scriptText && (
+                  <div className="lg:sticky lg:top-6 lg:self-start">
+                    <ScriptPreview scriptText={scriptText} suggestions={suggestions} projectId={projectId} projectTitle={project?.title ?? 'Script'} />
+                  </div>
+                )}
               </div>
             </div>
+          ) : (
+            <div className="space-y-4">
+              <SuggestionGenerationPanel
+                hasSuggestions={suggestions.length > 0}
+                isGenerating={isGenerating}
+                hasCriticAnalysis={!!project?.criticAnalysis}
+                onGenerate={handleGenerate}
+                onRegenerate={handleRegenerate}
+              />
+              <SuggestionList
+                suggestions={suggestions}
+                isStreaming={isGenerating}
+                streamingCurrent={streamingCurrent}
+                streamingTotal={streamingTotal}
+                error={generationError}
+                failedCount={failedCount}
+                onStatusChange={handleStatusChange}
+                onRegenerate={handleRegenerateSingle}
+                regeneratingIds={regeneratingIds}
+              />
+              {scriptText && (
+                <ScriptPreview scriptText={scriptText} suggestions={suggestions} projectId={projectId} projectTitle={project?.title ?? 'Script'} />
+              )}
+            </div>
           )}
-        </div>
-      ) : (
-        <>
-          <SuggestionGenerationPanel
-            hasSuggestions={suggestions.length > 0}
-            isGenerating={isGenerating}
+        </TabsContent>
+
+        <TabsContent value="full-rewrite" className="mt-4">
+          <FullRewritePanel
+            projectId={projectId}
+            projectTitle={project?.title ?? 'Script'}
             hasCriticAnalysis={!!project?.criticAnalysis}
-            onGenerate={handleGenerate}
-            onRegenerate={handleRegenerate}
+            scriptText={scriptText}
           />
-          <SuggestionList
-            suggestions={suggestions}
-            isStreaming={isGenerating}
-            streamingCurrent={streamingCurrent}
-            streamingTotal={streamingTotal}
-            error={generationError}
-            failedCount={failedCount}
-            onStatusChange={handleStatusChange}
-            onRegenerate={handleRegenerateSingle}
-            regeneratingIds={regeneratingIds}
-          />
-        </>
-      )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

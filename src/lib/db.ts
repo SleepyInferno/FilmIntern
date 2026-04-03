@@ -46,6 +46,7 @@ function getDb(): Database.Database {
   runMigration(db, 'ALTER TABLE projects ADD COLUMN uploadData TEXT', 'duplicate column name');
   runMigration(db, 'ALTER TABLE projects ADD COLUMN criticAnalysis TEXT', 'duplicate column name');
   runMigration(db, 'ALTER TABLE projects ADD COLUMN fdxSource TEXT', 'duplicate column name');
+  runMigration(db, 'ALTER TABLE projects ADD COLUMN fullRewrite TEXT', 'duplicate column name');
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS suggestions (
@@ -101,6 +102,7 @@ export interface ProjectRow {
   generatedDocuments: string | null;
   criticAnalysis: string | null;
   fdxSource: string | null;
+  fullRewrite: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -141,7 +143,7 @@ export const db = {
     return (stmt.get(id) as ProjectRow) ?? null;
   },
 
-  updateProject(id: string, fields: Partial<Pick<ProjectRow, 'title' | 'uploadData' | 'analysisData' | 'reportDocument' | 'generatedDocuments' | 'criticAnalysis' | 'fdxSource'>>): ProjectRow | null {
+  updateProject(id: string, fields: Partial<Pick<ProjectRow, 'title' | 'uploadData' | 'analysisData' | 'reportDocument' | 'generatedDocuments' | 'criticAnalysis' | 'fdxSource' | 'fullRewrite'>>): ProjectRow | null {
     const now = new Date().toISOString();
     const sets: string[] = ['updatedAt = ?'];
     const values: unknown[] = [now];
@@ -153,6 +155,7 @@ export const db = {
     if (fields.generatedDocuments !== undefined) { sets.push('generatedDocuments = ?'); values.push(fields.generatedDocuments); }
     if (fields.criticAnalysis !== undefined) { sets.push('criticAnalysis = ?'); values.push(fields.criticAnalysis); }
     if (fields.fdxSource !== undefined) { sets.push('fdxSource = ?'); values.push(fields.fdxSource); }
+    if (fields.fullRewrite !== undefined) { sets.push('fullRewrite = ?'); values.push(fields.fullRewrite); }
 
     values.push(id);
     getDb().prepare(`UPDATE projects SET ${sets.join(', ')} WHERE id = ?`).run(...values);
