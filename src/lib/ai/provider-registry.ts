@@ -45,6 +45,24 @@ export function getModelForSettings(settings: AISettings) {
   return { registry, modelId };
 }
 
+/**
+ * Lighter/cheaper model for structured extraction and validation passes.
+ * Uses the same provider the user configured — no extra API key needed.
+ */
+export function getLightModelForSettings(settings: AISettings) {
+  const registry = buildRegistry(
+    settings.ollama.baseURL,
+    settings.anthropic.apiKey || undefined,
+    settings.openai.apiKey || undefined,
+  );
+  const lightModelId = ({
+    anthropic: 'anthropic:claude-haiku-4-5-20251001',
+    openai: 'openai:gpt-4o-mini',
+    ollama: `ollama:${settings.ollama.model}`, // no lighter option — use same model
+  } as const)[settings.provider];
+  return { registry, modelId: lightModelId };
+}
+
 /** Clear the cached registry (used by tests) */
 export function clearRegistryCache(): void {
   _registryCache = null;
