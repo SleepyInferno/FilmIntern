@@ -27,7 +27,7 @@ export async function POST(
   let extreme = false;
   try {
     const body = await req.json();
-    notes = (body?.notes as string) || '';
+    notes = ((body?.notes as string) || '').slice(0, 5000);
     extreme = body?.extreme === true;
   } catch {
     // No body or invalid JSON — proceed with defaults
@@ -88,8 +88,19 @@ export async function POST(
 
     const stream = new ReadableStream({
       async start(controller) {
+        let closed = false;
         const send = (obj: Record<string, unknown>) => {
-          controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n'));
+          if (closed) return;
+          try {
+            controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n'));
+          } catch {
+            closed = true; // Stream cancelled by client disconnect
+          }
+        };
+        const close = () => {
+          if (closed) return;
+          closed = true;
+          try { controller.close(); } catch { /* already closed */ }
         };
 
         try {
@@ -143,7 +154,7 @@ export async function POST(
             model: lightModel,
             schema: validationSchema,
             system: supervisorSystemPrompt,
-            prompt: buildSupervisorUserPrompt(scriptText, fullRewriteText, bible, criticNotes),
+            prompt: buildSupervisorUserPrompt(scriptText, fullRewriteText, bible, criticNotes, notes || undefined),
             ...structuredOpts,
           });
 
@@ -206,19 +217,25 @@ export async function POST(
               model: lightModel,
               schema: validationSchema,
               system: supervisorSystemPrompt,
-              prompt: buildSupervisorUserPrompt(scriptText, fullRewriteText, bible, combinedCritique),
+              prompt: buildSupervisorUserPrompt(scriptText, fullRewriteText, bible, combinedCritique, notes || undefined),
               ...structuredOpts,
             });
 
             send({ phase: 'validation2', data: finalValidation.object });
           }
 
+          // Save server-side before signaling complete — prevents data loss
+          // if the client's PUT fails or the user navigates away
+          if (fullRewriteText) {
+            try { db.updateProject(id, { fullRewrite: fullRewriteText }); } catch { /* best effort */ }
+          }
+
           send({ phase: 'complete' });
-          controller.close();
+          close();
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error during rewrite';
           send({ phase: 'error', message: errorMessage });
-          controller.close();
+          close();
         }
       },
     });

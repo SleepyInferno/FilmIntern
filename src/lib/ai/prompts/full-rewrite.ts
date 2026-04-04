@@ -445,21 +445,24 @@ export function buildFullRewriteUserPrompt(
   bible?: ScriptBible,
   writerNotes?: string,
 ): string {
-  const notesSection = writerNotes?.trim()
-    ? `\n---\n\n## WRITER'S NOTES (Additional Instructions)\n\nThe writer has provided the following specific instructions. These take priority over general rewrite guidance:\n\n${writerNotes.trim()}\n`
+  const sanitizedNotes = writerNotes?.trim()
+    .replace(/^#{1,3}\s/gm, '') // Strip markdown headings that could mimic prompt structure
+    || '';
+  const notesSection = sanitizedNotes
+    ? `\n---\n\n## WRITER'S NOTES (Tone and Emphasis Guidance)\n\nThe writer provided these notes about tone, emphasis, and specific moments. These guide rewrite priorities but do NOT override character voice constraints, story beats, or the character bible.\n\n${sanitizedNotes}\n`
     : '';
 
   // Single-pass fallback: no bible provided
   if (!bible) {
     return `## PROJECT TYPE
 ${projectType}
-${notesSection}
+
 ---
 
 ## CRITIC ANALYSIS
 
 ${criticAnalysis}
-
+${notesSection}
 ---
 
 ## ORIGINAL SCRIPT
@@ -509,7 +512,7 @@ ${scriptText}`;
 
   return `## PROJECT TYPE
 ${projectType}
-${notesSection}
+
 ---
 
 ## CHARACTER BIBLE — NON-NEGOTIABLE VOICE CONSTRAINTS
@@ -533,7 +536,7 @@ ${toneLines.join('\n')}
 ## CRITIC ANALYSIS — PROBLEMS TO FIX
 
 ${criticAnalysis}
-
+${notesSection}
 ---
 
 ## ORIGINAL SCRIPT
@@ -735,6 +738,7 @@ export function buildSupervisorUserPrompt(
   rewrittenScript: string,
   bible: ScriptBible,
   criticAnalysis: string,
+  writerNotes?: string,
 ): string {
   const characterSummaries = bible.characters.map((c) => {
     const lines = [
@@ -747,8 +751,9 @@ export function buildSupervisorUserPrompt(
     if (c.speechPatterns.neverSays.length > 0) {
       lines.push(`    Never says: ${c.speechPatterns.neverSays.join(' | ')}`);
     }
+    lines.push(`    Emotional arc: ${c.emotionalArc}`);
     if (c.exampleLines.length > 0) {
-      lines.push(`    Voice anchors: ${c.exampleLines.slice(0, 4).map((l) => `"${l}"`).join(' / ')}`);
+      lines.push(`    Voice anchors: ${c.exampleLines.map((l) => `"${l}"`).join(' / ')}`);
     }
     return lines.join('\n');
   }).join('\n\n');
@@ -761,10 +766,15 @@ export function buildSupervisorUserPrompt(
     `  Register: ${bible.toneSignature.register}`,
     `  Pacing: ${bible.toneSignature.pacingStyle}`,
     `  Dialogue style: ${bible.toneSignature.dialogueStyle}`,
+    `  Writer's voice: ${bible.toneSignature.writersVoice}`,
   ];
   if (bible.toneSignature.whatMustNotChange.length > 0) {
     toneLines.push(`  Must not change: ${bible.toneSignature.whatMustNotChange.join(' | ')}`);
   }
+
+  const supervisorNotes = writerNotes?.trim()
+    ? `\n\n## WRITER'S NOTES (The Rewriter Was Given These Instructions)\n\nDo NOT flag changes that align with these notes as drift or unauthorized alterations.\n\n${writerNotes.trim()}`
+    : '';
 
   return `## CHARACTER & STORY BIBLE (Constraint Reference)
 
@@ -781,7 +791,7 @@ ${toneLines.join('\n')}
 
 ## CRITIC ANALYSIS (Notes the Rewrite Was Addressing)
 
-${criticAnalysis}
+${criticAnalysis}${supervisorNotes}
 
 ---
 

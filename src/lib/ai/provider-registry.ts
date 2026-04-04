@@ -2,6 +2,7 @@ import { createProviderRegistry } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createOllama } from 'ollama-ai-provider-v2';
+import { createHash } from 'crypto';
 import type { AISettings } from './settings';
 
 // Cache registry to avoid recreating provider clients on every request
@@ -9,7 +10,7 @@ let _registryCache: ReturnType<typeof createProviderRegistry> | null = null;
 let _registryCacheKey = '';
 
 export function buildRegistry(ollamaBaseURL?: string, anthropicApiKey?: string, openaiApiKey?: string) {
-  const key = `${ollamaBaseURL ?? ''}|${anthropicApiKey ?? ''}|${openaiApiKey ?? ''}`;
+  const key = createHash('sha256').update(`${ollamaBaseURL ?? ''}|${anthropicApiKey ?? ''}|${openaiApiKey ?? ''}`).digest('hex');
   if (_registryCache && _registryCacheKey === key) return _registryCache;
 
   _registryCache = createProviderRegistry({

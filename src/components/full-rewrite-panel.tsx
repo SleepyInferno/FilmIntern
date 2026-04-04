@@ -61,6 +61,12 @@ export function FullRewritePanel({
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportingDocx, setExportingDocx] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Abort any in-flight generation on unmount
+  useEffect(() => {
+    return () => { abortRef.current?.abort(); };
+  }, []);
 
   // Load previously saved rewrite on mount
   useEffect(() => {
@@ -91,6 +97,10 @@ export function FullRewritePanel({
   }, [rewriteText, phase]);
 
   const handleGenerate = useCallback(async (extreme: boolean) => {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setIsExtreme(extreme);
     setPhase('extracting');
     setPhaseMessage('');
@@ -107,6 +117,7 @@ export function FullRewritePanel({
           notes: notes.trim() || undefined,
           extreme,
         }),
+        signal: controller.signal,
       });
 
       if (!res.ok) {
@@ -199,6 +210,30 @@ export function FullRewritePanel({
         }
       }
 
+      // Process any trailing buffer
+      if (buffer.trim()) {
+        try {
+          const event = JSON.parse(buffer);
+          if (event.phase === 'complete') setPhase('complete');
+          else if (event.phase === 'error') {
+            setError(event.message || 'An error occurred');
+            setPhase('error');
+          } else if (event.phase === 'chunk') {
+            accumulated += event.text;
+            setRewriteText(accumulated);
+          } else if (event.phase === 'chunk2') {
+            accumulated += event.text;
+            setRewriteText(accumulated);
+          } else if (event.phase === 'validation') {
+            setValidation(event.data as ValidationData);
+          } else if (event.phase === 'validation2') {
+            setFinalValidation(event.data as ValidationData);
+          }
+        } catch {
+          // Skip malformed trailing data
+        }
+      }
+
       // Save to DB if we got a rewrite
       if (accumulated) {
         await fetch(`/api/projects/${projectId}/rewrite`, {
@@ -207,7 +242,8 @@ export function FullRewritePanel({
           body: JSON.stringify({ fullRewrite: accumulated }),
         });
       }
-    } catch {
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return; // User navigated away
       setError('Rewrite generation failed. Check your AI provider settings and try again.');
       setPhase('error');
     }
@@ -294,6 +330,7 @@ export function FullRewritePanel({
             rows={3}
             placeholder="e.g., Don't soften the ending scene. Keep Maria's accent stronger. The confrontation in Scene 4 needs to stay uncomfortable..."
             value={notes}
+            maxLength={5000}
             onChange={(e) => setNotes(e.target.value)}
             disabled={isGenerating}
           />
