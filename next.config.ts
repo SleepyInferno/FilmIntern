@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ['*'],
   output: 'standalone',
   serverExternalPackages: ['pdf-parse', 'better-sqlite3', 'mammoth', 'fast-xml-parser'],
   outputFileTracingIncludes: {
