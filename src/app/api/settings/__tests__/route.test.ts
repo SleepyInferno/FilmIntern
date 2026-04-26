@@ -8,10 +8,14 @@ const { mockLoadSettings, mockSaveSettings } = vi.hoisted(() => ({
   mockSaveSettings: vi.fn(),
 }));
 
-vi.mock('@/lib/ai/settings', () => ({
-  loadSettings: mockLoadSettings,
-  saveSettings: mockSaveSettings,
-}));
+vi.mock('@/lib/ai/settings', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/ai/settings')>();
+  return {
+    ...actual,
+    loadSettings: mockLoadSettings,
+    saveSettings: mockSaveSettings,
+  };
+});
 
 import { GET, PUT } from '../route';
 
@@ -47,12 +51,28 @@ describe('GET /api/settings', () => {
     expect(body.openai.model).toBe('gpt-4o');
     expect(body.ollama.model).toBe('llama3.1');
   });
+
+  it('masks API keys before returning to clients', async () => {
+    mockLoadSettings.mockResolvedValue({
+      ...validSettings,
+      anthropic: { model: 'claude-sonnet-4-5', apiKey: 'sk-ant-1234567890abcdef' },
+      openai: { model: 'gpt-4o', apiKey: 'sk-proj-abcdefghijklmnop' },
+    });
+
+    const res = await GET();
+    const body = await res.json();
+    expect(body.anthropic.apiKey).not.toContain('1234567890');
+    expect(body.anthropic.apiKey).toMatch(/\.\.\./);
+    expect(body.openai.apiKey).not.toContain('abcdefghijklmnop');
+    expect(body.openai.apiKey).toMatch(/\.\.\./);
+  });
 });
 
 describe('PUT /api/settings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSaveSettings.mockResolvedValue(undefined);
+    mockLoadSettings.mockResolvedValue(validSettings);
   });
 
   it('saves valid settings and returns { ok: true }', async () => {
@@ -63,6 +83,79 @@ describe('PUT /api/settings', () => {
     const body = await res.json();
     expect(body.ok).toBe(true);
     expect(mockSaveSettings).toHaveBeenCalledWith(validSettings);
+  });
+
+  it('preserves stored keys when client sends masked echoes', async () => {
+    mockLoadSettings.mockResolvedValue({
+      ...validSettings,
+      anthropic: { model: 'claude-sonnet-4-5', apiKey: 'sk-ant-real-key-1234' },
+      openai: { model: 'gpt-4o', apiKey: 'sk-proj-real-key-abcd' },
+    });
+
+    const req = makePutRequest({
+      ...validSettings,
+      anthropic: { model: 'claude-sonnet-4-5', apiKey: 'sk-a...1234' },
+      openai: { model: 'gpt-4o', apiKey: '' },
+    });
+    const res = await PUT(req);
+
+    expect(res.status).toBe(200);
+    const saved = mockSaveSettings.mock.calls[0][0];
+    expect(saved.anthropic.apiKey).toBe('sk-ant-real-key-1234');
+    expect(saved.openai.apiKey).toBe('sk-proj-real-key-abcd');
+  });
+
+  it('overwrites stored key when client supplies a fresh value', async () => {
+    mockLoadSettings.mockResolvedValue({
+      ...validSettings,
+      anthropic: { model: 'claude-sonnet-4-5', apiKey: 'old-key' },
+    });
+
+    const req = makePutRequest({
+      ...validSettings,
+      anthropic: { model: 'claude-sonnet-4-5', apiKey: 'sk-ant-brand-new-value' },
+    });
+    await PUT(req);
+    const saved = mockSaveSettings.mock.calls[0][0];
+    expect(saved.anthropic.apiKey).toBe('sk-ant-brand-new-value');
+  });
+
+  it('accepts a LAN baseURL (e.g. http://192.168.1.9:11434/api)', async () => {
+    const req = makePutRequest({
+      ...validSettings,
+      ollama: { model: 'llama3.1', baseURL: 'http://192.168.1.9:11434/api' },
+    });
+    const res = await PUT(req);
+    expect(res.status).toBe(200);
+  });
+
+  it('rejects baseURL with link-local/metadata host', async () => {
+    const req = makePutRequest({
+      ...validSettings,
+      ollama: { model: 'llama3.1', baseURL: 'http://169.254.169.254/latest/meta-data/' },
+    });
+    const res = await PUT(req);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/link-local|metadata/i);
+  });
+
+  it('rejects baseURL with non-http scheme', async () => {
+    const req = makePutRequest({
+      ...validSettings,
+      ollama: { model: 'llama3.1', baseURL: 'file:///etc/passwd' },
+    });
+    const res = await PUT(req);
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects baseURL containing credentials', async () => {
+    const req = makePutRequest({
+      ...validSettings,
+      ollama: { model: 'llama3.1', baseURL: 'http://user:pass@example.com/api' },
+    });
+    const res = await PUT(req);
+    expect(res.status).toBe(400);
   });
 
   it('returns 400 when provider is missing', async () => {
