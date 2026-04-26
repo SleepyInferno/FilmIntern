@@ -72,15 +72,28 @@ function makeRequest(body: Record<string, unknown>): Request {
   });
 }
 
+function makeStreamMock(chunks: string[] | (() => AsyncIterable<string>)) {
+  const iterable = typeof chunks === 'function' ? chunks() : (async function* () {
+    for (const c of chunks) yield c;
+  })();
+  return { textStream: iterable };
+}
+
+async function readNdjson(res: Response): Promise<Array<Record<string, unknown>>> {
+  const text = await res.text();
+  return text
+    .split('\n')
+    .filter((l) => l.length > 0)
+    .map((l) => JSON.parse(l));
+}
+
 describe('POST /api/analyze/critic', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockLoadSettings.mockResolvedValue({ ...DEFAULT_MOCK_SETTINGS });
     mockBuildRegistry.mockReturnValue({ languageModel: mockLanguageModel });
     mockLanguageModel.mockReturnValue('mock-model');
-    mockStreamText.mockReturnValue({
-      toTextStreamResponse: vi.fn().mockReturnValue(new Response('critic output')),
-    });
+    mockStreamText.mockReturnValue(makeStreamMock(['critic ', 'output']));
     mockCheckProviderHealth.mockResolvedValue({ ok: true });
     mockAPICallError.isInstance.mockReturnValue(false);
     mockLoadAPIKeyError.isInstance.mockReturnValue(false);
@@ -196,6 +209,49 @@ describe('POST /api/analyze/critic', () => {
       const res = await POST(req);
 
       expect(res.status).toBe(500);
+    });
+  });
+
+  describe('NDJSON envelope', () => {
+    it('emits chunk events and a terminal done event with full text', async () => {
+      mockStreamText.mockReturnValue(makeStreamMock(['Harsh ', 'critique ', 'text.']));
+      const req = makeRequest({ text: 'sample', projectType: 'narrative' });
+      const res = await POST(req);
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get('Content-Type')).toBe('application/x-ndjson');
+
+      const events = await readNdjson(res);
+      const chunkEvents = events.filter((e) => e.type === 'chunk');
+      const doneEvents = events.filter((e) => e.type === 'done');
+      expect(chunkEvents).toHaveLength(3);
+      expect(doneEvents).toHaveLength(1);
+      expect(doneEvents[0].text).toBe('Harsh critique text.');
+    });
+
+    it('emits a typed error event when provider stream throws mid-stream', async () => {
+      mockStreamText.mockReturnValue(makeStreamMock(async function* () {
+        yield 'starting...';
+        throw new Error('rate limit hit');
+      }));
+      const req = makeRequest({ text: 'sample', projectType: 'narrative' });
+      const res = await POST(req);
+
+      const events = await readNdjson(res);
+      const errorEvents = events.filter((e) => e.type === 'error');
+      expect(errorEvents).toHaveLength(1);
+      expect(errorEvents[0].message).toContain('rate limit hit');
+    });
+
+    it('emits an error event when the stream produces no data', async () => {
+      mockStreamText.mockReturnValue(makeStreamMock([]));
+      const req = makeRequest({ text: 'sample', projectType: 'narrative' });
+      const res = await POST(req);
+
+      const events = await readNdjson(res);
+      const errorEvents = events.filter((e) => e.type === 'error');
+      expect(errorEvents).toHaveLength(1);
+      expect(errorEvents[0].message).toMatch(/no data/i);
     });
   });
 });

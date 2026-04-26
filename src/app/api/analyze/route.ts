@@ -47,6 +47,7 @@ export async function POST(req: Request) {
 
   try {
     const { registry, modelId } = getModelForSettings(settings);
+    const encoder = new TextEncoder();
 
     const result = streamText({
       model: registry.languageModel(modelId),
@@ -63,7 +64,56 @@ export async function POST(req: Request) {
       },
     });
 
-    return result.toTextStreamResponse();
+    const stream = new ReadableStream({
+      async start(controller) {
+        let closed = false;
+        const send = (obj: Record<string, unknown>) => {
+          if (closed) return;
+          try {
+            controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n'));
+          } catch {
+            closed = true; // client disconnected
+          }
+        };
+        const close = () => {
+          if (closed) return;
+          closed = true;
+          try { controller.close(); } catch { /* already closed */ }
+        };
+
+        let accumulated = '';
+        try {
+          for await (const chunk of result.textStream) {
+            accumulated += chunk;
+            send({ type: 'chunk', text: chunk });
+          }
+
+          if (accumulated.trim().length === 0) {
+            send({ type: 'error', message: 'Provider returned no data. Check API key and model in Settings.' });
+          } else {
+            try {
+              const data = JSON.parse(accumulated);
+              send({ type: 'done', data });
+            } catch {
+              send({ type: 'error', message: 'Provider response was malformed JSON. Check model selection in Settings.' });
+            }
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown streaming error';
+          send({ type: 'error', message: `Analysis stream failed: ${message}` });
+        } finally {
+          close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'application/x-ndjson',
+        'Cache-Control': 'no-cache',
+        'Transfer-Encoding': 'chunked',
+      },
+    });
   } catch (error) {
     if (LoadAPIKeyError.isInstance(error)) {
       return Response.json(

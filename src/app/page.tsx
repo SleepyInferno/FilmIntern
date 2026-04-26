@@ -178,23 +178,56 @@ export default function Home() {
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      let accumulated = '';
+      let buffer = '';
+      let accumulatedText = '';
       let finalData: Record<string, unknown> | null = null;
+      let serverError: string | null = null;
+
+      const consumeLine = (line: string) => {
+        if (!line) return;
+        let evt: { type?: string; text?: string; data?: Record<string, unknown>; message?: string };
+        try {
+          evt = JSON.parse(line);
+        } catch {
+          return; // ignore malformed event line
+        }
+        if (evt.type === 'chunk' && typeof evt.text === 'string') {
+          accumulatedText += evt.text;
+          // Progressive UI: only attempt parse when accumulated text could plausibly close.
+          // Avoids O(n²) parse-per-byte while still giving incremental rendering.
+          if (accumulatedText.endsWith('}')) {
+            try {
+              const partial = JSON.parse(accumulatedText) as Record<string, unknown>;
+              setAnalysisData(partial);
+            } catch {
+              // not yet parseable
+            }
+          }
+        } else if (evt.type === 'done' && evt.data) {
+          finalData = evt.data;
+          setAnalysisData(evt.data);
+        } else if (evt.type === 'error' && typeof evt.message === 'string') {
+          serverError = evt.message;
+        }
+      };
 
       while (reader) {
         const { done, value } = await reader.read();
         if (done) break;
-        accumulated += decoder.decode(value, { stream: true });
-        try {
-          const partial = JSON.parse(accumulated);
-          setAnalysisData(partial);
-          finalData = partial;
-        } catch {
-          // Incomplete JSON — continue accumulating
+        buffer += decoder.decode(value, { stream: true });
+        let nl = buffer.indexOf('\n');
+        while (nl >= 0) {
+          const line = buffer.slice(0, nl);
+          buffer = buffer.slice(nl + 1);
+          consumeLine(line);
+          nl = buffer.indexOf('\n');
         }
       }
+      if (buffer) consumeLine(buffer);
 
-      if (finalData) {
+      if (serverError) {
+        setAnalysisError(serverError);
+      } else if (finalData) {
         const reportKind = getReportKind(projectType);
         const reportDoc = buildReportDocument({
           reportKind,
@@ -208,10 +241,8 @@ export default function Home() {
         setActiveDocumentId(reportDoc.id);
         // LIB-01: Auto-save analysis + report + source material after streaming completes
         await saveAnalysis(projectId, { uploadData: uploadData!, analysisData: finalData, reportDocument: reportDoc });
-      } else if (accumulated.trim().length === 0) {
-        setAnalysisError('Analysis returned no data. Check your API key and model in Settings, then try again.');
       } else {
-        setAnalysisError('Analysis response was malformed. Check your model selection in Settings and try again.');
+        setAnalysisError('Analysis ended without producing a result. Check your model selection in Settings and try again.');
       }
 
       setIsAnalyzing(false);
@@ -230,17 +261,38 @@ export default function Home() {
           if (criticResponse.ok) {
             const reader = criticResponse.body?.getReader();
             const decoder = new TextDecoder();
+            let buffer = '';
             let criticText = '';
+
+            const consume = (line: string) => {
+              if (!line) return;
+              let evt: { type?: string; text?: string; message?: string };
+              try { evt = JSON.parse(line); } catch { return; }
+              if (evt.type === 'chunk' && typeof evt.text === 'string') {
+                criticText += evt.text;
+                setCriticAnalysis(criticText);
+              } else if (evt.type === 'done' && typeof evt.text === 'string') {
+                criticText = evt.text;
+                setCriticAnalysis(criticText);
+              }
+              // 'error' events are non-fatal here — keep whatever critic text streamed
+            };
 
             while (reader) {
               const { done, value } = await reader.read();
               if (done) break;
-              criticText += decoder.decode(value, { stream: true });
-              setCriticAnalysis(criticText);
+              buffer += decoder.decode(value, { stream: true });
+              let nl = buffer.indexOf('\n');
+              while (nl >= 0) {
+                consume(buffer.slice(0, nl));
+                buffer = buffer.slice(nl + 1);
+                nl = buffer.indexOf('\n');
+              }
             }
+            if (buffer) consume(buffer);
 
             // Save critic result to DB (plain text, not JSON-stringified)
-            if (projectId) {
+            if (projectId && criticText) {
               await fetch(`/api/projects/${projectId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },

@@ -233,6 +233,9 @@ describe('auto-save behavior', () => {
   });
 
   function makeAnalysisStream() {
+    const ndjson =
+      JSON.stringify({ type: 'chunk', text: '{"summary":{"overview":"A test doc."}}' }) + '\n' +
+      JSON.stringify({ type: 'done', data: { summary: { overview: 'A test doc.' } } }) + '\n';
     return {
       ok: true,
       body: {
@@ -241,9 +244,7 @@ describe('auto-save behavior', () => {
             .fn()
             .mockResolvedValueOnce({
               done: false,
-              value: new TextEncoder().encode(
-                JSON.stringify({ summary: { overview: 'A test doc.' } })
-              ),
+              value: new TextEncoder().encode(ndjson),
             })
             .mockResolvedValueOnce({ done: true, value: undefined }),
         }),
