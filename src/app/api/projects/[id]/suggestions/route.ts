@@ -59,15 +59,25 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     analysisContext = `Here is the full analysis:\n${JSON.stringify(analysisData)}`;
   }
 
-  // Clear existing suggestions before regenerating
-  db.deleteSuggestionsForProject(id);
-
   // Get script text from uploadData
   const scriptText = project.uploadData ? JSON.parse(project.uploadData)?.text ?? '' : '';
 
   const { registry, modelId } = getModelForSettings(settings);
 
-  // NDJSON streaming with concurrency limiter (max 3 concurrent AI calls)
+  // Defer the existing-suggestion delete until the FIRST successful generation:
+  // if every call fails (network/provider outage) we'd otherwise lose the old
+  // suggestions and produce nothing in their place.
+  const abortController = new AbortController();
+  let closed = false;
+  let oldDeleted = false;
+
+  const ensureOldDeleted = () => {
+    if (!oldDeleted) {
+      oldDeleted = true;
+      db.deleteSuggestionsForProject(id);
+    }
+  };
+
   const stream = new ReadableStream({
     async start(controller) {
       const encoder = new TextEncoder();
@@ -77,9 +87,25 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       let completedCount = 0;
       const totalCount = targets.length;
 
+      const send = (obj: Record<string, unknown>) => {
+        if (closed) return;
+        try {
+          controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n'));
+        } catch {
+          closed = true;
+          abortController.abort();
+        }
+      };
+
+      const closeStream = () => {
+        if (closed) return;
+        closed = true;
+        try { controller.close(); } catch { /* already closed */ }
+      };
+
       await new Promise<void>((resolve) => {
         function tryLaunch() {
-          while (activeCount < maxConcurrent && nextIndex < totalCount) {
+          while (activeCount < maxConcurrent && nextIndex < totalCount && !closed) {
             const i = nextIndex++;
             const weakness = targets[i];
             activeCount++;
@@ -89,10 +115,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
               schema: suggestionSchema,
               system: systemPrompt,
               prompt: `${analysisContext}\n\nHere is the script text:\n${scriptText}\n\nTarget this specific critique area:\nCategory: ${weakness.category}\n${weakness.label}\n\nFind the exact passage in the script that best exhibits this problem and write a concrete rewrite.`,
+              abortSignal: abortController.signal,
               ...(settings.provider === 'anthropic' ? {
                 providerOptions: { anthropic: { structuredOutputMode: 'auto' } },
               } : {}),
             }).then((result) => {
+              if (closed) return; // client disconnected — drop result
+              ensureOldDeleted();
               const suggestion = {
                 id: generateId(),
                 projectId: id,
@@ -105,22 +134,22 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                 weaknessLabel: weakness.label,
               };
               db.insertSuggestion(suggestion);
-              controller.enqueue(encoder.encode(JSON.stringify(suggestion) + '\n'));
+              send(suggestion);
             }).catch((err) => {
-              // Stream error info for this suggestion so client knows it failed
-              controller.enqueue(encoder.encode(JSON.stringify({
+              if (closed) return;
+              send({
                 error: true,
                 orderIndex: i,
                 weaknessLabel: weakness.label,
                 message: err instanceof Error ? err.message : 'Generation failed',
-              }) + '\n'));
+              });
             }).finally(() => {
               activeCount--;
               completedCount++;
-              if (completedCount === totalCount) {
-                controller.close();
+              if (completedCount === totalCount || (closed && activeCount === 0)) {
+                closeStream();
                 resolve();
-              } else {
+              } else if (!closed) {
                 tryLaunch();
               }
             });
@@ -128,6 +157,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         }
         tryLaunch();
       });
+    },
+    cancel() {
+      // Client disconnected before stream finished — stop launching new tasks
+      // and abort any in-flight provider calls so we don't rack up billing.
+      closed = true;
+      abortController.abort();
     },
   });
 
