@@ -50,4 +50,25 @@ describe('applyAcceptedRewrites', () => {
     ]);
     expect(result).toBe('A much longer replacement line here. Another short line.');
   });
+
+  it('binds duplicate originalText suggestions to distinct occurrences', () => {
+    // Regression: previous indexOf-up-front impl resolved both suggestions
+    // to the same first occurrence, then the second one was dropped.
+    const script = 'I love you.\nLater...\nI love you.';
+    const result = applyAcceptedRewrites(script, [
+      { originalText: 'I love you.', rewriteText: 'I adore you.', status: 'accepted' },
+      { originalText: 'I love you.', rewriteText: 'I always have.', status: 'accepted' },
+    ]);
+    expect(result).toBe('I adore you.\nLater...\nI always have.');
+  });
+
+  it('preserves unmatched duplicates instead of overwriting prior matches', () => {
+    const script = 'Hello\nHello\nHello';
+    const result = applyAcceptedRewrites(script, [
+      { originalText: 'Hello', rewriteText: 'Hi', status: 'accepted' },
+      { originalText: 'Hello', rewriteText: 'Hey', status: 'accepted' },
+    ]);
+    // Two accepted matches consumed; third 'Hello' remains untouched.
+    expect(result).toBe('Hi\nHey\nHello');
+  });
 });
