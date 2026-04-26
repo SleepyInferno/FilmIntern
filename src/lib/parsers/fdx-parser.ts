@@ -1,11 +1,35 @@
 import { XMLParser } from 'fast-xml-parser';
 import type { ParseResult } from './txt-parser';
 
+// Hard cap on XML element count to bound parse-time memory. A pathological FDX
+// (or a deliberately crafted one) can pack the 10 MB upload limit with millions
+// of empty <Paragraph><Text/></Paragraph> nodes that explode 10–50× in memory
+// once parsed. Real FDX files for feature-length scripts top out around ~50k
+// elements; 200k gives generous headroom with a hard ceiling well below OOM.
+const MAX_XML_ELEMENTS = 200_000;
+
 export async function parseFdx(buffer: Buffer, filename: string): Promise<ParseResult> {
   const xmlContent = buffer.toString('utf-8');
+
+  // Cheap pre-parse element-count check: counting opening tags is O(n) over
+  // the source string and can't be fooled by entity expansion (we disable
+  // entities below regardless).
+  let elementCount = 0;
+  for (let i = 0; i < xmlContent.length; i++) {
+    if (xmlContent.charCodeAt(i) === 60 /* '<' */) elementCount++;
+    if (elementCount > MAX_XML_ELEMENTS) {
+      throw new Error(`FDX file contains too many XML elements (>${MAX_XML_ELEMENTS}). Aborting parse.`);
+    }
+  }
+
   const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_',
+    // Disable XML entity expansion — FDX has no legitimate need for custom
+    // entities, and leaving them on exposes us to billion-laughs / quadratic
+    // blowup attacks (historical fast-xml-parser CVE class).
+    processEntities: false,
+    allowBooleanAttributes: false,
   });
   const doc = parser.parse(xmlContent);
 

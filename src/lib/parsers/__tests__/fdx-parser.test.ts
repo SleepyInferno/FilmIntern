@@ -81,4 +81,32 @@ describe('parseFdx', () => {
     expect(result.text).toContain('A single action line.');
     expect(result.metadata.lineCount).toBe(1);
   });
+
+  it('rejects FDX files with excessive element counts (parse-bomb defense)', async () => {
+    // Forge an FDX with > 200k opening tags. Use a tight repeated pattern so
+    // we don't accidentally OOM the test runner before the cap fires.
+    const head = '<?xml version="1.0"?><FinalDraft><Content>';
+    const tail = '</Content></FinalDraft>';
+    const filler = '<P/>'.repeat(200_001); // 200,001 elements
+    const buffer = Buffer.from(head + filler + tail, 'utf-8');
+
+    await expect(parseFdx(buffer, 'huge.fdx')).rejects.toThrow(/too many XML elements/i);
+  });
+
+  it('does not expand XML entities (billion-laughs defense)', async () => {
+    // With processEntities:false, &lol; should be preserved verbatim
+    // rather than expanded. We assert no expansion occurred by checking
+    // the resulting text doesn't contain the expanded form.
+    const ENTITY_FDX = `<?xml version="1.0"?>
+<!DOCTYPE FinalDraft [
+  <!ENTITY lol "lololololololololololololol">
+]>
+<FinalDraft><Content>
+  <Paragraph Type="Action"><Text>&lol;</Text></Paragraph>
+</Content></FinalDraft>`;
+    const buffer = Buffer.from(ENTITY_FDX, 'utf-8');
+    const result = await parseFdx(buffer, 'entities.fdx');
+    // Entity not expanded → no run of 'lol' characters in the output
+    expect(result.text).not.toMatch(/lololololol/);
+  });
 });
